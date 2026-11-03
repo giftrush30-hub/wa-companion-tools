@@ -45,8 +45,13 @@ class QuickFireBackend(context: Context) {
             Question(item.getString("id"), item.getString("question_text"),
                 shuffledOptions, item.optInt("points", 10), item.optString("difficulty", "standard"))
         }.shuffled()
-        val roundQuestions = questionPool.take(if (difficulty == "mixed") 10 else 5)
+        val recentIds = rotationPrefs.getStringSet("recent_question_ids", emptySet()) ?: emptySet()
+        val freshPool = questionPool.filter { it.id !in recentIds }
+        val availablePool = if (freshPool.size >= 3) freshPool else questionPool
+        val roundQuestions = availablePool.take(if (difficulty == "mixed") 10 else 5)
         if (roundQuestions.isEmpty()) return null
+        val updatedRecent = (recentIds + roundQuestions.map { it.id }).takeLast(40).toSet()
+        rotationPrefs.edit().putStringSet("recent_question_ids", updatedRecent).apply()
         return Quiz(setId, chosenSet.getString("title"), chosenSet.optString("description"), roundQuestions, difficulty)
     }
 
