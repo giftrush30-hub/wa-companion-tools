@@ -37,7 +37,7 @@ class GamesArenaActivity : Activity() {
 
         val quiz = panel()
         quiz.addView(label("🏆  BIG QUIZ", 21, green, true))
-        quiz.addView(label("A proper quiz-show challenge with rising difficulty, a prize ladder and a one-time 50:50 lifeline. Play offline in practice mode.", 14, ink))
+        quiz.addView(label("A 30-question quiz-show practice ladder with rising difficulty, checkpoints, explanations and a one-use 50:50 lifeline. Play offline.", 14, ink))
         quiz.addView(Button(this).apply {
             text = "Start Big Quiz practice"
             isAllCaps = false
