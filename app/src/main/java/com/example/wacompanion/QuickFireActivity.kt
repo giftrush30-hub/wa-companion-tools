@@ -105,7 +105,7 @@ class QuickFireActivity : Activity() {
             try {
                 val result = backend.submit(question.id, selected)
                 runOnUiThread {
-                    if (result.correct) score += question.points
+                    if (result.correct && !result.alreadyAnswered) score += question.points
                     val feedback = LinearLayout(this).apply {
                         orientation = LinearLayout.VERTICAL
                         setPadding(dp(14), dp(12), dp(14), dp(12))
