@@ -33,6 +33,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
     private var nickname = ""
     private var userId = ""
     private var room: GamesMultiplayerBackend.Room? = null
+    private var roomMembers: List<GamesMultiplayerBackend.Member> = emptyList()
     private var realtime: GamesRealtimeClient? = null
     private var voice: GamesVoiceClient? = null
     private var ready = false
@@ -54,6 +55,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
                     main.post {
                         refreshing = false
                         if (room?.id != active.id) return@post
+                        roomMembers = players
                         showRoster(fresh, players)
                         history.forEach { addChat(it.id, players.firstOrNull { p -> p.userId == it.senderId }?.displayName ?: "Player", it.body) }
                     }
@@ -174,6 +176,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
                 val players = api.members(value.id)
                 val history = api.messages(value.id)
                 main.post {
+                    roomMembers = players
                     showRoster(value, players)
                     history.forEach { addChat(it.id, players.firstOrNull { p -> p.userId == it.senderId }?.displayName ?: "Player", it.body) }
                 }
@@ -235,7 +238,11 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
 
     private fun showRoster(value: GamesMultiplayerBackend.Room, players: List<GamesMultiplayerBackend.Member>) {
         status.text = when (value.status) { "in_progress" -> "MATCH IN PROGRESS"; "completed" -> "MATCH COMPLETE"; "cancelled" -> "ROOM CLOSED"; else -> "WAITING FOR PLAYERS" }
-        roster.text = players.joinToString("\n") { (if (it.userId == userId) "YOU • " else "") + it.displayName + " • " + if (it.role == "host") "HOST" else "PLAYER" + " • " + if (it.isReady) "READY" else "NOT READY" } +
+        roster.text = players.joinToString("\n") {
+            (if (it.userId == userId) "YOU • " else "") + it.displayName + " • " +
+                (if (it.role == "host") "HOST" else "PLAYER") + " • " +
+                (if (it.isReady) "READY" else "NOT READY")
+        } +
             "\n\n" + players.size + "/" + value.maxPlayers + " players"
         ready = players.firstOrNull { it.userId == userId }?.isReady ?: ready
         readyButton.text = if (ready) "Cancel ready" else "I'm ready"
@@ -275,6 +282,9 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
             putExtra("game_room_id", active.id); putExtra("game_room_code", active.code)
             putExtra("game_room_type", active.gameType); putExtra("game_display_name", nickname)
             putExtra("game_host_id", active.hostId); putExtra("game_is_host", active.hostId == userId)
+            putExtra("game_player_count", roomMembers.size)
+            putStringArrayListExtra("game_player_names", ArrayList(roomMembers.map { it.displayName }))
+            putStringArrayListExtra("game_player_ids", ArrayList(roomMembers.map { it.userId }))
         })
     }
 
@@ -351,7 +361,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
 
     private fun closeRoom() {
         main.removeCallbacks(poll); realtime?.close(); realtime = null; voice?.disconnect(); voice = null
-        room = null; gameLaunched = false; chatOnly = false; seen.clear(); landing()
+        room = null; roomMembers = emptyList(); gameLaunched = false; chatOnly = false; seen.clear(); landing()
     }
 
     override fun onDestroy() {
