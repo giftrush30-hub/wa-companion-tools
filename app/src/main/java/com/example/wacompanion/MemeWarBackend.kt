@@ -13,6 +13,7 @@ class MemeWarBackend(context: Context) {
         val title: String,
         val instructions: String,
         val templateImageUrl: String?,
+        val templateCredit: String?,
         val endsAt: String?,
         val category: String = "Everyday Naija"
     )
@@ -112,7 +113,7 @@ class MemeWarBackend(context: Context) {
 
     fun activeChallenge(excludeChallengeId: String? = null): Challenge? {
         val rows = discover.request(
-            "/rest/v1/arena_meme_challenges?select=id,title,instructions,template_image_url,ends_at,starts_at,category&status=eq.published&order=created_at.desc&limit=100",
+            "/rest/v1/arena_meme_challenges?select=id,title,instructions,template_image_url,template_credit,ends_at,starts_at,category&status=eq.published&order=created_at.desc&limit=100",
             "GET", null, null
         ) as JSONArray
         if (rows.length() == 0) return null
@@ -141,6 +142,7 @@ class MemeWarBackend(context: Context) {
             row.getString("title"),
             row.optString("instructions"),
             row.optString("template_image_url").takeIf { it.isNotBlank() && it != "null" },
+            row.optString("template_credit").takeIf { it.isNotBlank() && it != "null" },
             row.optString("ends_at").takeIf { it.isNotBlank() && it != "null" },
             row.optString("category", "Everyday Naija")
         )
