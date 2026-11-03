@@ -23,6 +23,43 @@ class MemeWarBackend(context: Context) {
         val votedByMe: Boolean
     )
     data class PendingSubmission(val id: String, val caption: String, val challengeTitle: String, val createdAt: String)
+    data class ArenaReport(
+        val id: String,
+        val targetType: String,
+        val targetId: String,
+        val reason: String,
+        val details: String?,
+        val status: String,
+        val createdAt: String
+    )
+
+    fun pendingReports(): List<ArenaReport> {
+        val session = requireSession()
+        val rows = discover.request(
+            "/rest/v1/arena_reports?select=id,target_type,target_id,reason,details,status,created_at&status=in.(open,reviewing)&order=created_at.asc&limit=100",
+            "GET", null, session.accessToken
+        ) as JSONArray
+        return (0 until rows.length()).map { index ->
+            val row = rows.getJSONObject(index)
+            ArenaReport(
+                row.getString("id"), row.getString("target_type"), row.getString("target_id"),
+                row.getString("reason"), row.optString("details").takeIf { it.isNotBlank() && it != "null" },
+                row.getString("status"), row.optString("created_at")
+            )
+        }
+    }
+
+    fun updateReportStatus(reportId: String, status: String) {
+        val session = requireSession()
+        if (!isAdmin()) throw IllegalStateException("This review area is for authorised moderators only.")
+        if (status !in setOf("reviewing", "resolved", "dismissed")) {
+            throw IllegalArgumentException("Invalid moderation status.")
+        }
+        discover.request(
+            "/rest/v1/arena_reports?id=eq.$reportId",
+            "PATCH", JSONObject().put("status", status), session.accessToken
+        )
+    }
 
     fun isAdmin(): Boolean {
         val token = discover.currentSession()?.accessToken ?: return false
