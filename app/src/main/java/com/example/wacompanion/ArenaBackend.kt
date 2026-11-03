@@ -8,7 +8,12 @@ import org.json.JSONObject
 class ArenaBackend(context: Context) {
     private val discover = DiscoverBackend(context.applicationContext)
 
-    data class Poll(val id: String, val question: String, val options: List<Option>)
+    data class Poll(
+        val id: String,
+        val question: String,
+        val options: List<Option>,
+        val myVoteOptionId: String? = null
+    )
     data class Option(val id: String, val text: String)
     data class Result(val optionId: String, val count: Long)
 
@@ -28,7 +33,15 @@ class ArenaBackend(context: Context) {
             val item = optionsJson.getJSONObject(it)
             Option(item.getString("id"), item.getString("option_text"))
         }
-        return Poll(id, row.getString("question"), options)
+        val session = discover.currentSession()
+        val myVote = if (session == null) null else {
+            val votes = discover.request(
+                "/rest/v1/arena_hot_seat_votes?select=option_id&poll_id=eq.$id&user_id=eq.${session.userId}&limit=1",
+                "GET", null, session.accessToken
+            ) as JSONArray
+            if (votes.length() == 0) null else votes.getJSONObject(0).getString("option_id")
+        }
+        return Poll(id, row.getString("question"), options, myVote)
     }
 
     fun vote(pollId: String, optionId: String) {
