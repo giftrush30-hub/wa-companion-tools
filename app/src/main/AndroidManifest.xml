@@ -10,6 +10,7 @@
         android:allowBackup="true"
         android:label="WA Companion Tools"
         android:theme="@style/AppTheme">
+        <activity android:name=".ArenaModerationActivity" android:exported="false" />
         <activity android:name=".MemeModerationActivity" android:exported="false" />
         <activity android:name=".MemeWarActivity" android:exported="false" />
         <activity android:name=".QuickFireActivity" android:exported="false" />
