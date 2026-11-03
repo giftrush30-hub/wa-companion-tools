@@ -4,15 +4,21 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.text.InputFilter
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import java.util.concurrent.Executors
+import java.io.ByteArrayOutputStream
+import java.util.UUID
 
 /** Playable Meme War: moderated caption entries, voting, and community reporting. */
 class MemeWarActivity : Activity() {
@@ -27,6 +33,9 @@ class MemeWarActivity : Activity() {
     private lateinit var entriesArea: LinearLayout
     private var challenge: MemeWarBackend.Challenge? = null
     private var mySubmission: org.json.JSONObject? = null
+    private var selectedImageUri: Uri? = null
+    private var imagePreview: ImageView? = null
+    private var imageStatus: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +54,52 @@ class MemeWarActivity : Activity() {
         entriesArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         page.addView(entriesArea)
         loadChallenge()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 4201 && resultCode == RESULT_OK) {
+            selectedImageUri = data?.data
+            val uri = selectedImageUri
+            if (uri != null) {
+                imagePreview?.setImageURI(uri)
+                imagePreview?.visibility = View.VISIBLE
+                imageStatus?.text = "Photo selected. It will be uploaded with your caption."
+            }
+        }
+    }
+
+    private fun uploadSelectedImage(uri: Uri): String {
+        val mime = contentResolver.getType(uri) ?: "image/jpeg"
+        if (mime !in setOf("image/jpeg", "image/png", "image/webp")) {
+            throw IllegalArgumentException("Choose a JPG, PNG or WEBP image.")
+        }
+        val bitmap = contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+            ?: throw IllegalStateException("Could not read the selected image.")
+        val maxSide = 1440
+        val scale = minOf(1f, maxSide.toFloat() / maxOf(bitmap.width, bitmap.height))
+        val resized = if (scale < 1f) Bitmap.createScaledBitmap(
+            bitmap, (bitmap.width * scale).toInt(), (bitmap.height * scale).toInt(), true
+        ) else bitmap
+        val output = ByteArrayOutputStream()
+        resized.compress(Bitmap.CompressFormat.JPEG, 84, output)
+        if (resized !== bitmap) resized.recycle()
+        bitmap.recycle()
+        val bytes = output.toByteArray()
+        if (bytes.size > 5 * 1024 * 1024) throw IllegalArgumentException("This photo is still too large. Choose another image.")
+        val session = DiscoverBackend(this).currentSession()
+            ?: throw IllegalStateException("Sign in first to upload a photo.")
+        val path = "${session.userId}/${UUID.randomUUID()}.jpg"
+        return DiscoverBackend(this).uploadMemeImage(path, bytes, "image/jpeg")
+    }
+
+    private fun loadRemoteImage(url: String, target: ImageView) {
+        worker.execute {
+            try {
+                val bitmap = java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }
+                if (bitmap != null) runOnUiThread { target.setImageBitmap(bitmap) }
+            } catch (_: Exception) { }
+        }
     }
 
     private fun loadChallenge(excludeChallengeId: String? = null) {
