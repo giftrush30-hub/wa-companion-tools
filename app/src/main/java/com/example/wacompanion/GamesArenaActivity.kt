@@ -48,7 +48,7 @@ class GamesArenaActivity : Activity() {
 
         val ludo = panel()
         ludo.addView(label("🎲  LUDO", 21, green, true))
-        ludo.addView(label("Classic 2–4 player board game. Private rooms, online matchmaking, reconnects and rematches are planned. We will not label local-only play as online multiplayer.", 14, ink))
+        ludo.addView(label("A 2–4 player local pass-and-play board game. Roll to leave base, capture rivals, reach home and earn bonus rolls. Online rooms and matchmaking are a later milestone.", 14, ink))
         ludo.addView(label("OFFLINE PASS & PLAY — AVAILABLE", 11, muted, true))
         ludo.addView(Button(this).apply {
             text = "Play Ludo on this phone"
@@ -60,7 +60,7 @@ class GamesArenaActivity : Activity() {
 
         val whot = panel()
         whot.addView(label("🃏  WHOT!", 21, green, true))
-        whot.addView(label("A Nigerian card-game experience with a clearly stated rule set, private rooms and fair matchmaking. Rule-set decisions and authoritative gameplay come before release.", 14, ink))
+        whot.addView(label("Nigerian WHOT! for 2–4 players on one phone. Match shapes or numbers, defend Pick Two/Pick Three, call a shape with WHOT 20 and be first to check up. Online rooms come later.", 14, ink))
         whot.addView(label("OFFLINE PASS & PLAY — AVAILABLE", 11, muted, true))
         whot.addView(Button(this).apply {
             text = "Play WHOT! on this phone"
