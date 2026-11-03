@@ -2,6 +2,8 @@ package com.example.wacompanion
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.animation.ValueAnimator
+import android.view.animation.DecelerateInterpolator
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -54,6 +56,8 @@ class LudoActivity : Activity() {
     private val tokens = mutableListOf<MutableList<Token>>()
     private lateinit var board: LudoBoard
     private lateinit var status: TextView
+    private lateinit var diceView: TextView
+    private var isRolling = false
     private lateinit var tokenButtons: LinearLayout
     private lateinit var rollButton: Button
     private var current = 0
@@ -83,6 +87,12 @@ class LudoActivity : Activity() {
         root.addView(label("LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
         root.addView(label("One phone • $selectedPlayers players • Offline practice",13,Color.DKGRAY))
         board=LudoBoard(); root.addView(board,LinearLayout.LayoutParams(-1,dp(330)))
+        diceView=label("⚄",54,Color.rgb(7,91,69),true).apply {
+            gravity=android.view.Gravity.CENTER
+            setPadding(0,dp(2),0,dp(2))
+            contentDescription="Dice ready"
+        }
+        root.addView(diceView,LinearLayout.LayoutParams(-1,dp(76)))
         status=label("",16,Color.rgb(18,42,55),true); root.addView(status)
         rollButton=Button(this).apply {
             text="PASS PHONE • TAP WHEN READY"; isAllCaps=false
@@ -100,8 +110,37 @@ class LudoActivity : Activity() {
     }
 
     private fun rollDice() {
-        if(gameOver || roll!=null) return
-        val value=Random.nextInt(1,7); roll=value
+        if(gameOver || roll!=null || isRolling) return
+        isRolling=true
+        rollButton.isEnabled=false
+        diceView.animate().cancel()
+        val faces=listOf("⚀","⚁","⚂","⚃","⚄","⚅")
+        val finalValue=Random.nextInt(1,7)
+        val animator=ValueAnimator.ofInt(0,13).apply {
+            duration=760L
+            interpolator=DecelerateInterpolator()
+            addUpdateListener { frame ->
+                diceView.text=faces[Random.nextInt(faces.size)]
+                val pulse=1f+(frame.animatedFraction*0.12f)
+                diceView.scaleX=pulse
+                diceView.scaleY=pulse
+                diceView.rotation=if(frame.animatedFraction<0.75f) (frame.animatedFraction*720f) else 0f
+            }
+            addListener(object:android.animation.AnimatorListenerAdapter(){
+                override fun onAnimationEnd(animation:android.animation.Animator){
+                    diceView.text=faces[finalValue-1]
+                    diceView.scaleX=1f;diceView.scaleY=1f;diceView.rotation=0f
+                    isRolling=false
+                    resolveRoll(finalValue)
+                }
+            })
+        }
+        animator.start()
+    }
+
+    private fun resolveRoll(value:Int) {
+        if(gameOver)return
+        roll=value
         if(value==6) consecutiveSixes++ else consecutiveSixes=0
         if(consecutiveSixes>=3) {
             roll=null; consecutiveSixes=0; advanceTurn("Three sixes in a row — turn forfeited."); return
@@ -144,8 +183,32 @@ class LudoActivity : Activity() {
     private fun moveToken(index:Int) {
         val value=roll ?: return
         val token=tokens[current][index]
+        val startProgress=token.progress
+        val targetProgress=if(startProgress==-1) 0 else startProgress+value
+        tokenButtons.isEnabled=false
+        tokenButtons.removeAllViews()
+        rollButton.isEnabled=false
+        status.text="${players[current].name}'s token is moving..."
+        val steps=if(startProgress==-1)1 else value
+        ValueAnimator.ofInt(0,steps).apply {
+            duration=(steps*125L).coerceIn(180L,850L)
+            interpolator=DecelerateInterpolator(1.2f)
+            addUpdateListener { frame ->
+                val walked=frame.animatedValue as Int
+                token.progress=if(startProgress==-1) { if(walked==0)-1 else 0 } else startProgress+walked
+                board.invalidate()
+            }
+            addListener(object:android.animation.AnimatorListenerAdapter(){
+                override fun onAnimationEnd(animation:android.animation.Animator){
+                    token.progress=targetProgress
+                    completeTokenMove(token,value)
+                }
+            })
+        }.start()
+    }
+
+    private fun completeTokenMove(token:Token,value:Int) {
         var bonus=value==6
-        if(token.progress==-1) token.progress=0 else token.progress+=value
         var captured=false
         if(token.progress in 0..50) {
             val global=(players[current].start+token.progress)%52
@@ -175,7 +238,9 @@ class LudoActivity : Activity() {
         if(gameOver) return
         status.text="${players[current].name}'s turn • Home: ${tokens[current].count{it.progress==56}}/4\nPass the phone, then roll."+if(note.isNotBlank()) "\n$note" else ""
         readyToRoll=false
-        rollButton.isEnabled=true; rollButton.text="PASS PHONE • TAP WHEN READY"; tokenButtons.removeAllViews(); board.invalidate()
+        rollButton.isEnabled=true; rollButton.text="PASS PHONE • TAP WHEN READY"
+        diceView.text="⚄";diceView.rotation=0f;diceView.scaleX=1f;diceView.scaleY=1f
+        tokenButtons.removeAllViews(); board.invalidate()
     }
 
     private inner class LudoBoard:View(this@LudoActivity) {
