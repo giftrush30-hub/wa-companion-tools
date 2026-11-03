@@ -129,6 +129,16 @@ class DiscoverActivity : Activity() {
             setOnClickListener { showSellerNotice() }
         }
         page.addView(sellerButton)
+        page.addView(space(10))
+
+        val promoteButton = Button(this).apply {
+            text = "Advertise my business"
+            isAllCaps = false
+            setOnClickListener { showPromotionPackages() }
+        }
+        page.addView(promoteButton)
+        page.addView(space(8))
+        page.addView(text("Free basic listing. Optional paid boosts will be clearly marked Sponsored and promote placement inside WA Discover only. Payment is not active yet.", 12, muted))
 
         val back = Button(this).apply {
             text = "Back to WA Companion"
@@ -140,6 +150,41 @@ class DiscoverActivity : Activity() {
         page.addView(text("Basic business discovery is planned to be free. Optional sponsored promotion may come later and will be clearly labelled. We do not promise WhatsApp Status views or sales.", 12, muted))
 
         setContentView(scroll)
+    }
+
+    private fun showPromotionPackages() {
+        val message = """
+            FREE BASIC LISTING — ₦0
+            Keep an approved business profile discoverable.
+
+            LOCAL BOOST — ₦50
+            A low-cost sponsored placement for local discovery.
+
+            WIDER DISCOVERY — ₦100
+            A sponsored placement with wider discovery across WA Discover.
+
+            FEATURED LISTING — ₦300
+            A more prominent Sponsored listing in discovery.
+
+            BUSINESS SPOTLIGHT — ₦1,000
+            The highest-visibility Sponsored placement in WA Discover.
+
+            Promotions do not guarantee views, enquiries or sales. They do not buy WhatsApp Status views or send messages to anyone.
+            
+            Paystack checkout is not connected yet. No money will be collected from this screen.
+        """.trimIndent()
+        AlertDialog.Builder(this)
+            .setTitle("Promote your business")
+            .setMessage(message)
+            .setPositiveButton("Continue") { _, _ ->
+                AlertDialog.Builder(this)
+                    .setTitle("Payments coming soon")
+                    .setMessage("Your promotion options are now recorded in the app plan. Paystack will be connected after the shared database and secure server-side payment verification are ready. Do not send money manually.")
+                    .setPositiveButton("OK", null)
+                    .show()
+            }
+            .setNegativeButton("Close", null)
+            .show()
     }
 
     private fun promptCatalogueLink() {
