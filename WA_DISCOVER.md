@@ -24,33 +24,43 @@ WA Discover is a Nigeria-wide discovery directory inside WA Companion. It helps 
 
 ## Lean first-version data
 
-Keep the shared directory database small. A business entry should contain only:
+The first shared directory stores only:
 - Business name and short description
 - Category
 - State and city
-- WhatsApp contact link or phone number
-- WhatsApp Business catalogue link (optional)
-- Optional logo/image URL only if a seller deliberately supplies one and we later support it
-- Approval/status and timestamps
+- International WhatsApp number
+- Optional WhatsApp Business catalogue URL
+- Owner account ID, approval status and timestamps
+- Simple directory engagement events and abuse reports
 
-Do not build our own product-photo/video upload system for the first version. Do not store WhatsApp media by scraping or copying it.
+No product photo/video uploads, product listings, paid promotions or payment processing are needed in v1.
+
+## Backend schema status
+
+The current `supabase/schema.sql` has been simplified for this directory model:
+- `discover_categories`
+- `discover_businesses`
+- `discover_reports`
+- `discover_events`
+
+Public users can read approved business profiles and active categories. Sellers need an authenticated account to submit a pending business and can edit their own details. A database trigger prevents ordinary sellers from changing ownership or approval status. Admin authorization uses a trusted Supabase `app_metadata.role = discover_admin` claim; it must only be granted through trusted server-side admin tooling, never user-editable metadata.
+
+**This SQL is a reviewed project file only. It has not been executed or tested against a live Supabase project.** The Android app is not connected to Supabase yet. Do not paste service-role keys into the app or GitHub.
 
 ## Current milestone
 
-The Android app has a WA Discover entry point and a dedicated screen redesigned around the WhatsApp-first directory model. The screen explains the seller-to-directory-to-buyer flow and is honest that search and registration are not live yet.
-
-The existing supabase/schema.sql is an earlier marketplace schema draft with product listings and promotions. It must be reviewed and simplified before use; it is not yet deployed or tested. The next backend should start with business directory records, categories, reports/moderation and basic directory events. Image storage is not required for the first version.
+The Android screen has seller draft preparation, local private draft saving/restoration, and buyer hand-off actions to open a seller-supplied catalogue link or WhatsApp chat. These do not publish a listing or provide public search. The latest source build has passed GitHub Actions compilation; physical-device testing remains outstanding.
 
 ## Next implementation stages
 
-1. Simplify the database to business profiles, categories, moderation/reports and basic directory events.
-2. Connect the Android app to the shared database using a client-safe publishable/anon key and strict row-level security.
-3. Implement seller submission of business details and WhatsApp catalogue/contact links.
-4. Implement buyer search and state/city/category filters.
-5. Add report/block and admin moderation tools.
-6. Only after real buyer activity exists, consider optional sponsored placements and payment processing.
+1. Create a Supabase project and apply/review the lean schema.
+2. Connect Android using a client-safe publishable/anon key and strict row-level security.
+3. Add seller authentication and secure business submission.
+4. Add buyer search and state/city/category filters for approved businesses.
+5. Add reporting, moderation and abuse controls.
+6. Only after real buyer activity exists, consider optional sponsored placements and server-verified payments.
 
-Never put a Supabase service-role key or payment secret in Android source code or GitHub. Payment verification, if added later, must be server-side. Do not charge sellers before there is real buyer traffic.
+Never put a Supabase service-role key or payment secret in Android source code or GitHub. Do not charge sellers before there is real buyer traffic.
 
 ## Build and testing
 
