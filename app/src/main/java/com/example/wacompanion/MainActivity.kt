@@ -84,6 +84,9 @@ class MainActivity : Activity() {
         card("DAILY ARENA", "Daily Hot Seat questions, Quick Fire challenges and Meme War.") {
             startActivity(Intent(this, DailyArenaActivity::class.java))
         }
+        card("GAMES ARENA", "Big Quiz practice is ready. Ludo and WHOT! are being built for fair multiplayer play.") {
+            startActivity(Intent(this, GamesArenaActivity::class.java))
+        }
         card("DISCOVER", "Find Nigerian businesses and useful opportunities.") {
             startActivity(Intent(this, DiscoverActivity::class.java))
         }
