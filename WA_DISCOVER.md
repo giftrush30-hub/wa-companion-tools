@@ -58,7 +58,7 @@ The current `supabase/schema.sql` has been simplified for this directory model:
 
 Public users can read approved business profiles and active categories. Sellers need an authenticated account to submit a pending business and can edit their own details. A database trigger prevents ordinary sellers from changing ownership or approval status. Admin authorization uses a trusted Supabase `app_metadata.role = discover_admin` claim; it must only be granted through trusted server-side admin tooling, never user-editable metadata.
 
-**This SQL is a reviewed project file only. It has not been executed or tested against a live Supabase project.** The Android app is not connected to Supabase yet. Do not paste service-role keys into the app or GitHub.
+**The initial schema has now been applied to the connected Supabase project** (`coodsyfdhjpqfxanqhwm`). Tables and RLS policies were confirmed in the project. The admin helper function search path and foreign-key indexes were also hardened. The Android app is not connected to Supabase yet, and seller authentication/search have not been implemented. Security advisor warnings still need review before public launch. Do not paste service-role keys into the app or GitHub.
 
 ## Current milestone
 
@@ -66,11 +66,11 @@ The Android screen has seller draft preparation, local private draft saving/rest
 
 ## Next implementation stages
 
-1. Create a Supabase project and apply/review the lean schema.
-2. Connect Android using a client-safe publishable/anon key and strict row-level security.
-3. Add seller authentication and secure business submission.
-4. Add buyer search and state/city/category filters for approved businesses.
-5. Add reporting, moderation and abuse controls.
+1. Connect Android using a client-safe publishable/anon key and strict row-level security.
+2. Add seller authentication and secure business submission.
+3. Add buyer search and state/city/category filters for approved businesses.
+4. Add reporting, moderation and abuse controls.
+5. Review and resolve Supabase security advisor findings before public launch.
 6. After the directory is live and real buyer activity exists, enable the prepared Sponsored packages with server-verified Paystack payments.
 
 Never put a Supabase service-role key or payment secret in Android source code or GitHub. Do not charge sellers before there is real buyer traffic.
