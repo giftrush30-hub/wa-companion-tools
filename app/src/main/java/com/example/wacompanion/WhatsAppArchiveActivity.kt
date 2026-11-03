@@ -56,7 +56,7 @@ class WhatsAppArchiveActivity : Activity() {
         root.addView(label("SAVED CHAT EXPORTS", 13, green, true))
         val search = EditText(this).apply {
             hint = "Search saved chat names or messages"
-            singleLine = true
+            isSingleLine = true
         }
         root.addView(search)
         entries = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
