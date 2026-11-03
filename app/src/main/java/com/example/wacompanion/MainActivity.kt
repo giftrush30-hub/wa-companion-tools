@@ -12,6 +12,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.RectF
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -85,6 +87,7 @@ class MainActivity : Activity() {
         card("STATUS CONVERSATION GAMES", "Create fun polls, choose-one questions and conversation starters for your Status.") { statusConversationGames() }
         card("7-DAY STATUS CALENDAR", "Plan, save and share a week of status ideas without needing internet.") { statusCalendar() }
         card("PERSONAL BRAND BUILDER", "Save your name, business identity and contact call-to-action for consistent status cards.") { personalBrandBuilder() }
+        card("PRODUCT CATALOGUE MAKER", "Create product cards with photos, prices and descriptions, save your items and share them with customers.") { productCatalogueMaker() }
         card("REPLY-TO-STATUS ASSISTANT", "Bring in a status or describe it, then get thoughtful reply ideas in different tones.") { replyAssistant() }
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
         card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
@@ -513,6 +516,163 @@ class MainActivity : Activity() {
         root.addView(saved)
         refreshSaved()
         root.addView(label("This is a planning calendar, not automatic posting. You choose when to share each status.", 11, Color.GRAY))
+    }
+
+    private var selectedProductImage: Uri? = null
+    private var productImageStatus: TextView? = null
+
+    private fun productCatalogueMaker() {
+        root.addView(label("YOUR MINI PRODUCT CATALOGUE", 16, Color.rgb(6, 63, 50), true))
+        root.addView(label("Add an item, choose an optional photo, then create a shareable product card.", 12, Color.DKGRAY))
+        val name = EditText(this).apply { hint = "Product or service name"; isSingleLine = true }
+        val price = EditText(this).apply { hint = "Price in naira (e.g. 12500)"; isSingleLine = true; inputType = 2 }
+        val description = EditText(this).apply { hint = "Short description or key benefits"; minLines = 2; maxLines = 4 }
+        val contact = EditText(this).apply {
+            hint = "How customers can order (optional)"
+            isSingleLine = true
+            setText(prefs.getString("brand_contact", ""))
+        }
+        productImageStatus = label("No product photo selected. A designed text card can still be created.", 11, Color.GRAY)
+        root.addView(name); root.addView(price); root.addView(description); root.addView(contact)
+        val photoButton = Button(this).apply { text = "Choose product photo (optional)"; isAllCaps = false }
+        root.addView(photoButton); root.addView(productImageStatus)
+        photoButton.setOnClickListener {
+            val pick = Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*"; addCategory(Intent.CATEGORY_OPENABLE) }
+            try { startActivityForResult(Intent.createChooser(pick, "Choose product photo"), 73) }
+            catch (_: Exception) { toast("Could not open the photo picker.") }
+        }
+        fun productText(): String {
+            val title = name.text.toString().trim()
+            val amount = price.text.toString().trim()
+            val details = description.text.toString().trim()
+            val order = contact.text.toString().trim()
+            return listOf(title, amount, details, order).joinToString("\u001e")
+        }
+        button("Save product to my catalogue") {
+            val title = name.text.toString().trim()
+            val amount = price.text.toString().trim()
+            if (title.isBlank() || amount.isBlank()) {
+                toast("Enter the product name and price.")
+            } else {
+                val old = prefs.getString("product_catalogue", "") ?: ""
+                val updated = old + (if (old.isBlank()) "" else "\u001f") + productText()
+                prefs.edit().putString("product_catalogue", updated).apply()
+                toast("Product saved on this phone.")
+                renderProductCatalogue()
+            }
+        }
+        button("Create and share product card") {
+            val title = name.text.toString().trim()
+            val amount = price.text.toString().trim()
+            if (title.isBlank() || amount.isBlank()) toast("Enter the product name and price first.")
+            else shareProductCard(title, amount, description.text.toString().trim(),
+                contact.text.toString().trim(), selectedProductImage)
+        }
+        root.addView(space(8))
+        root.addView(label("SAVED PRODUCTS", 13, Color.rgb(6, 63, 50), true))
+        renderProductCatalogue()
+        root.addView(label("Photos are selected by you from your device. Products stay in this app; this feature does not upload them to an online shop.", 11, Color.GRAY))
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 73 && resultCode == RESULT_OK) {
+            selectedProductImage = data?.data
+            productImageStatus?.text = if (selectedProductImage == null) "No photo selected." else "Product photo selected."
+        }
+    }
+
+    private fun renderProductCatalogue() {
+        val raw = prefs.getString("product_catalogue", "") ?: ""
+        if (raw.isBlank()) {
+            root.addView(label("No products saved yet.", 12, Color.GRAY))
+            return
+        }
+        raw.split("\u001f").filter { it.isNotBlank() }.forEach { record ->
+            val fields = record.split("\u001e")
+            val title = fields.getOrNull(0).orEmpty()
+            val amount = fields.getOrNull(1).orEmpty()
+            val details = fields.getOrNull(2).orEmpty()
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(10), dp(9), dp(10), dp(9))
+                setBackgroundColor(Color.WHITE)
+            }
+            row.addView(label(title, 15, Color.rgb(6, 63, 50), true))
+            row.addView(label("₦$amount", 14, Color.DKGRAY))
+            if (details.isNotBlank()) row.addView(label(details, 12, Color.GRAY))
+            val share = Button(this).apply { text = "Share this product"; isAllCaps = false }
+            share.setOnClickListener {
+                shareProductCard(title, amount, details, fields.getOrNull(3).orEmpty(), null)
+            }
+            row.addView(share)
+            root.addView(row)
+            root.addView(space(5))
+        }
+    }
+
+    private fun shareProductCard(name: String, price: String, description: String, contact: String, photoUri: Uri?) {
+        try {
+            val bitmap = Bitmap.createBitmap(1080, 1080, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            canvas.drawColor(Color.rgb(6, 63, 50))
+            var photo: Bitmap? = null
+            if (photoUri != null) {
+                photo = contentResolver.openInputStream(photoUri)?.use { BitmapFactory.decodeStream(it) }
+            }
+            if (photo != null) {
+                val scale = maxOf(1080f / photo.width, 610f / photo.height)
+                val width = (photo.width * scale).toInt()
+                val height = (photo.height * scale).toInt()
+                val scaled = Bitmap.createScaledBitmap(photo, width, height, true)
+                val srcLeft = ((width - 1080) / 2).coerceAtLeast(0)
+                val srcTop = ((height - 610) / 2).coerceAtLeast(0)
+                canvas.drawBitmap(scaled, android.graphics.Rect(srcLeft, srcTop, (srcLeft + 1080).coerceAtMost(width), (srcTop + 610).coerceAtMost(height)),
+                    RectF(0f, 0f, 1080f, 610f), paint)
+                if (scaled !== photo) scaled.recycle()
+                photo.recycle()
+            } else {
+                paint.color = Color.argb(35, 255, 255, 255)
+                canvas.drawCircle(930f, 120f, 260f, paint)
+                canvas.drawCircle(80f, 620f, 210f, paint)
+            }
+            paint.color = Color.rgb(230, 195, 120)
+            paint.textSize = 32f
+            paint.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            canvas.drawText("AVAILABLE NOW", 65f, 675f, paint)
+            paint.color = Color.WHITE
+            paint.textSize = 66f
+            paint.typeface = Typeface.create("sans-serif", Typeface.BOLD)
+            val title = if (name.length > 25) name.take(24) + "…" else name
+            canvas.drawText(title, 65f, 770f, paint)
+            paint.color = Color.rgb(245, 211, 145)
+            paint.textSize = 54f
+            canvas.drawText("₦$price", 65f, 850f, paint)
+            paint.color = Color.WHITE
+            paint.textSize = 29f
+            val detail = if (description.length > 75) description.take(72) + "…" else description
+            if (detail.isNotBlank()) canvas.drawText(detail, 65f, 910f, paint)
+            paint.color = Color.rgb(245, 211, 145)
+            paint.textSize = 26f
+            val footer = if (contact.isBlank()) "Message us to order" else contact
+            canvas.drawText(if (footer.length > 48) footer.take(45) + "…" else footer, 65f, 1000f, paint)
+            val dir = File(cacheDir, "product_cards").apply { mkdirs() }
+            val file = File(dir, "product_${System.currentTimeMillis()}.png")
+            FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            bitmap.recycle()
+            val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_TEXT, "$name • ₦$price" + if (description.isBlank()) "" else "\n$description")
+                clipData = ClipData.newUri(contentResolver, "Product card", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(send, "Share product card"))
+        } catch (_: Exception) {
+            toast("Could not create the product card. Try another photo or remove the photo.")
+        }
     }
 
     private fun personalBrandBuilder() {
