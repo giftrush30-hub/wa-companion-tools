@@ -26,12 +26,12 @@ class LudoActivity : Activity() {
         for (x in 12 downTo 0) add(13 to x)
         for (y in 12 downTo 1) add(y to 0)
     }
-    private val starts = listOf(6,19,32,45)
+    private val starts = listOf(7,20,33,46)
     private val lanes = listOf(
         (1..6).map { it to 7 },
         (12 downTo 7).map { 7 to it },
         (12 downTo 7).map { it to 6 },
-        (7 downTo 2).map { 6 to it }
+        (1..6).map { 6 to it }
     )
     private val bases = listOf(
         listOf(2.5f to 2.5f,4f to 2.5f,2.5f to 4f,4f to 4f),
