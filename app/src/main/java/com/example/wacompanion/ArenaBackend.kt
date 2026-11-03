@@ -18,6 +18,10 @@ class ArenaBackend(context: Context) {
     )
     data class Option(val id: String, val text: String)
     data class Result(val optionId: String, val count: Long)
+    data class Suggestion(
+        val id: String, val question: String, val topic: String,
+        val options: List<String>, val votes: Long, val votedByMe: Boolean
+    )
 
     fun activePoll(excludePollId: String? = null): Poll? {
         val polls = discover.request(
@@ -64,6 +68,106 @@ class ArenaBackend(context: Context) {
         }
         return Poll(id, selected.getString("question"), options, myVote,
             selected.optString("topic", "General"), selected.optString("poll_type", "poll"))
+    }
+
+    fun submitSuggestion(question: String, topic: String, options: List<String>) {
+        val session = discover.currentSession()
+            ?: throw IllegalStateException("Sign in first to suggest a Hot Seat question.")
+        val cleanQuestion = question.trim()
+        val cleanOptions = options.map { it.trim() }.filter { it.isNotBlank() }.distinct()
+        if (cleanQuestion.length !in 12..180) throw IllegalArgumentException("Question must be 12–180 characters.")
+        if (cleanOptions.size !in 2..4) throw IllegalArgumentException("Add between 2 and 4 different answer options.")
+        val payload = JSONObject()
+            .put("user_id", session.userId)
+            .put("question", cleanQuestion)
+            .put("topic", topic.trim().ifBlank { "General" }.take(40))
+            .put("options", JSONArray(cleanOptions))
+            .put("status", "pending")
+        discover.request("/rest/v1/arena_hot_seat_suggestions", "POST", payload, session.accessToken)
+    }
+
+    fun suggestions(): List<Suggestion> {
+        val session = discover.currentSession()
+            ?: throw IllegalStateException("Sign in to explore community questions.")
+        val rows = discover.request(
+            "/rest/v1/arena_hot_seat_suggestions?select=id,question,topic,options&status=eq.approved&order=created_at.desc&limit=40",
+            "GET", null, session.accessToken
+        ) as JSONArray
+        if (rows.length() == 0) return emptyList()
+        val ids = JSONArray().apply {
+            for (i in 0 until rows.length()) put(rows.getJSONObject(i).getString("id"))
+        }
+        val countsJson = discover.request(
+            "/rest/v1/rpc/arena_hot_seat_suggestion_vote_counts",
+            "POST", JSONObject().put("p_ids", ids), session.accessToken
+        ) as JSONArray
+        val counts = (0 until countsJson.length()).associate {
+            val row = countsJson.getJSONObject(it)
+            row.getString("suggestion_id") to row.optLong("vote_count")
+        }
+        val mineJson = discover.request(
+            "/rest/v1/arena_hot_seat_suggestion_votes?select=suggestion_id&user_id=eq.${session.userId}&limit=500",
+            "GET", null, session.accessToken
+        ) as JSONArray
+        val mine = (0 until mineJson.length()).map { mineJson.getJSONObject(it).getString("suggestion_id") }.toSet()
+        return (0 until rows.length()).map {
+            val row = rows.getJSONObject(it)
+            val options = row.optJSONArray("options") ?: JSONArray()
+            Suggestion(
+                row.getString("id"), row.getString("question"), row.optString("topic"),
+                (0 until options.length()).map { index -> options.getString(index) },
+                counts[row.getString("id")] ?: 0L, row.getString("id") in mine
+            )
+        }.sortedByDescending { it.votes }
+    }
+
+    fun voteSuggestion(suggestionId: String) {
+        val session = discover.currentSession()
+            ?: throw IllegalStateException("Sign in to vote for community questions.")
+        discover.request(
+            "/rest/v1/arena_hot_seat_suggestion_votes", "POST",
+            JSONObject().put("suggestion_id", suggestionId).put("user_id", session.userId),
+            session.accessToken
+        )
+    }
+
+    fun pendingSuggestions(): List<Suggestion> {
+        val session = discover.currentSession()
+            ?: throw IllegalStateException("Sign in first.")
+        if (!isAdmin()) throw IllegalStateException("Moderator access required.")
+        val rows = discover.request(
+            "/rest/v1/arena_hot_seat_suggestions?select=id,question,topic,options,status&status=eq.pending&order=created_at.asc&limit=100",
+            "GET", null, session.accessToken
+        ) as JSONArray
+        return (0 until rows.length()).map {
+            val row = rows.getJSONObject(it)
+            val options = row.optJSONArray("options") ?: JSONArray()
+            Suggestion(row.getString("id"), row.getString("question"), row.optString("topic"),
+                (0 until options.length()).map { index -> options.getString(index) }, 0L, false)
+        }
+    }
+
+    fun moderateSuggestion(id: String, approved: Boolean) {
+        val session = discover.currentSession()
+            ?: throw IllegalStateException("Sign in first.")
+        if (!isAdmin()) throw IllegalStateException("Moderator access required.")
+        discover.request(
+            "/rest/v1/arena_hot_seat_suggestions?id=eq.$id", "PATCH",
+            JSONObject().put("status", if (approved) "approved" else "rejected"),
+            session.accessToken
+        )
+    }
+
+    private fun isAdmin(): Boolean {
+        val token = discover.currentSession()?.accessToken ?: return false
+        return try {
+            val payload = token.split(".").getOrNull(1) ?: return false
+            val decoded = android.util.Base64.decode(
+                payload.replace('-', '+').replace('_', '/') +
+                    "=".repeat((4 - payload.length % 4) % 4), android.util.Base64.DEFAULT
+            )
+            JSONObject(String(decoded, Charsets.UTF_8)).optJSONObject("app_metadata")?.optString("role") == "admin"
+        } catch (_: Exception) { false }
     }
 
     fun vote(pollId: String, optionId: String) {
