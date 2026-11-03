@@ -82,6 +82,7 @@ class MainActivity : Activity() {
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
         card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
         card("SMALL BUSINESS FOLLOW-UP DESK", "Keep customer names, order notes and follow-ups on this phone.") { businessDesk() }
+        card("PRICE, PROFIT & QUOTATION CALCULATOR", "Work out customer prices, estimated profit and a ready-to-share quotation in naira.") { quotationTool() }
         card("QUICK REPLIES", "Save messages you use often, then copy or share them into WhatsApp.") {
             quickReplySection()
         }
@@ -309,6 +310,35 @@ class MainActivity : Activity() {
         root.addView(label("Records stay on this phone. Clearing app data or uninstalling may erase them.", 11, Color.GRAY))
     }
 
+    private fun quotationTool() {
+        val product = EditText(this).apply { hint = "Product or service name"; isSingleLine = true }
+        val cost = EditText(this).apply { hint = "Your cost per item (₦)"; inputType = 2 }
+        val price = EditText(this).apply { hint = "Selling price per item (₦)"; inputType = 2 }
+        val quantity = EditText(this).apply { hint = "Quantity"; inputType = 2 }
+        val customer = EditText(this).apply { hint = "Customer name (optional)"; isSingleLine = true }
+        root.addView(product); root.addView(cost); root.addView(price); root.addView(quantity); root.addView(customer)
+        val result = TextView(this).apply { textSize = 15f; setTextColor(Color.rgb(6, 63, 50)); setPadding(0, dp(12), 0, dp(12)) }
+        root.addView(result)
+        var quote = ""
+        button("Calculate total and profit") {
+            val name = product.text.toString().trim()
+            val c = cost.text.toString().toDoubleOrNull()
+            val p = price.text.toString().toDoubleOrNull()
+            val q = quantity.text.toString().toIntOrNull()
+            if (name.isBlank() || c == null || p == null || q == null || c < 0 || p < 0 || q <= 0) {
+                toast("Enter a product, valid amounts and a quantity above zero.")
+            } else {
+                val totalCost = c * q; val total = p * q; val profit = (p - c) * q
+                val currency = java.text.NumberFormat.getNumberInstance(Locale("en", "NG"))
+                quote = "QUOTATION\n$name\nQuantity: $q\nUnit price: ₦${currency.format(p)}\nTotal: ₦${currency.format(total)}\nEstimated profit: ₦${currency.format(profit)}"
+                val buyer = customer.text.toString().trim()
+                if (buyer.isNotBlank()) quote = "Hello $buyer,\n\n$quote"
+                result.text = quote + "\n\nTotal cost to you: ₦${currency.format(totalCost)}"
+            }
+        }
+        button("Share quotation") { if (quote.isBlank()) toast("Calculate a quotation first.") else shareToWhatsApp(quote) }
+        root.addView(label("Profit is an estimate based on the cost and selling price entered. Include transport, fees, tax and other expenses in your cost if needed.", 11, Color.GRAY))
+    }
     private fun quickReplySection() {
         val input = EditText(this).apply { hint = "Write a reusable reply"; minLines = 2 }
         root.addView(input)
