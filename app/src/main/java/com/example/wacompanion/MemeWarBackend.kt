@@ -13,7 +13,8 @@ class MemeWarBackend(context: Context) {
         val title: String,
         val instructions: String,
         val templateImageUrl: String?,
-        val endsAt: String?
+        val endsAt: String?,
+        val category: String = "Everyday Naija"
     )
     data class Submission(
         val id: String,
@@ -108,19 +109,39 @@ class MemeWarBackend(context: Context) {
         )
     }
 
-    fun activeChallenge(): Challenge? {
+    fun activeChallenge(excludeChallengeId: String? = null): Challenge? {
         val rows = discover.request(
-            "/rest/v1/arena_meme_challenges?select=id,title,instructions,template_image_url,ends_at&status=eq.published&order=created_at.desc&limit=1",
+            "/rest/v1/arena_meme_challenges?select=id,title,instructions,template_image_url,ends_at,starts_at,category&status=eq.published&order=created_at.desc&limit=100",
             "GET", null, null
         ) as JSONArray
         if (rows.length() == 0) return null
-        val row = rows.getJSONObject(0)
+        val session = discover.currentSession()
+        val submittedIds = if (session == null) emptySet() else {
+            val submitted = discover.request(
+                "/rest/v1/arena_meme_submissions?select=challenge_id&user_id=eq.\${session.userId}&limit=500",
+                "GET", null, session.accessToken
+            ) as JSONArray
+            (0 until submitted.length()).map { submitted.getJSONObject(it).getString("challenge_id") }.toSet()
+        }
+        val now = java.time.Instant.now().toString()
+        val available = (0 until rows.length()).map { rows.getJSONObject(it) }.filter { row ->
+            val id = row.getString("id")
+            val start = row.optString("starts_at")
+            val end = row.optString("ends_at")
+            val started = start.isBlank() || start == "null" || start.replace(" ", "T") <= now
+            val notEnded = end.isBlank() || end == "null" || end.replace(" ", "T") > now
+            started && notEnded && id !in submittedIds && id != excludeChallengeId
+        }
+        val fallback = (0 until rows.length()).map { rows.getJSONObject(it) }
+            .filter { it.getString("id") != excludeChallengeId }
+        val row = (if (available.isNotEmpty()) available else fallback).shuffled().firstOrNull() ?: return null
         return Challenge(
             row.getString("id"),
             row.getString("title"),
             row.optString("instructions"),
             row.optString("template_image_url").takeIf { it.isNotBlank() && it != "null" },
-            row.optString("ends_at").takeIf { it.isNotBlank() && it != "null" }
+            row.optString("ends_at").takeIf { it.isNotBlank() && it != "null" },
+            row.optString("category", "Everyday Naija")
         )
     }
 
@@ -172,7 +193,7 @@ class MemeWarBackend(context: Context) {
             val id = row.getString("id")
             Submission(id, row.getString("caption"), row.optString("created_at"),
                 counts[id] ?: 0L, id in myVotes)
-        }
+        }.sortedByDescending { it.votes }
     }
 
     fun vote(submissionId: String) {
