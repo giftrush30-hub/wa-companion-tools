@@ -14,6 +14,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ImageView
+import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import android.widget.TextView
 import java.util.concurrent.Executors
@@ -237,22 +238,35 @@ class MemeWarActivity : Activity() {
                     startActivityForResult(Intent.createChooser(picker, "Choose a Meme War photo"), 4201)
                 }
             })
-            card.addView(label("QUICK STICKERS", 12, green, true))
+            card.addView(label("STICKER LIBRARY", 12, green, true))
+            val stickerScroll = HorizontalScrollView(this).apply {
+                isHorizontalScrollBarEnabled = false
+            }
             val stickerRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            listOf("😂", "🔥", "😭", "💀", "✨", "👀", "💯", "🤝").forEach { sticker ->
-                stickerRow.addView(Button(this).apply {
-                    text = sticker
-                    textSize = 18f
-                    isAllCaps = false
-                    minWidth = dp(38)
-                    setPadding(dp(2), 0, dp(2), 0)
+            val stickerItems = listOf(
+                "😂" to "1f602", "🔥" to "1f525", "😭" to "1f62d", "💀" to "1f480",
+                "✨" to "2728", "👀" to "1f440", "💯" to "1f4af", "🤝" to "1f91d"
+            )
+            stickerItems.forEach { (sticker, code) ->
+                val stickerImage = ImageView(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(dp(48), dp(48)).apply {
+                        marginEnd = dp(7)
+                    }
+                    setPadding(dp(4), dp(4), dp(4), dp(4))
+                    setBackgroundColor(Color.rgb(242, 246, 244))
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    contentDescription = "Insert $sticker sticker"
                     setOnClickListener {
                         val cursor = input.selectionStart.coerceAtLeast(0)
                         input.text.insert(cursor, sticker)
                     }
-                })
+                }
+                stickerRow.addView(stickerImage)
+                loadRemoteImage("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/$code.png", stickerImage)
             }
-            card.addView(stickerRow)
+            stickerScroll.addView(stickerRow)
+            card.addView(stickerScroll)
+            card.addView(label("Sticker artwork: Twemoji, CC BY 4.0.", 10, muted))
             card.addView(label("Up to 500 characters. Entries are reviewed before appearing publicly.", 12, muted))
             card.addView(Button(this).apply {
                 text = "Submit caption"
