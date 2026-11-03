@@ -89,6 +89,12 @@ class DailyArenaActivity : Activity() {
                 setOnClickListener { startActivity(Intent(this@DailyArenaActivity, ArenaModerationActivity::class.java)) }
             })
             content.addView(gap(9))
+            content.addView(Button(this).apply {
+                text = "Review community Hot Seat questions"
+                isAllCaps = false
+                setOnClickListener { startActivity(Intent(this@DailyArenaActivity, HotSeatModerationActivity::class.java)) }
+            })
+            content.addView(gap(9))
         }
 
         val note = panel()
