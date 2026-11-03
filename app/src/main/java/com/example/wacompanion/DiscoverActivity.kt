@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
-import android.view.Gravity
 import android.widget.Button
 import android.widget.EditText
 import android.widget.HorizontalScrollView
@@ -13,16 +12,15 @@ import android.widget.ScrollView
 import android.widget.TextView
 
 /**
- * First WA Discover milestone.
+ * WA Discover link-first directory.
  *
- * This is deliberately an honest marketplace shell: no fake listings or invented
- * view counts are shown. Live browsing and seller publishing will be enabled after
- * the shared backend and its security policies are configured.
+ * Sellers keep products, photos and videos on WhatsApp Business.
+ * WA Discover is intended to index business details and seller-supplied
+ * catalogue/contact links only. Live publishing waits for a shared backend.
  */
 class DiscoverActivity : Activity() {
     private val green = Color.rgb(6, 63, 50)
     private val muted = Color.rgb(93, 105, 100)
-    private val pale = Color.rgb(238, 245, 241)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,7 +36,7 @@ class DiscoverActivity : Activity() {
         val scroll = ScrollView(this).apply { addView(page) }
 
         page.addView(text("WA DISCOVER", 25, green, true))
-        page.addView(text("Your business deserves to be discovered.", 15, muted))
+        page.addView(text("Find businesses beyond your WhatsApp contacts.", 15, muted))
         page.addView(space(18))
 
         val hero = LinearLayout(this).apply {
@@ -46,15 +44,16 @@ class DiscoverActivity : Activity() {
             setPadding(dp(16), dp(18), dp(16), dp(18))
             setBackgroundColor(green)
         }
-        hero.addView(text("Discover Nigerian businesses", 20, Color.WHITE, true))
-        hero.addView(text("Find products, services and local sellers from across Nigeria — not only people already in your contacts.", 14, Color.WHITE))
+        hero.addView(text("WhatsApp is their shop. We help people find it.", 20, Color.WHITE, true))
+        hero.addView(space(8))
+        hero.addView(text("Discover Nigerian sellers, open their WhatsApp catalogues and chat with them directly. Sellers keep posting on WhatsApp as usual.", 14, Color.WHITE))
         hero.addView(space(12))
-        hero.addView(text("LAUNCH PLAN  •  NIGERIA", 11, Color.rgb(205, 235, 219), true))
+        hero.addView(text("LINK-FIRST DISCOVERY  •  NIGERIA", 11, Color.rgb(205, 235, 219), true))
         page.addView(hero)
         page.addView(space(16))
 
         val search = EditText(this).apply {
-            hint = "Search products, shops and services"
+            hint = "Search businesses, products or services"
             textSize = 15f
             isSingleLine = true
             setPadding(dp(13), dp(12), dp(13), dp(12))
@@ -66,7 +65,7 @@ class DiscoverActivity : Activity() {
         page.addView(search)
         page.addView(space(14))
 
-        page.addView(text("EXPLORE CATEGORIES", 13, green, true))
+        page.addView(text("EXPLORE BUSINESSES", 13, green, true))
         val categories = listOf("Fashion", "Food", "Phones", "Beauty", "Electronics", "Home", "Farming", "Services", "Other")
         val categoryScroll = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false }
         val categoryRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
@@ -90,21 +89,38 @@ class DiscoverActivity : Activity() {
         page.addView(categoryScroll)
         page.addView(space(10))
 
+        val explainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+            setBackgroundColor(Color.WHITE)
+        }
+        explainer.addView(text("How WA Discover works", 18, green, true))
+        explainer.addView(space(9))
+        explainer.addView(text("1. Sellers post products and updates on WhatsApp Status as usual.", 14, muted))
+        explainer.addView(space(6))
+        explainer.addView(text("2. Sellers share their WhatsApp Business catalogue link and business details with WA Discover.", 14, muted))
+        explainer.addView(space(6))
+        explainer.addView(text("3. Buyers find the business here, then open its catalogue or start a WhatsApp chat.", 14, muted))
+        explainer.addView(space(12))
+        explainer.addView(text("We plan to store business details and links — not copies of every seller photo or video. No WhatsApp Status is read automatically.", 12, muted, true))
+        page.addView(explainer)
+        page.addView(space(16))
+
         val status = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(16), dp(16), dp(16))
             setBackgroundColor(Color.WHITE)
         }
-        status.addView(text("The marketplace is being connected", 18, green, true))
+        status.addView(text("Business discovery is being connected", 17, green, true))
         status.addView(space(7))
-        status.addView(text("We are preparing the shared online catalogue and seller accounts. Real businesses and products will appear here after the secure backend is connected and listings are approved.", 14, muted))
-        status.addView(space(12))
-        status.addView(text("No sample sellers, fake products or made-up view counts are displayed.", 12, muted, true))
+        status.addView(text("The directory needs a small shared online database before real businesses can register and appear in search. We are avoiding our own product-photo and video storage in this first version.", 14, muted))
+        status.addView(space(10))
+        status.addView(text("No sample sellers, fake products or invented view counts are displayed.", 12, muted, true))
         page.addView(status)
         page.addView(space(16))
 
         val sellerButton = Button(this).apply {
-            text = "I'm a seller — prepare my business page"
+            text = "I'm a seller — add my WhatsApp business"
             isAllCaps = false
             setOnClickListener { showSellerNotice() }
         }
@@ -117,23 +133,23 @@ class DiscoverActivity : Activity() {
         }
         page.addView(back)
         page.addView(space(12))
-        page.addView(text("Free basic listings are planned. Paid promotion will be optional and clearly marked as Sponsored. Buyers will be able to contact sellers through WhatsApp after live listings are available.", 12, muted))
+        page.addView(text("Basic business discovery is planned to be free. Optional sponsored promotion may come later and will be clearly labelled. We do not promise WhatsApp Status views or sales.", 12, muted))
 
         setContentView(scroll)
     }
 
     private fun showBackendNotice() {
         AlertDialog.Builder(this)
-            .setTitle("Search is coming")
-            .setMessage("Search and category filters will work when the shared marketplace database is connected. We are not showing pretend business results.")
+            .setTitle("Business search is coming")
+            .setMessage("Search and category filters will become live after the shared business directory is connected. We are not displaying pretend businesses.")
             .setPositiveButton("OK", null)
             .show()
     }
 
     private fun showSellerNotice() {
         AlertDialog.Builder(this)
-            .setTitle("Seller registration is being prepared")
-            .setMessage("Seller accounts will be connected to a secure online database. Your business name, WhatsApp number or other details will not be collected until that connection and its privacy protections are ready.")
+            .setTitle("Seller links are coming")
+            .setMessage("The seller form will ask for your business name, category, state/city, WhatsApp contact link and WhatsApp Business catalogue link. You will keep your photos, videos and product updates on WhatsApp. We will only collect details after the secure directory is ready.")
             .setPositiveButton("Understood", null)
             .show()
     }
