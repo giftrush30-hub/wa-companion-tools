@@ -180,8 +180,10 @@ class WhotActivity : Activity() {
         val leaders=hands.indices.filter{hands[it].size==fewest}
         gameOver=true;table.removeAllViews();status.text="THE MARKET IS EMPTY • ROUND COMPLETE"
         val names=leaders.joinToString(" & "){players[it]}
+        val recordLine=recordMatch("$names finished with the fewest cards",leaders.size)
         table.addView(label(if(leaders.size==1) "🏆 $names wins on the fewest cards!" else "🤝 Draw! $names finish level.",22,green,true))
         table.addView(label("No cards remained to draw. The player(s) holding the fewest cards take the round.",14,ink))
+        showRecordPanel(recordLine)
         table.addView(Button(this).apply{text="Share the result";isAllCaps=false;setOnClickListener{
             ArenaShareCard.share(this@WhotActivity,"WHOT! MATCH RESULT","$names finished with the fewest cards in a $playerCount-player practice match.","YOUR TURN • GAMES ARENA")
         }})
@@ -273,14 +275,41 @@ class WhotActivity : Activity() {
     }
 
     private fun finishGame(winner:Int){
+        if(gameOver)return
         gameOver=true;table.removeAllViews()
         status.text="MATCH COMPLETE"
+        val recordLine=recordMatch("${players[winner]} won",1)
         table.addView(label("🏆 ${players[winner]} wins! CHECK UP!",23,green,true))
         table.addView(label("The first player to play their final card wins this practice round.",15,ink))
+        showRecordPanel(recordLine)
         table.addView(Button(this).apply{text="Share the result";isAllCaps=false;setOnClickListener{
             ArenaShareCard.share(this@WhotActivity,"WHOT! MATCH RESULT","${players[winner]} won a $playerCount-player practice match. Who is ready for a rematch?","YOUR TURN • GAMES ARENA")
         }})
         table.addView(Button(this).apply{text="Play again";isAllCaps=false;setOnClickListener{newGame()}})
+    }
+
+    private fun recordMatch(result:String,winnerCount:Int):String {
+        val prefs=getSharedPreferences("whot_local_records",MODE_PRIVATE)
+        val played=prefs.getInt("matches_played",0)+1
+        val wins=prefs.getInt("player_wins",0)+winnerCount
+        val history=(prefs.getString("recent_results","") ?: "").split("|").filter{it.isNotBlank()}.toMutableList()
+        history.add(0,result)
+        val firstMatch=!prefs.getBoolean("first_match",false)
+        val firstWin=winnerCount>0 && !prefs.getBoolean("first_win",false)
+        val editor=prefs.edit().putInt("matches_played",played).putInt("player_wins",wins)
+            .putBoolean("first_match",true).putString("recent_results",history.take(8).joinToString("|"))
+        if(firstWin)editor.putBoolean("first_win",true)
+        editor.apply()
+        return "Matches completed: $played  •  Player wins recorded: $wins" +
+            if(firstMatch) "  •  FIRST MATCH unlocked" else if(firstWin) "  •  FIRST WIN unlocked" else ""
+    }
+
+    private fun showRecordPanel(recordLine:String) {
+        table.addView(label("YOUR LOCAL MATCH RECORD",13,green,true))
+        table.addView(label(recordLine,13,ink,true))
+        val history=(getSharedPreferences("whot_local_records",MODE_PRIVATE).getString("recent_results","") ?: "")
+            .split("|").filter{it.isNotBlank()}
+        history.take(5).forEach{table.addView(label("• $it",12,ink))}
     }
 
     private fun panel()=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(12),dp(10),dp(12),dp(10));setBackgroundColor(Color.WHITE)}
