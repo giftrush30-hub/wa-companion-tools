@@ -128,7 +128,7 @@ class DiscoverBackend(context: Context) {
         return token
     }
 
-    private fun request(
+    internal fun request(
         path: String,
         method: String,
         body: JSONObject?,
