@@ -49,13 +49,14 @@ class DiscoverBackend(context: Context) {
         prefs.edit().clear().apply()
     }
 
-    fun searchBusinesses(term: String = "", state: String = "", city: String = ""): JSONArray {
+    fun searchBusinesses(term: String = "", state: String = "", city: String = "", categoryId: String = ""): JSONArray {
         val filters = mutableListOf("select=id,name,description,category_id,whatsapp_number,catalogue_url,state,city")
         filters += "approval_status=eq.approved"
         if (term.isNotBlank()) {
             val safe = term.trim().replace(",", " ").replace("%", "").replace("*", "")
             filters += encode("or=(name.ilike.*$safe*,description.ilike.*$safe*)")
         }
+        if (categoryId.isNotBlank()) filters += "category_id=eq.${encode(categoryId)}"
         if (state.isNotBlank()) filters += "state=ilike.*${encode(state.trim())}*"
         if (city.isNotBlank()) filters += "city=ilike.*${encode(city.trim())}*"
         filters += "order=name.asc"
