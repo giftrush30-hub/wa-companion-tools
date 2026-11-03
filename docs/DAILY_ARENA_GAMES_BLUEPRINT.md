@@ -213,3 +213,9 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - The call card uses the same visual language. The hand is displayed in a two-column touch-friendly grid and remains protected by the pass-phone reveal step.
 - Research references: whot.online describes cream cards, deep-brown symbols and mirrored corners; Tabletop Runner and Prototable discuss information hierarchy, visible playability, consistent card layout and readability.
 - Visual-only change: no rules, points, online play, build, device test or deployment were added.
+
+## Ludo animation pass - 2026-11-03
+- Updated `app/src/main/java/com/example/wacompanion/LudoActivity.kt` with a dedicated animated dice display: rapid face changes, rotation and a brief scale pulse settle on the final roll before the existing legal-move logic runs.
+- Token movement now animates along the shared track or into the home lane, then resolves captures, safe squares, bonus turns and victory only after the piece reaches its destination.
+- Existing dice rules, token progress, capture rules, pass-phone handoff and offline/no-points boundary are retained.
+- Source change committed to GitHub main. No Android build, device test, APK or deployment was run; animation timing and rendering still need on-device review.
