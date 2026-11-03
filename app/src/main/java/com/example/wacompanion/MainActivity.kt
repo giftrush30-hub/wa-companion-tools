@@ -28,6 +28,18 @@ class MainActivity : Activity() {
     private lateinit var root: LinearLayout
     private var reminderText: String = ""
 
+    private val reactions = listOf(
+        "Omo! Wetin be this?" to "Pidgin", "I no fit shout!" to "Pidgin",
+        "Abeg, make we calm down." to "Pidgin", "Na wa o!" to "Pidgin",
+        "Who send you? 😂" to "Funny", "E choke!" to "Funny",
+        "I don tire abeg." to "Funny", "No be small thing!" to "Funny",
+        "You made my day ❤️" to "Love", "I miss you, no lie." to "Love",
+        "God is still working. 🙏" to "Faith", "Grace will speak for you." to "Faith",
+        "It is well. Keep believing." to "Faith", "Congratulations! More wins!" to "Celebration",
+        "Happy birthday! More life!" to "Celebration", "Big things are coming!" to "Motivation"
+    )
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestNotificationPermission()
@@ -59,6 +71,7 @@ class MainActivity : Activity() {
         root.addView(label("Your WhatsApp stays installed and unchanged.", 13, Color.rgb(6, 100, 70)))
         root.addView(space(18))
 
+        card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }
         card("QUICK REPLIES", "Save messages you use often, then copy or share them into WhatsApp.") {
             quickReplySection()
         }
@@ -95,6 +108,110 @@ class MainActivity : Activity() {
         }
         root.addView(space(10))
         root.addView(label("Note: This is a companion utility, not a modified WhatsApp client. It cannot read private chats, hide typing indicators, or send messages automatically.", 12, Color.GRAY))
+    }
+
+
+    private fun memeStudio() {
+        val search = EditText(this).apply { hint = "Search reactions"; singleLine = true }
+        root.addView(search)
+        val categories = listOf("All", "Pidgin", "Funny", "Love", "Faith", "Celebration", "Motivation")
+        val categoryRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val results = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(categoryRow); root.addView(results)
+        var selected = "All"
+        fun render() {
+            categoryRow.removeAllViews(); results.removeAllViews()
+            categories.forEach { category ->
+                val b = Button(this).apply { text = category; isAllCaps = false; textSize = 10f; setPadding(dp(3), 0, dp(3), 0) }
+                b.setOnClickListener { selected = category; render() }
+                categoryRow.addView(b)
+            }
+            val q = search.text.toString().lowercase(Locale.getDefault())
+            val found = reactions.filter { (phrase, cat) ->
+                (selected == "All" || cat == selected) &&
+                    (q.isBlank() || phrase.lowercase(Locale.getDefault()).contains(q) || cat.lowercase(Locale.getDefault()).contains(q))
+            }
+            if (found.isEmpty()) results.addView(label("No reactions found.", 13, Color.GRAY))
+            found.forEach { (phrase, cat) ->
+                val item = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(6), dp(7), dp(6), dp(7)) }
+                item.addView(label(phrase, 16, Color.rgb(20, 55, 48), true))
+                item.addView(label(cat, 11, Color.GRAY))
+                val actions = LinearLayout(this)
+                val make = Button(this).apply { text = "Create image"; isAllCaps = false }
+                make.setOnClickListener { shareMemeImage(phrase) }
+                val copy = Button(this).apply { text = "Copy"; isAllCaps = false }
+                copy.setOnClickListener {
+                    (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Reaction", phrase))
+                    toast("Reaction copied.")
+                }
+                actions.addView(make); actions.addView(copy); item.addView(actions); results.addView(item)
+            }
+        }
+        search.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { render() }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+        render()
+        root.addView(space(8))
+        root.addView(label("CREATE YOUR OWN", 14, Color.rgb(6, 63, 50), true))
+        val custom = EditText(this).apply { hint = "Write your own reaction or caption"; minLines = 2; maxLines = 4 }
+        root.addView(custom)
+        button("Create and share my image") {
+            val text = custom.text.toString().trim()
+            if (text.isBlank()) toast("Write a message first.") else shareMemeImage(text)
+        }
+        root.addView(label("The starter reactions work offline. More original packs can be added in future updates.", 11, Color.GRAY))
+    }
+
+    private fun shareMemeImage(message: String) {
+        try {
+            val size = 1080
+            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            val palette = intArrayOf(Color.rgb(6,63,50), Color.rgb(30,45,80), Color.rgb(105,45,65), Color.rgb(115,75,20))
+            canvas.drawColor(palette[message.length % palette.size])
+            paint.color = Color.argb(35,255,255,255)
+            canvas.drawCircle(950f, 100f, 260f, paint); canvas.drawCircle(80f, 1040f, 300f, paint)
+            paint.color = Color.rgb(230,195,120); paint.textSize = 34f
+            paint.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            canvas.drawText("WA COMPANION • NAIJA REACTIONS", 65f, 105f, paint)
+            paint.color = Color.WHITE; paint.textAlign = Paint.Align.CENTER
+            paint.typeface = Typeface.create("sans-serif", Typeface.BOLD)
+            val words = message.split(Regex("\\s+"))
+            var font = 82f
+            var lines = listOf<String>()
+            while (font >= 44f) {
+                paint.textSize = font
+                val temp = mutableListOf<String>(); var line = ""
+                words.forEach { word ->
+                    val next = if (line.isEmpty()) word else "$line $word"
+                    if (paint.measureText(next) > 900f && line.isNotEmpty()) { temp.add(line); line = word } else line = next
+                }
+                if (line.isNotEmpty()) temp.add(line)
+                lines = temp
+                if (lines.size <= 5) break
+                font -= 6f
+            }
+            paint.textSize = font
+            val lineHeight = font * 1.25f
+            var y = (size - lines.size * lineHeight) / 2f + font
+            lines.forEach { canvas.drawText(it, size / 2f, y, paint); y += lineHeight }
+            paint.textSize = 28f; paint.color = Color.rgb(230,195,120)
+            canvas.drawText("Made to share • Keep it kind", size / 2f, 970f, paint)
+            val dir = File(cacheDir, "shared_memes").apply { mkdirs() }
+            val file = File(dir, "reaction_${System.currentTimeMillis()}.png")
+            FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            bitmap.recycle()
+            val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"; putExtra(Intent.EXTRA_STREAM, uri); putExtra(Intent.EXTRA_TEXT, message)
+                clipData = ClipData.newUri(contentResolver, "Reaction image", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(send, "Share your reaction"))
+        } catch (_: Exception) { toast("Could not create image. Please try again.") }
     }
 
     private fun quickReplySection() {
