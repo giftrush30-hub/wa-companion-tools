@@ -180,7 +180,7 @@ class WhotActivity : Activity() {
         val leaders=hands.indices.filter{hands[it].size==fewest}
         gameOver=true;table.removeAllViews();status.text="THE MARKET IS EMPTY • ROUND COMPLETE"
         val names=leaders.joinToString(" & "){players[it]}
-        val recordLine=recordMatch("$names finished with the fewest cards",leaders.size)
+        val recordLine=recordMatch("$names finished with the fewest cards",if(leaders.size==1) 1 else 0)
         table.addView(label(if(leaders.size==1) "🏆 $names wins on the fewest cards!" else "🤝 Draw! $names finish level.",22,green,true))
         table.addView(label("No cards remained to draw. The player(s) holding the fewest cards take the round.",14,ink))
         showRecordPanel(recordLine)
