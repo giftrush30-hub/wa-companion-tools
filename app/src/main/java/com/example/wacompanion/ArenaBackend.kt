@@ -7,6 +7,7 @@ import org.json.JSONObject
 /** Live Hot Seat API. Uses DiscoverBackend's secure session and refresh handling. */
 class ArenaBackend(context: Context) {
     private val discover = DiscoverBackend(context.applicationContext)
+    private val rotationPrefs = context.applicationContext.getSharedPreferences("hot_seat_rotation", Context.MODE_PRIVATE)
 
     data class Poll(
         val id: String,
@@ -37,7 +38,8 @@ class ArenaBackend(context: Context) {
             ) as JSONArray
             (0 until votes.length()).map { votes.getJSONObject(it).getString("poll_id") }.toSet()
         }
-        val candidates = (0 until polls.length()).map { polls.getJSONObject(it) }
+        val recentIds = rotationPrefs.getStringSet("recent_poll_ids", emptySet()) ?: emptySet()
+        val eligible = (0 until polls.length()).map { polls.getJSONObject(it) }
             .filter { row ->
                 val id = row.getString("id")
                 val starts = row.optString("starts_at")
@@ -46,10 +48,13 @@ class ArenaBackend(context: Context) {
                     (ends.isBlank() || ends == "null" || ends.replace(" ", "T") > java.time.Instant.now().toString()) &&
                     id !in votedIds && id != excludePollId
             }
+        val fresh = eligible.filter { it.getString("id") !in recentIds }
         val fallback = (0 until polls.length()).map { polls.getJSONObject(it) }
             .filter { it.getString("id") != excludePollId }
-        val selected = (if (candidates.isNotEmpty()) candidates else fallback).shuffled().firstOrNull()
-            ?: return null
+        val selected = (if (fresh.isNotEmpty()) fresh else if (eligible.isNotEmpty()) eligible else fallback)
+            .shuffled().firstOrNull() ?: return null
+        val updatedRecent = (recentIds + selected.getString("id")).takeLast(12).toSet()
+        rotationPrefs.edit().putStringSet("recent_poll_ids", updatedRecent).apply()
         val id = selected.getString("id")
         val optionsJson = discover.request(
             "/rest/v1/arena_hot_seat_options?select=id,option_text&poll_id=eq.$id&order=position.asc",
