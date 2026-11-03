@@ -176,11 +176,11 @@ class DailyArenaActivity : Activity() {
             text = "Share this question"
             isAllCaps = false
             setOnClickListener {
-                val choices = poll.options.joinToString("\\n") { "• " + it.text }
+                val choices = poll.options.joinToString("\n") { "• " + it.text }
                 ArenaShareCard.share(
                     this@DailyArenaActivity,
                     "HOT SEAT",
-                    "${poll.question}\\n\\nWhat would YOU choose?\\n\\n${choices}",
+                    "${poll.question}\n\nWhat would YOU choose?\n\n${choices}",
                     "CAST YOUR VOTE  •  DAILY ARENA"
                 )
             }
@@ -236,7 +236,7 @@ class DailyArenaActivity : Activity() {
             text = "Share this question"
             isAllCaps = false
             setOnClickListener {
-                val summary = poll.options.joinToString("\\n") { option ->
+                val summary = poll.options.joinToString("\n") { option ->
                     val count = counts[option.id] ?: 0L
                     val percent = if (totalVotes == 0L) 0 else ((count * 100) / totalVotes).toInt()
                     "${option.text}: ${percent}%"
@@ -244,7 +244,7 @@ class DailyArenaActivity : Activity() {
                 ArenaShareCard.share(
                     this@DailyArenaActivity,
                     "HOT SEAT RESULTS",
-                    "${poll.question}\\n\\n${summary}\\n\\nBased on ${totalVotes} community votes.",
+                    "${poll.question}\n\n${summary}\n\nBased on ${totalVotes} community votes.",
                     "WHAT'S YOUR TAKE?  •  DAILY ARENA"
                 )
             }
