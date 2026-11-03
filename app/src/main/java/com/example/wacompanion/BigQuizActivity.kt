@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 
@@ -50,6 +51,7 @@ class BigQuizActivity : Activity() {
     private val muted = Color.rgb(91,108,119)
     private lateinit var root: LinearLayout
     private lateinit var status: TextView
+    private lateinit var progressBar: ProgressBar
     private lateinit var questionArea: LinearLayout
     private var index = 0
     private var correct = 0
@@ -67,8 +69,15 @@ class BigQuizActivity : Activity() {
         setContentView(ScrollView(this).apply { addView(root) })
         root.addView(label("BIG QUIZ",28,green,true))
         root.addView(label("The practice challenge • 30 questions",14,muted))
-        status = label("",14,muted)
+        status = label("",14,muted,true)
         root.addView(status)
+        progressBar = ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal).apply {
+            max = questions.size
+            progress = 0
+            progressTintList = android.content.res.ColorStateList.valueOf(green)
+            progressBackgroundTintList = android.content.res.ColorStateList.valueOf(Color.rgb(220,229,224))
+        }
+        root.addView(progressBar,LinearLayout.LayoutParams(-1,dp(8)).apply { bottomMargin=dp(14) })
         questionArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(questionArea)
         renderQuestion()
@@ -80,6 +89,7 @@ class BigQuizActivity : Activity() {
         hiddenOptions.clear()
         val q = questions[index]
         status.text = "LEVEL ${index+1} / ${questions.size}     •     CORRECT: $correct"
+        progressBar.progress = index
         questionArea.removeAllViews()
         val milestone = when (index + 1) {
             5 -> "CHECKPOINT • STARTER"
@@ -98,8 +108,11 @@ class BigQuizActivity : Activity() {
             val button = Button(this).apply {
                 text = "${'A'+optionIndex}.  $option"
                 isAllCaps = false
-                setTextColor(ink)
-                setBackgroundColor(Color.WHITE)
+                setTextColor(Color.WHITE)
+                setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    listOf(Color.rgb(28,105,164),Color.rgb(7,117,86),Color.rgb(112,75,155),Color.rgb(174,93,38))[optionIndex]))
+                setPadding(dp(12),dp(12),dp(12),dp(12))
+                elevation=dp(2).toFloat()
                 setOnClickListener { choose(optionIndex, answers) }
             }
             answers.addView(button)
@@ -148,7 +161,8 @@ class BigQuizActivity : Activity() {
 
     private fun showSummary() {
         questionArea.removeAllViews()
-        status.text = "CHALLENGE COMPLETE"
+        status.text = "CHALLENGE COMPLETE • $correct/${questions.size}"
+        progressBar.progress = questions.size
         questionArea.addView(label("You got $correct out of ${questions.size} correct.",23,green,true))
         val message = when {
             correct >= 27 -> "Quiz Champion! Outstanding performance."
@@ -171,7 +185,7 @@ class BigQuizActivity : Activity() {
         questionArea.addView(Button(this).apply {
             text = "Play again"
             isAllCaps = false
-            setOnClickListener { index=0; correct=0; fiftyUsed=false; renderQuestion() }
+            setOnClickListener { index=0; correct=0; fiftyUsed=false; progressBar.progress=0; renderQuestion() }
         })
         questionArea.addView(Button(this).apply {
             text = "Back to Games Arena"
