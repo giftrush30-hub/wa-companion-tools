@@ -172,6 +172,11 @@ class DailyArenaActivity : Activity() {
             isAllCaps = false
             setOnClickListener { loadPoll(poll.id) }
         })
+        pollArea.addView(Button(this).apply {
+            text = "Share this question"
+            isAllCaps = false
+            setOnClickListener { shareText("Hot Seat: ${poll.question}\n\nWhat would you choose? Vote and see what everyone thinks in WA Companion → Daily Arena.") }
+        })
         addPollReportButton(poll.id)
     }
 
@@ -218,6 +223,11 @@ class DailyArenaActivity : Activity() {
             text = "Next Hot Seat question"
             isAllCaps = false
             setOnClickListener { loadPoll(poll.id) }
+        })
+        pollArea.addView(Button(this).apply {
+            text = "Share this question"
+            isAllCaps = false
+            setOnClickListener { shareText("Hot Seat: ${poll.question}\n\nThe community has cast ${totalVotes} vote(s). Join the debate in WA Companion → Daily Arena.") }
         })
         addPollReportButton(poll.id)
     }
@@ -389,6 +399,14 @@ class DailyArenaActivity : Activity() {
             suggestionArea.addView(card)
             suggestionArea.addView(gap(6))
         }
+    }
+
+    private fun shareText(message: String) {
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, message)
+        }
+        startActivity(Intent.createChooser(send, "Share Daily Arena question"))
     }
 
     private fun addFeature(parent: LinearLayout, title: String, description: String) {
