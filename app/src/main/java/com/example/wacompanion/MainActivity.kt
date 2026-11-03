@@ -341,22 +341,62 @@ class MainActivity : Activity() {
 
 
     private fun statusStudio() {
-        val starters = listOf("May this new day bring you peace, strength and fresh opportunities.",
-            "Thank you for supporting my small business. Every order means a lot!",
-            "Happy birthday! May your new year be full of grace and beautiful wins.",
-            "New week. New strength. New opportunities. Keep moving forward.",
-            "Quality service, honest value and customer care. Send a message to order.")
-        starters.forEach { phrase ->
-            val b = Button(this).apply { text = phrase; isAllCaps = false }
-            b.setOnClickListener { shareMemeImage(phrase) }; root.addView(b)
+        root.addView(label("MAKE A STATUS PEOPLE WANT TO READ", 18, Color.rgb(6, 63, 50), true))
+        root.addView(label("Choose a mood, get a ready-made idea, edit it and share it to WhatsApp Status.", 13, Color.DKGRAY))
+
+        val moodNames = listOf("Grateful", "Funny / Naija vibes", "Faith and hope", "Love and friendship",
+            "Focused / motivation", "Business promotion", "Birthday / celebration", "Quiet confidence")
+        val mood = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, moodNames)
         }
-        val custom = EditText(this).apply { hint = "Write your own status or advert"; minLines = 2 }
-        root.addView(custom)
-        button("Design and share status card") {
-            val value = custom.text.toString().trim()
+        root.addView(label("WHAT IS YOUR MOOD TODAY?", 12, Color.rgb(6, 63, 50), true))
+        root.addView(mood)
+
+        val ideas = listOf(
+            listOf("Today, I choose gratitude. Small blessings still count. 🙏", "My heart is full. Thankful for the little things and the big things."),
+            listOf("Omo, life no get duplicate. Enjoy your day and make you smile! 😂", "I came, I saw, I laughed. Some things no get explanation."),
+            listOf("God is still writing my story. I will not give up halfway. 🙏", "One day at a time, one prayer at a time. Grace will carry me."),
+            listOf("Good people make ordinary days feel special. ❤️", "May we never lack genuine love, loyal friends and peaceful hearts."),
+            listOf("Quiet work. Clear goals. Consistent progress. No noise needed.", "I may be moving slowly, but I am not standing still."),
+            listOf("Your support keeps this dream growing. Send a message to place your order today.", "Good value, honest service and care in every order. Thank you for choosing us."),
+            listOf("Another year, another reason to celebrate life. More grace and beautiful memories! 🎉", "May this new chapter bring peace, good health and new opportunities."),
+            listOf("Not every move needs an announcement. Let the results speak.", "Protect your peace. Keep your standards. Continue growing.")
+        )
+        val output = EditText(this).apply {
+            hint = "Your status will appear here. You can edit it."
+            minLines = 4
+            setText(ideas[0][0])
+        }
+        root.addView(space(8))
+        button("Give me a fresh idea") {
+            val options = ideas[mood.selectedItemPosition]
+            val current = output.text.toString().trim()
+            output.setText(options.firstOrNull { it != current } ?: options.last())
+        }
+        button("Create a 3-part status story") {
+            val topic = output.text.toString().trim().ifBlank { "A new chapter is beginning" }
+            output.setText("1/3 • A little reminder for today...\n\n2/3 • $topic\n\n3/3 • Keep going. Your next chapter is still being written. ✨")
+        }
+        root.addView(output)
+        button("Design and share to WhatsApp") {
+            val value = output.text.toString().trim()
             if (value.isBlank()) toast("Write your status first.") else shareMemeImage(value)
         }
-        root.addView(label("Created offline. Choose WhatsApp Status in the Android share menu.", 11, Color.GRAY))
+        button("Save this as a draft") {
+            val value = output.text.toString().trim()
+            if (value.isBlank()) toast("Write something first.") else {
+                val old = prefs.getString("status_drafts", "") ?: ""
+                prefs.edit().putString("status_drafts", old + (if (old.isBlank()) "" else "\n\n") + value).apply()
+                toast("Draft saved on this phone.")
+            }
+        }
+        val drafts = prefs.getString("status_drafts", "") ?: ""
+        if (drafts.isNotBlank()) {
+            root.addView(space(10))
+            root.addView(label("YOUR SAVED STATUS DRAFTS", 13, Color.rgb(6, 63, 50), true))
+            root.addView(label(drafts, 13, Color.DKGRAY))
+        }
+        root.addView(label("Works offline. Review your wording before sharing. WhatsApp asks you to confirm the Status post.", 11, Color.GRAY))
     }
 
     private fun messageLab() {
