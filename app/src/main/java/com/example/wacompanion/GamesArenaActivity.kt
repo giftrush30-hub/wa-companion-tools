@@ -10,7 +10,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 
-/** Games Arena hub. Big Quiz practice is the first playable milestone; online modes stay locked until authoritative multiplayer is ready. */
+/** Games Arena hub. Big Quiz, Ludo and WHOT have offline practice modes; network play remains a separate future milestone. */
 class GamesArenaActivity : Activity() {
     private val ink = Color.rgb(18, 42, 55)
     private val green = Color.rgb(7, 91, 69)
