@@ -141,6 +141,22 @@ class MemeWarActivity : Activity() {
                 setBackgroundColor(Color.rgb(242, 246, 244))
             }
             card.addView(input)
+            card.addView(label("QUICK STICKERS", 12, green, true))
+            val stickerRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            listOf("😂", "🔥", "😭", "💀", "✨", "👀", "💯", "🤝").forEach { sticker ->
+                stickerRow.addView(Button(this).apply {
+                    text = sticker
+                    textSize = 18f
+                    isAllCaps = false
+                    minWidth = dp(38)
+                    setPadding(dp(2), 0, dp(2), 0)
+                    setOnClickListener {
+                        val cursor = input.selectionStart.coerceAtLeast(0)
+                        input.text.insert(cursor, sticker)
+                    }
+                })
+            }
+            card.addView(stickerRow)
             card.addView(label("Up to 500 characters. Entries are reviewed before appearing publicly.", 12, muted))
             card.addView(Button(this).apply {
                 text = "Submit caption"
