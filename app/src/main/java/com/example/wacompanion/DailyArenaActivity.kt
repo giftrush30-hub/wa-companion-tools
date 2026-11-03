@@ -20,6 +20,7 @@ class DailyArenaActivity : Activity() {
     private val worker = Executors.newSingleThreadExecutor()
     private lateinit var content: LinearLayout
     private lateinit var status: TextView
+    private lateinit var pollArea: LinearLayout
     private val arena by lazy { ArenaBackend(this) }
     private var activePoll: ArenaBackend.Poll? = null
     private var voted = false
@@ -49,6 +50,8 @@ class DailyArenaActivity : Activity() {
         hotSeat.addView(text("One question. Your opinion. A community conversation.", 14, muted))
         status = text("Loading today's question…", 14, muted)
         hotSeat.addView(status)
+        pollArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        hotSeat.addView(pollArea)
         content.addView(hotSeat)
         content.addView(gap(12))
 
@@ -85,11 +88,13 @@ class DailyArenaActivity : Activity() {
         loadPoll()
     }
 
-    private fun loadPoll() {
-        status.text = "Loading today's question…"
+    private fun loadPoll(excludePollId: String? = null) {
+        status.text = "Finding a fresh Hot Seat question…"
+        pollArea.removeAllViews()
+        pollReportButtonAdded = false
         worker.execute {
             try {
-                val poll = arena.activePoll()
+                val poll = arena.activePoll(excludePollId)
                 runOnUiThread {
                     activePoll = poll
                     if (poll == null) {
@@ -118,7 +123,9 @@ class DailyArenaActivity : Activity() {
     }
 
     private fun renderPoll(poll: ArenaBackend.Poll) {
-        status.text = poll.question
+        status.text = "HOT SEAT • \${poll.topic.uppercase()} • \${poll.pollType.replace('_', ' ').uppercase()}"
+        pollArea.removeAllViews()
+        pollArea.addView(text(poll.question, 18, ink, true))
         poll.options.forEach { option ->
             val choice = Button(this).apply {
                 text = option.text
@@ -128,9 +135,14 @@ class DailyArenaActivity : Activity() {
                 isEnabled = !voted
                 setOnClickListener { submitVote(poll, option) }
             }
-            (status.parent as LinearLayout).addView(choice)
+            pollArea.addView(choice)
         }
         if (poll.options.isEmpty()) status.text = "This question has no answer choices yet."
+        pollArea.addView(Button(this).apply {
+            text = "Skip to another question"
+            isAllCaps = false
+            setOnClickListener { loadPoll(poll.id) }
+        })
         addPollReportButton(poll.id)
     }
 
@@ -156,19 +168,33 @@ class DailyArenaActivity : Activity() {
     }
 
     private fun showResults(poll: ArenaBackend.Poll, results: List<ArenaBackend.Result>) {
-        val parent = status.parent as LinearLayout
+        pollArea.removeAllViews()
         val counts = results.associate { it.optionId to it.count }
+        val totalVotes = results.sumOf { it.count }
+        pollArea.addView(text(poll.question, 18, ink, true))
+        pollArea.addView(text("$totalVotes community vote(s)", 13, muted))
         poll.options.forEach { option ->
             val count = counts[option.id] ?: 0L
-            parent.addView(text("${option.text}  •  $count vote(s)", 14, ink, true))
+            val percent = if (totalVotes == 0L) 0 else ((count * 100) / totalVotes).toInt()
+            pollArea.addView(text("\${option.text}  •  $count votes  ($percent%)", 14, ink, true))
+            val track = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+                max = 100
+                progress = percent
+            }
+            pollArea.addView(track)
         }
+        pollArea.addView(Button(this).apply {
+            text = "Next Hot Seat question"
+            isAllCaps = false
+            setOnClickListener { loadPoll(poll.id) }
+        })
         addPollReportButton(poll.id)
     }
 
     private fun addPollReportButton(pollId: String) {
         if (pollReportButtonAdded) return
         pollReportButtonAdded = true
-        (status.parent as LinearLayout).addView(Button(this).apply {
+        pollArea.addView(Button(this).apply {
             text = "Report this question"
             isAllCaps = false
             setOnClickListener { showPollReportDialog(pollId) }
