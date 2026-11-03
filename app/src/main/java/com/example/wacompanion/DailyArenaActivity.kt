@@ -123,7 +123,7 @@ class DailyArenaActivity : Activity() {
     }
 
     private fun renderPoll(poll: ArenaBackend.Poll) {
-        status.text = "HOT SEAT • \${poll.topic.uppercase()} • \${poll.pollType.replace('_', ' ').uppercase()}"
+        status.text = "HOT SEAT • ${poll.topic.uppercase()} • ${poll.pollType.replace('_', ' ').uppercase()}"
         pollArea.removeAllViews()
         pollArea.addView(text(poll.question, 18, ink, true))
         poll.options.forEach { option ->
@@ -176,7 +176,7 @@ class DailyArenaActivity : Activity() {
         poll.options.forEach { option ->
             val count = counts[option.id] ?: 0L
             val percent = if (totalVotes == 0L) 0 else ((count * 100) / totalVotes).toInt()
-            pollArea.addView(text("\${option.text}  •  $count votes  ($percent%)", 14, ink, true))
+            pollArea.addView(text("${option.text}  •  $count votes  ($percent%)", 14, ink, true))
             val track = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
                 max = 100
                 progress = percent
