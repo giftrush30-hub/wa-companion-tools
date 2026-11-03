@@ -86,15 +86,15 @@ class LudoActivity : Activity() {
         rootLayout=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(12),dp(14),dp(12),dp(18)); setBackgroundColor(Color.rgb(246,249,247)) }
         setContentView(ScrollView(this).apply { addView(rootLayout) })
         rootLayout.addView(label("LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
-        root.addView(label("One phone • $selectedPlayers players • Offline practice",13,Color.DKGRAY))
-        board=LudoBoard(); root.addView(board,LinearLayout.LayoutParams(-1,dp(330)))
+        rootLayout.addView(label("One phone • $selectedPlayers players • Offline practice",13,Color.DKGRAY))
+        board=LudoBoard(); rootLayout.addView(board,LinearLayout.LayoutParams(-1,dp(330)))
         diceView=label("⚄",54,Color.rgb(7,91,69),true).apply {
             gravity=android.view.Gravity.CENTER
             setPadding(0,dp(2),0,dp(2))
             contentDescription="Dice ready"
         }
-        root.addView(diceView,LinearLayout.LayoutParams(-1,dp(76)))
-        status=label("",16,Color.rgb(18,42,55),true); root.addView(status)
+        rootLayout.addView(diceView,LinearLayout.LayoutParams(-1,dp(76)))
+        status=label("",16,Color.rgb(18,42,55),true); rootLayout.addView(status)
         rollButton=Button(this).apply {
             text="PASS PHONE • TAP WHEN READY"; isAllCaps=false
             setOnClickListener {
@@ -103,10 +103,10 @@ class LudoActivity : Activity() {
                     status.text="${players[current].name} is ready. Roll the dice!"
                 } else rollDice()
             }
-        }; root.addView(rollButton)
-        tokenButtons=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }; root.addView(tokenButtons)
-        root.addView(label("Rules: roll a 6 to leave base; starting squares are safe; land on a single rival to send it home; exact roll required to finish. A 6 or capture earns another roll. Three consecutive sixes end your turn.",12,Color.DKGRAY))
-        root.addView(Button(this).apply { text="New game"; isAllCaps=false; setOnClickListener { choosePlayers() } })
+        }; rootLayout.addView(rollButton)
+        tokenButtons=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }; rootLayout.addView(tokenButtons)
+        rootLayout.addView(label("Rules: roll a 6 to leave base; starting squares are safe; land on a single rival to send it home; exact roll required to finish. A 6 or capture earns another roll. Three consecutive sixes end your turn.",12,Color.DKGRAY))
+        rootLayout.addView(Button(this).apply { text="New game"; isAllCaps=false; setOnClickListener { choosePlayers() } })
         updateTurn()
     }
 
