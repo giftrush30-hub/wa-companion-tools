@@ -23,6 +23,7 @@ class DailyArenaActivity : Activity() {
     private val arena by lazy { ArenaBackend(this) }
     private var activePoll: ArenaBackend.Poll? = null
     private var voted = false
+    private var pollReportButtonAdded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,11 +123,7 @@ class DailyArenaActivity : Activity() {
             (status.parent as LinearLayout).addView(choice)
         }
         if (poll.options.isEmpty()) status.text = "This question has no answer choices yet."
-        (status.parent as LinearLayout).addView(Button(this).apply {
-            text = "Report this question"
-            isAllCaps = false
-            setOnClickListener { showPollReportDialog(poll.id) }
-        })
+        addPollReportButton(poll.id)
     }
 
     private fun submitVote(poll: ArenaBackend.Poll, option: ArenaBackend.Option) {
@@ -157,10 +154,16 @@ class DailyArenaActivity : Activity() {
             val count = counts[option.id] ?: 0L
             parent.addView(text("${option.text}  •  $count vote(s)", 14, ink, true))
         }
-        parent.addView(Button(this).apply {
+        addPollReportButton(poll.id)
+    }
+
+    private fun addPollReportButton(pollId: String) {
+        if (pollReportButtonAdded) return
+        pollReportButtonAdded = true
+        (status.parent as LinearLayout).addView(Button(this).apply {
             text = "Report this question"
             isAllCaps = false
-            setOnClickListener { showPollReportDialog(poll.id) }
+            setOnClickListener { showPollReportDialog(pollId) }
         })
     }
 
