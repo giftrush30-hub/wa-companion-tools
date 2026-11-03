@@ -88,6 +88,7 @@ class MainActivity : Activity() {
         card("7-DAY STATUS CALENDAR", "Plan, save and share a week of status ideas without needing internet.") { statusCalendar() }
         card("PERSONAL BRAND BUILDER", "Save your name, business identity and contact call-to-action for consistent status cards.") { personalBrandBuilder() }
         card("PRODUCT CATALOGUE MAKER", "Create product cards with photos, prices and descriptions, save your items and share them with customers.") { productCatalogueMaker() }
+        card("BUSINESS ORDER DASHBOARD", "See your order count, money collected, outstanding balances and delivery progress at a glance.") { orderDashboard() }
         card("CUSTOMER ORDER TRACKER", "Record customer orders, payments and balances, track progress and share updates.") { orderTracker() }
         card("REPLY-TO-STATUS ASSISTANT", "Bring in a status or describe it, then get thoughtful reply ideas in different tones.") { replyAssistant() }
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
@@ -517,6 +518,56 @@ class MainActivity : Activity() {
         root.addView(saved)
         refreshSaved()
         root.addView(label("This is a planning calendar, not automatic posting. You choose when to share each status.", 11, Color.GRAY))
+    }
+
+    private fun orderDashboard() {
+        root.addView(label("YOUR BUSINESS AT A GLANCE", 17, Color.rgb(6, 63, 50), true))
+        root.addView(label("Figures are calculated from the orders saved on this phone. Cancelled orders are excluded from money totals.", 12, Color.DKGRAY))
+        val records = (prefs.getString("customer_orders", "") ?: "").split("\u001f").filter { it.isNotBlank() }
+        data class OrderSummary(val total: Double, val paid: Double, val status: String)
+        val orders = records.mapNotNull { record ->
+            val fields = record.split("\u001e")
+            val total = fields.getOrNull(2)?.toDoubleOrNull() ?: return@mapNotNull null
+            val paid = fields.getOrNull(3)?.toDoubleOrNull() ?: return@mapNotNull null
+            OrderSummary(total, paid, fields.getOrNull(4).orEmpty())
+        }
+        val active = orders.filter { it.status != "Cancelled" }
+        val formatter = java.text.NumberFormat.getNumberInstance(Locale("en", "NG"))
+        val orderCount = active.size
+        val orderValue = active.sumOf { it.total }
+        val received = active.sumOf { it.paid }
+        val outstanding = active.sumOf { (it.total - it.paid).coerceAtLeast(0.0) }
+        val delivered = active.count { it.status == "Delivered" }
+        val inProgress = active.count { it.status == "In progress" }
+        val ready = active.count { it.status == "Ready for collection" }
+        val receivedOrders = active.count { it.status == "Order received" }
+        fun metric(title: String, value: String, detail: String) {
+            val panel = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(14), dp(12), dp(14), dp(12))
+                setBackgroundColor(Color.WHITE)
+            }
+            panel.addView(label(title, 12, Color.GRAY, true))
+            panel.addView(label(value, 21, Color.rgb(6, 63, 50), true))
+            panel.addView(label(detail, 11, Color.DKGRAY))
+            root.addView(panel)
+            root.addView(space(8))
+        }
+        metric("ACTIVE ORDERS", orderCount.toString(), "Cancelled orders are not counted")
+        metric("ORDER VALUE", "₦${formatter.format(orderValue)}", "Value of non-cancelled orders")
+        metric("MONEY RECEIVED", "₦${formatter.format(received)}", "Payments recorded so far")
+        metric("CUSTOMER BALANCES", "₦${formatter.format(outstanding)}", "Amount still outstanding")
+        metric("DELIVERED ORDERS", delivered.toString(), "Orders marked as delivered")
+        root.addView(label("ORDER PROGRESS", 14, Color.rgb(6, 63, 50), true))
+        root.addView(label("Order received: $receivedOrders", 13, Color.DKGRAY))
+        root.addView(label("In progress: $inProgress", 13, Color.DKGRAY))
+        root.addView(label("Ready for collection: $ready", 13, Color.DKGRAY))
+        root.addView(label("Delivered: $delivered", 13, Color.DKGRAY))
+        root.addView(label("Cancelled: ${orders.count { it.status == "Cancelled" }}", 13, Color.DKGRAY))
+        root.addView(space(12))
+        button("Open customer order tracker") { orderTracker() }
+        button("Refresh dashboard") { orderDashboard() }
+        root.addView(label("Note: this is a simple local summary, not a bank balance or verified accounting report. Keep records of refunds and expenses separately.", 11, Color.GRAY))
     }
 
     private fun orderTracker() {
