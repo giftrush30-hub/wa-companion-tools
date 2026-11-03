@@ -148,7 +148,8 @@ class MainActivity : Activity() {
                 setPadding(dp(14), dp(14), dp(14), dp(14))
                 setBackgroundColor(Color.WHITE)
             }
-            root.addView(preview)            root.addView(space(5))
+            root.addView(preview)
+            root.addView(space(5))
         }
         button("Add Naija Reactions to WhatsApp") {
             try {
@@ -297,7 +298,8 @@ class MainActivity : Activity() {
         button("Create and share my image") {
             val text = custom.text.toString().trim()
             if (text.isBlank()) toast("Write a message first.") else shareMemeImage(text)
-        }        root.addView(label("The starter reactions work offline. More original packs can be added in future updates.", 11, Color.GRAY))
+        }
+        root.addView(label("The starter reactions work offline. More original packs can be added in future updates.", 11, Color.GRAY))
     }
 
     private fun shareMemeImage(message: String) {
@@ -446,7 +448,8 @@ class MainActivity : Activity() {
         }
         root.addView(prompt)
         var selectedPrompt = ""
-        button("Give me a question") {            val options = games[category.selectedItem.toString()].orEmpty()
+        button("Give me a question") {
+            val options = games[category.selectedItem.toString()].orEmpty()
             val previous = selectedPrompt
             selectedPrompt = (options.filter { it != previous }.ifEmpty { options }).random()
             prompt.text = selectedPrompt
@@ -595,7 +598,8 @@ class MainActivity : Activity() {
                 noteButton.setOnClickListener {
                     val input = EditText(this).apply { hint = "Record reply, promise date or discussion" }
                     android.app.AlertDialog.Builder(this@MainActivity)
-                        .setTitle("Update follow-up note")                        .setView(input)
+                        .setTitle("Update follow-up note")
+                        .setView(input)
                         .setNegativeButton("Cancel", null)
                         .setPositiveButton("Save") { _, _ ->
                             val updated = fields.toMutableList()
@@ -744,7 +748,8 @@ class MainActivity : Activity() {
             if (who.isBlank() || what.isBlank() || t == null || p == null || t <= 0 || p < 0 || p > t) {
                 toast("Enter valid order details first.")
             } else {
-                val balance = t - p                val note = "Hello $who, this is a friendly update about your $what order. Total: ₦${money(t)}. Paid: ₦${money(p)}. Balance: ₦${money(balance)}. Thank you."
+                val balance = t - p
+                val note = "Hello $who, this is a friendly update about your $what order. Total: ₦${money(t)}. Paid: ₦${money(p)}. Balance: ₦${money(balance)}. Thank you."
                 shareToWhatsApp(note)
             }
         }
@@ -893,7 +898,8 @@ class MainActivity : Activity() {
             val title = name.text.toString().trim()
             val amount = price.text.toString().trim()
             if (title.isBlank() || amount.isBlank()) toast("Enter the product name and price first.")
-            else shareProductCard(title, amount, description.text.toString().trim(),                contact.text.toString().trim(), selectedProductImage)
+            else shareProductCard(title, amount, description.text.toString().trim(),
+                contact.text.toString().trim(), selectedProductImage)
         }
         root.addView(space(8))
         root.addView(label("SAVED PRODUCTS", 13, Color.rgb(6, 63, 50), true))
@@ -1139,7 +1145,8 @@ class MainActivity : Activity() {
         val contextInput = EditText(this).apply {
             hint = "Example: My friend posted that they got a new job..."
             minLines = 3
-        }        root.addView(contextInput)
+        }
+        root.addView(contextInput)
         val tones = listOf("Warm and friendly", "Funny and playful", "Encouraging", "Respectful", "Professional", "Short and simple")
         val tone = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, tones)
@@ -1289,3 +1296,226 @@ class MainActivity : Activity() {
                 val money = amount.text.toString().trim(); val phone = contact.text.toString().trim()
                 val record = "• " + name + (if (phone.isBlank()) "" else " (" + phone + ")") +
                     (if (money.isBlank()) "" else " — ₦" + money) + "\n  " + note
+                val old = prefs.getString("business_followups", "") ?: ""
+                prefs.edit().putString("business_followups", old + (if (old.isBlank()) "" else "\n\n") + record).apply()
+                if (addReminder.isChecked) {
+                    if (selectedTime.timeInMillis <= System.currentTimeMillis()) {
+                        toast("Customer saved, but choose a future time to set the reminder.")
+                    } else {
+                        scheduleReminder("Follow up with $name: $note", selectedTime.timeInMillis)
+                        toast("Customer saved and reminder scheduled.")
+                    }
+                } else {
+                    toast("Saved on this phone.")
+                }
+                customer.setText(""); contact.setText(""); task.setText(""); amount.setText("")
+                addReminder.isChecked = false
+                dueButton.text = "Choose follow-up reminder time"
+                refresh()
+            }
+        }
+        root.addView(list); refresh()
+        root.addView(label("Records stay on this phone. Clearing app data or uninstalling may erase them.", 11, Color.GRAY))
+    }
+
+    private fun quotationTool() {
+        val product = EditText(this).apply { hint = "Product or service name"; isSingleLine = true }
+        val cost = EditText(this).apply { hint = "Your cost per item (₦)"; inputType = 2 }
+        val price = EditText(this).apply { hint = "Selling price per item (₦)"; inputType = 2 }
+        val quantity = EditText(this).apply { hint = "Quantity"; inputType = 2 }
+        val customer = EditText(this).apply { hint = "Customer name (optional)"; isSingleLine = true }
+        root.addView(product); root.addView(cost); root.addView(price); root.addView(quantity); root.addView(customer)
+        val result = TextView(this).apply { textSize = 15f; setTextColor(Color.rgb(6, 63, 50)); setPadding(0, dp(12), 0, dp(12)) }
+        root.addView(result)
+        var quote = ""
+        button("Calculate total and profit") {
+            val name = product.text.toString().trim()
+            val c = cost.text.toString().toDoubleOrNull()
+            val p = price.text.toString().toDoubleOrNull()
+            val q = quantity.text.toString().toIntOrNull()
+            if (name.isBlank() || c == null || p == null || q == null || c < 0 || p < 0 || q <= 0) {
+                toast("Enter a product, valid amounts and a quantity above zero.")
+            } else {
+                val totalCost = c * q; val total = p * q; val profit = (p - c) * q
+                val currency = java.text.NumberFormat.getNumberInstance(Locale("en", "NG"))
+                quote = "QUOTATION\n$name\nQuantity: $q\nUnit price: ₦${currency.format(p)}\nTotal: ₦${currency.format(total)}\nEstimated profit: ₦${currency.format(profit)}"
+                val buyer = customer.text.toString().trim()
+                if (buyer.isNotBlank()) quote = "Hello $buyer,\n\n$quote"
+                result.text = quote + "\n\nTotal cost to you: ₦${currency.format(totalCost)}"
+            }
+        }
+        button("Share quotation") { if (quote.isBlank()) toast("Calculate a quotation first.") else shareToWhatsApp(quote) }
+        root.addView(label("Profit is an estimate based on the cost and selling price entered. Include transport, fees, tax and other expenses in your cost if needed.", 11, Color.GRAY))
+    }
+    private fun quickReplySection() {
+        val input = EditText(this).apply { hint = "Write a reusable reply"; minLines = 2 }
+        root.addView(input)
+        button("Save quick reply") {
+            val value = input.text.toString().trim()
+            if (value.isEmpty()) toast("Write a reply first.")
+            else {
+                val list = getReplies().toMutableList()
+                list.add(value)
+                prefs.edit().putString("replies", list.joinToString("\u001F")).apply()
+                input.setText("")
+                toast("Quick reply saved.")
+                showReplies()
+            }
+        }
+        showReplies()
+    }
+
+    private fun getReplies(): List<String> =
+        (prefs.getString("replies", "") ?: "").split("\u001F").filter { it.isNotBlank() }
+
+    private fun showReplies() {
+        val holder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(holder)
+        getReplies().forEachIndexed { index, reply ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, dp(8), 0, dp(8))
+            }
+            row.addView(label(reply, 14, Color.DKGRAY))
+            val actions = LinearLayout(this)
+            val copy = Button(this).apply { text = "Copy"; isAllCaps = false }
+            copy.setOnClickListener {
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("Quick reply", reply))
+                toast("Copied. Open WhatsApp and paste.")
+            }
+            val share = Button(this).apply { text = "Share to WhatsApp"; isAllCaps = false }
+            share.setOnClickListener { shareToWhatsApp(reply) }
+            val delete = Button(this).apply { text = "Delete"; isAllCaps = false }
+            delete.setOnClickListener {
+                val updated = getReplies().toMutableList().also { it.removeAt(index) }
+                prefs.edit().putString("replies", updated.joinToString("\u001F")).apply()
+                showHome()
+            }
+            actions.addView(copy)
+            actions.addView(share)
+            actions.addView(delete)
+            row.addView(actions)
+            holder.addView(row)
+        }
+    }
+
+    private fun reminderSection() {
+        val message = EditText(this).apply { hint = "What do you want to remember to send?"; minLines = 2 }
+        root.addView(message)
+        val timeButton = Button(this).apply { text = "Choose reminder time"; isAllCaps = false }
+        root.addView(timeButton)
+        timeButton.setOnClickListener { chooseDateTime(timeButton) }
+        button("Set reminder") {
+            val value = message.text.toString().trim()
+            if (value.isEmpty()) toast("Enter the message first.")
+            else if (selectedTime.timeInMillis <= System.currentTimeMillis()) toast("Choose a future time.")
+            else {
+                scheduleReminder(value, selectedTime.timeInMillis)
+                message.setText("")
+                toast("Reminder set.")
+            }
+        }
+    }
+
+    private fun chooseDateTime(button: Button) {
+        DatePickerDialog(this, { _, y, m, d ->
+            selectedTime.set(Calendar.YEAR, y)
+            selectedTime.set(Calendar.MONTH, m)
+            selectedTime.set(Calendar.DAY_OF_MONTH, d)
+            TimePickerDialog(this, { _, h, min ->
+                selectedTime.set(Calendar.HOUR_OF_DAY, h)
+                selectedTime.set(Calendar.MINUTE, min)
+                selectedTime.set(Calendar.SECOND, 0)
+                button.text = SimpleDateFormat("EEE, d MMM • h:mm a", Locale.getDefault()).format(selectedTime.time)
+            }, selectedTime.get(Calendar.HOUR_OF_DAY), selectedTime.get(Calendar.MINUTE), false).show()
+        }, selectedTime.get(Calendar.YEAR), selectedTime.get(Calendar.MONTH), selectedTime.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
+    private fun scheduleReminder(message: String, at: Long) {
+        val intent = Intent(this, ReminderReceiver::class.java).putExtra("message", message)
+        val pi = PendingIntent.getBroadcast(this, (at / 60000).toInt(), intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val alarm = getSystemService(ALARM_SERVICE) as AlarmManager
+        if (Build.VERSION.SDK_INT >= 31 && !alarm.canScheduleExactAlarms()) {
+            startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+            toast("Allow alarms, then set the reminder again.")
+            return
+        }
+        if (Build.VERSION.SDK_INT >= 23) {
+            alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+        } else {
+            alarm.setExact(AlarmManager.RTC_WAKEUP, at, pi)
+        }
+    }
+
+    private fun showReminder(message: String) {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Your message reminder")
+            .setMessage(message)
+            .setPositiveButton("Share to WhatsApp") { _, _ -> shareToWhatsApp(message) }
+            .setNegativeButton("Later", null)
+            .show()
+    }
+
+    private fun shareToWhatsApp(text: String) {
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            setPackage("com.whatsapp")
+        }
+        try {
+            startActivity(send)
+        } catch (_: Exception) {
+            val fallback = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, text)
+            }
+            startActivity(Intent.createChooser(fallback, "Share message"))
+        }
+    }
+
+    private fun showNotes() {
+        val notes = prefs.getString("status_notes", "") ?: ""
+        if (notes.isNotBlank()) root.addView(label("Saved notes:\n$notes", 13, Color.DKGRAY))
+    }
+
+    private fun card(title: String, description: String, content: () -> Unit) {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(14), dp(14), dp(14))
+            setBackgroundColor(Color.WHITE)
+        }
+        val params = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) }
+        root.addView(box, params)
+        box.addView(label(title, 16, Color.rgb(6, 63, 50), true))
+        box.addView(label(description, 13, Color.DKGRAY))
+        box.addView(space(8))
+        val oldRoot = root
+        root = box
+        content()
+        root = oldRoot
+    }
+
+    private fun button(text: String, action: () -> Unit) {
+        val b = Button(this).apply { this.text = text; isAllCaps = false }
+        b.setOnClickListener { action() }
+        root.addView(b)
+    }
+
+    private fun label(text: String, size: Int, color: Int, bold: Boolean = false) =
+        TextView(this).apply {
+            this.text = text
+            textSize = size.toFloat()
+            setTextColor(color)
+            if (bold) setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, dp(4), 0, dp(4))
+        }
+
+    private fun space(height: Int) = View(this).apply {
+        layoutParams = LinearLayout.LayoutParams(1, dp(height))
+    }
+
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+    private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
+}
