@@ -19,6 +19,7 @@ class ArenaBackend(context: Context) {
     )
     data class Option(val id: String, val text: String)
     data class Result(val optionId: String, val count: Long)
+    data class ActivityEvent(val eventType: String, val createdAt: String)
     data class Suggestion(
         val id: String, val question: String, val topic: String,
         val options: List<String>, val votes: Long, val votedByMe: Boolean
@@ -73,6 +74,21 @@ class ArenaBackend(context: Context) {
         }
         return Poll(id, selected.getString("question"), options, myVote,
             selected.optString("topic", "General"), selected.optString("poll_type", "poll"))
+    }
+
+
+    fun recentActivity(days: Int = 7): List<ActivityEvent> {
+        val session = discover.currentSession()
+            ?: throw IllegalStateException("Sign in to see your Daily Arena activity.")
+        val since = java.time.Instant.now().minusSeconds(days.coerceIn(1, 30) * 86400L).toString()
+        val rows = discover.request(
+            "/rest/v1/arena_activity_events?select=event_type,created_at&user_id=eq.${session.userId}&created_at=gte.$since&order=created_at.desc&limit=500",
+            "GET", null, session.accessToken
+        ) as JSONArray
+        return (0 until rows.length()).map {
+            val row = rows.getJSONObject(it)
+            ActivityEvent(row.getString("event_type"), row.getString("created_at"))
+        }
     }
 
     fun submitSuggestion(question: String, topic: String, options: List<String>) {
