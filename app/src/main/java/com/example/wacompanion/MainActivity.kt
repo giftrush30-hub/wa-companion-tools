@@ -2,6 +2,7 @@ package com.example.wacompanion
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.AlarmManager
 import android.app.DatePickerDialog
 import android.app.PendingIntent
