@@ -242,3 +242,10 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - This preserves the chosen local WHOT practice rules and does not introduce points, rankings or online play.
 - Rule references remain the Nigerian WHOT variant documented by Pagat (https://www.pagat.com/com/whot.html) and conventional Ludo safe-square, blockade and exact-finish rules (https://leludo.org/rules). These sources inform rule consistency; local house-rule variations are still disclosed in the game.
 - Source-only changes committed to GitHub main. No Android build, APK, device test or deployment was performed.
+
+### Games Arena progression improvement — 3 November 2026
+- Big Quiz now stores each category's personal-best correct-answer count locally on the device, plus a total completed-round count. These survive app restarts on the same installation.
+- Added four one-time local achievements: First Finish (complete a round), Expert Mind (75%+), Quiz Champion (90%+) and Perfect Round (100%). Newly earned achievements appear on the result screen alongside the personal best and overall achievement count.
+- This is offline practice progression only. It does not award, spend or affect Games Points, paid promotion, public rankings or competitive claims. Local records are not synced across devices or accounts.
+- Product pattern: Kahoot's guidance around replay variety and learner feedback informed the use of persistent personal improvement signals rather than rewarding raw volume. Keep progression transparent and avoid pay-to-win benefits.
+- Not build-tested or device-tested; no APK or deployment was produced.
