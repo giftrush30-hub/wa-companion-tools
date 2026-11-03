@@ -133,7 +133,8 @@ begin
   on conflict(room_id,user_id) do update
     set display_name=excluded.display_name,is_ready=false,left_at=null,joined_at=now();
   return jsonb_build_object('room_id',v_room.id,'room_code',v_room.room_code,'game_type',v_room.game_type,
-    'visibility',v_room.visibility,'status',v_room.status,'max_players',v_room.max_players);
+    'visibility',v_room.visibility,'status',v_room.status,'host_id',v_room.host_id,'max_players',v_room.max_players,
+    'created_at',v_room.created_at,'expires_at',v_room.expires_at);
 end;
 $fn$;
 
@@ -207,12 +208,16 @@ grant execute on function public.set_game_room_ready(uuid,boolean) to authentica
 grant execute on function public.leave_game_room(uuid) to authenticated;
 grant execute on function public.start_game_room(uuid) to authenticated;
 
+drop policy if exists "room members can receive private game broadcasts" on realtime.messages;
+drop policy if exists "room members can send private game broadcasts" on realtime.messages;
+
 create policy "room members can receive private game broadcasts"
 on realtime.messages for select to authenticated
 using (
   realtime.messages.extension in ('broadcast','presence')
   and case
-    when realtime.topic() like 'room:%' and split_part(realtime.topic(),':',2) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
+    when realtime.topic() like 'room:%'
+      and split_part(realtime.topic(),':',2) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
     else false
   end
@@ -223,28 +228,8 @@ on realtime.messages for insert to authenticated
 with check (
   realtime.messages.extension in ('broadcast','presence')
   and case
-    when split_part(realtime.topic(),':',2) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-    then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
-    else false
-  end
-);
-
-    then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
-    else false
-  end
-);
-
-create policy "room members can send private game broadcasts"
-on realtime.messages for insert to authenticated
-with check (
-  realtime.messages.extension in ('broadcast','presence')
-  and case
-    when realtime.topic() like 'room:%' and split_part(realtime.topic(),':',2) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
-    then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
-    else false
-  end
-);
-
+    when realtime.topic() like 'room:%'
+      and split_part(realtime.topic(),':',2) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
     else false
   end
