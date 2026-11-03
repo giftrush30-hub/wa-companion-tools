@@ -9,10 +9,23 @@ WA Discover is a Nigeria-wide discovery directory inside WA Companion. It helps 
 - Buyers browse businesses by keyword, category, state and city, then open the seller's catalogue or WhatsApp chat.
 - WA Discover stores directory information and links, not copies of every product photo or video.
 - Basic business discovery is intended to be free.
-- Optional paid promotion may be added later and must be clearly labelled **Sponsored**.
+- Free basic listings remain available to approved sellers. Optional paid promotions are priced as listed below and must be clearly labelled **Sponsored**.
 - The initial launch audience is all Nigeria, with location filters.
 - Buyers should be able to browse without creating an account.
 - Sellers will need a secure way to register and manage their directory entry.
+
+## Advertising packages and Paystack preparation
+
+The agreed introductory package menu is:
+- **Free Basic Listing — ₦0:** standard approved directory listing.
+- **Local Boost — ₦50:** sponsored placement for local discovery inside WA Discover.
+- **Wider Discovery — ₦100:** sponsored placement across wider WA Discover discovery.
+- **Featured Listing — ₦300:** more prominent Sponsored placement inside discovery.
+- **Business Spotlight — ₦1,000:** highest-visibility Sponsored placement inside WA Discover.
+
+These prices are the agreed starting menu, not guaranteed reach or sales. No campaign duration or impression guarantee has been promised yet; do not invent either. Paid placements must be labelled Sponsored. They do not buy WhatsApp Status views, access private contacts, or authorize unsolicited messages.
+
+The Android screen now displays these packages and a Paystack-coming-soon notice. It does not collect money or start a campaign yet. The SQL schema prepares a public package catalogue and private promotion-order records. Before real checkout, a trusted server must create the Paystack transaction, verify the signed webhook and transaction amount/reference, and only then activate the promotion. Never trust an Android success screen or a client-submitted payment status. Keep the Paystack secret key on the server only.
 
 ## Important WhatsApp limitations
 
@@ -33,7 +46,7 @@ The first shared directory stores only:
 - Owner account ID, approval status and timestamps
 - Simple directory engagement events and abuse reports
 
-No product photo/video uploads, product listings, paid promotions or payment processing are needed in v1.
+No product photo/video uploads, product listings or payment processing are needed in the first directory release. Promotion package definitions and payment-order preparation are now included, but checkout remains disabled.
 
 ## Backend schema status
 
@@ -58,7 +71,7 @@ The Android screen has seller draft preparation, local private draft saving/rest
 3. Add seller authentication and secure business submission.
 4. Add buyer search and state/city/category filters for approved businesses.
 5. Add reporting, moderation and abuse controls.
-6. Only after real buyer activity exists, consider optional sponsored placements and server-verified payments.
+6. After the directory is live and real buyer activity exists, enable the prepared Sponsored packages with server-verified Paystack payments.
 
 Never put a Supabase service-role key or payment secret in Android source code or GitHub. Do not charge sellers before there is real buyer traffic.
 
