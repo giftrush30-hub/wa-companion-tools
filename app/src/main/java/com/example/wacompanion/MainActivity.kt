@@ -358,11 +358,12 @@ class MainActivity : Activity() {
             "Celebrate someone who has helped you.",
             "Post something beautiful you noticed today."
         )
-        val today = java.time.LocalDate.now()
-        val index = Math.floorMod(today.toEpochDay().toInt(), challenges.size)
+        val today = java.util.Calendar.getInstance()
+        val index = Math.floorMod(today.get(java.util.Calendar.DAY_OF_YEAR) + today.get(java.util.Calendar.YEAR) * 3, challenges.size)
         val prompt = challenges[index]
+        val dateLabel = java.text.SimpleDateFormat("EEEE, d MMMM", java.util.Locale.getDefault()).format(today.time)
         root.addView(label("TODAY'S CREATIVE CHALLENGE", 16, Color.rgb(6, 63, 50), true))
-        root.addView(label(today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM")) , 12, Color.GRAY))
+        root.addView(label(dateLabel, 12, Color.GRAY))
         root.addView(label(prompt, 21, Color.rgb(20, 55, 48), true))
         val response = EditText(this).apply {
             hint = "Write your response or status here"
