@@ -82,6 +82,7 @@ class MainActivity : Activity() {
         card("DAILY MESSAGE & CAPTION GENERATOR", "Get fresh Nigerian-friendly ideas for greetings, faith, love, motivation and business. Copy or share the one you like.") { dailyMessageTool() }
         card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }
         card("DAILY STATUS CHALLENGE", "Get a fresh daily prompt, create your response and share it as a status.") { dailyChallenge() }
+        card("STATUS CONVERSATION GAMES", "Create fun polls, choose-one questions and conversation starters for your Status.") { statusConversationGames() }
         card("REPLY-TO-STATUS ASSISTANT", "Bring in a status or describe it, then get thoughtful reply ideas in different tones.") { replyAssistant() }
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
         card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
@@ -384,6 +385,77 @@ class MainActivity : Activity() {
             toast("Challenge copied.")
         }
         root.addView(label("Your challenge changes by date and works offline. Your progress stays private on this phone.", 11, Color.GRAY))
+    }
+
+    private fun statusConversationGames() {
+        val games = linkedMapOf(
+            "Choose one" to listOf(
+                "Peace of mind or plenty of money?",
+                "A quiet life or a famous life?",
+                "Love that is calm or love that is exciting?",
+                "Travel the world or build your dream home?",
+                "Forgive quickly or take time to heal?"
+            ),
+            "Complete the sentence" to listOf(
+                "One thing I have learned the hard way is...",
+                "If I could advise my younger self, I would say...",
+                "A small thing that makes me happy is...",
+                "I know I am growing because...",
+                "The kind of friend I value most is..."
+            ),
+            "Friendly debate" to listOf(
+                "Can friendship survive without regular communication?",
+                "Is honesty always better, even when it hurts?",
+                "Should couples share passwords?",
+                "Is consistency more important than talent?",
+                "Does money change people or reveal them?"
+            ),
+            "Get to know me" to listOf(
+                "What is one skill you wish you could learn?",
+                "What song can instantly improve your mood?",
+                "What is your favourite way to spend a free day?",
+                "What is one place you hope to visit?",
+                "What quality do you admire most in people?"
+            ),
+            "Naija fun" to listOf(
+                "Which is harder: December spending or January bills? 😂",
+                "Would you rather have free food or free transport for a year?",
+                "Who is more likely to say 'I am on my way' while still at home?",
+                "What's one Nigerian food you can eat any day?",
+                "If NEPA gives you 24 hours light, what is your first move?"
+            )
+        )
+        val category = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, games.keys.toList())
+        }
+        root.addView(label("PICK A STATUS GAME", 14, Color.rgb(6, 63, 50), true))
+        root.addView(category)
+        val prompt = TextView(this).apply {
+            text = "Choose a game category and tap for a prompt."
+            textSize = 19f
+            setTextColor(Color.rgb(20, 55, 48))
+            setPadding(dp(12), dp(18), dp(12), dp(18))
+            setBackgroundColor(Color.WHITE)
+        }
+        root.addView(prompt)
+        var selectedPrompt = ""
+        button("Give me a question") {
+            val options = games[category.selectedItem.toString()].orEmpty()
+            val previous = selectedPrompt
+            selectedPrompt = (options.filter { it != previous }.ifEmpty { options }).random()
+            prompt.text = selectedPrompt
+        }
+        button("Create shareable question card") {
+            if (selectedPrompt.isBlank()) toast("Choose a question first.") else shareMemeImage(selectedPrompt + "\\n\\nWhat do you think? Reply and let's talk. 💬")
+        }
+        button("Copy question") {
+            if (selectedPrompt.isBlank()) toast("Choose a question first.") else {
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager)
+                    .setPrimaryClip(ClipData.newPlainText("Status question", selectedPrompt))
+                toast("Question copied.")
+            }
+        }
+        root.addView(label("These prompts are designed for genuine conversation. Users share them manually and read replies in WhatsApp.", 11, Color.GRAY))
     }
 
     private fun replyAssistant() {
