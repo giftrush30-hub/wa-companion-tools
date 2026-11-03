@@ -108,12 +108,13 @@ class QuickFireActivity : Activity() {
             text = "Challenge a friend with this question"
             isAllCaps = false
             setOnClickListener {
-                val message = "⚡ QUICK FIRE CHALLENGE\\n\\n${question.text}\\n\\nWhat would you choose? Play Quick Fire on WA Companion → Daily Arena and compare your score with mine!"
-                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(android.content.Intent.EXTRA_TEXT, message)
-                }
-                startActivity(android.content.Intent.createChooser(send, "Challenge a friend"))
+                val options = question.options.joinToString("\n") { "• " + it.text }
+                ArenaShareCard.share(
+                    this@QuickFireActivity,
+                    "QUICK FIRE CHALLENGE",
+                    "${question.text}\n\n${options}\n\nThink you know it? Play and compare answers!",
+                    "CHALLENGE A FRIEND  •  DAILY ARENA"
+                )
             }
         })
         val choices = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -229,7 +230,7 @@ class QuickFireActivity : Activity() {
                 ArenaShareCard.share(
                     this@QuickFireActivity,
                     "QUICK FIRE RESULT",
-                    "Score: ${score} / ${total}\\nBest correct-answer streak: ${bestStreak}\\n\\nCan you beat this score?",
+                    "Score: ${score} / ${total}\nBest correct-answer streak: ${bestStreak}\n\nCan you beat this score?",
                     "YOUR TURN  •  DAILY ARENA"
                 )
             }
