@@ -12,14 +12,32 @@ import java.net.URL
  */
 class DiscoverBackend(context: Context) {
     private val prefs = context.getSharedPreferences("wa_discover_session", Context.MODE_PRIVATE)
+    private val secureSession = SecureSessionStore(context.applicationContext)
     private val baseUrl = "https://coodsyfdhjpqfxanqhwm.supabase.co"
     private val publishableKey = "sb_publishable_JqE_4yBgTnkp1n6I2j-l2A_tKxKAC9H"
 
     data class SellerSession(val accessToken: String, val userId: String)
 
+    @Synchronized
     fun currentSession(): SellerSession? {
-        val token = prefs.getString("access_token", null) ?: return null
-        val userId = prefs.getString("user_id", null) ?: return null
+        var saved = secureSession.read()
+        if (saved == null) {
+            // One-time migration of sessions saved by older app versions.
+            val oldToken = prefs.getString("access_token", null)
+            val oldUserId = prefs.getString("user_id", null)
+            if (!oldToken.isNullOrBlank() && !oldUserId.isNullOrBlank()) {
+                saved = JSONObject()
+                    .put("access_token", oldToken)
+                    .put("refresh_token", prefs.getString("refresh_token", ""))
+                    .put("token_expires_at", prefs.getLong("token_expires_at", 0L))
+                    .put("user_id", oldUserId)
+                secureSession.write(saved)
+                prefs.edit().clear().apply()
+            }
+        }
+        val token = saved?.optString("access_token").orEmpty()
+        val userId = saved?.optString("user_id").orEmpty()
+        if (token.isBlank() || userId.isBlank()) return null
         return SellerSession(token, userId)
     }
 
@@ -35,18 +53,20 @@ class DiscoverBackend(context: Context) {
         if (token.isBlank() || userId.isBlank()) {
             throw IllegalStateException("Sign-in did not return a session. Confirm your email if Supabase requests it, then sign in again.")
         }
-        prefs.edit().putString("access_token", token)
-            .putString("refresh_token", result.optString("refresh_token"))
-            .putLong("token_expires_at", System.currentTimeMillis() + result.optLong("expires_in", 3600L) * 1000L)
-            .putString("user_id", userId).apply()
+        secureSession.write(JSONObject()
+            .put("access_token", token)
+            .put("refresh_token", result.optString("refresh_token"))
+            .put("token_expires_at", System.currentTimeMillis() + result.optLong("expires_in", 3600L) * 1000L)
+            .put("user_id", userId))
         return SellerSession(token, userId)
     }
 
     fun signOut() {
-        val token = prefs.getString("access_token", null)
+        val token = currentSession()?.accessToken
         if (!token.isNullOrBlank()) {
             try { request("/auth/v1/logout", "POST", JSONObject(), token) } catch (_: Exception) {}
         }
+        secureSession.clear()
         prefs.edit().clear().apply()
     }
 
@@ -84,22 +104,27 @@ class DiscoverBackend(context: Context) {
      */
     @Synchronized
     private fun refreshAccessToken(): String {
-        val refreshToken = prefs.getString("refresh_token", null)
-            ?: throw IllegalStateException("Your session has expired. Please sign in again.")
+        val saved = secureSession.read()
+        val refreshToken = saved?.optString("refresh_token").orEmpty()
+        if (refreshToken.isBlank()) {
+            secureSession.clear()
+            throw IllegalStateException("Your session has expired. Please sign in again.")
+        }
         val result = request("/auth/v1/token?grant_type=refresh_token", "POST",
             JSONObject().put("refresh_token", refreshToken), null, allowRefresh = false) as JSONObject
         val token = result.optString("access_token")
         val nextRefresh = result.optString("refresh_token")
         if (token.isBlank() || nextRefresh.isBlank()) {
-            prefs.edit().clear().apply()
+            secureSession.clear()
             throw IllegalStateException("Your session could not be refreshed. Please sign in again.")
         }
         val userId = result.optJSONObject("user")?.optString("id")
-            ?: prefs.getString("user_id", "").orEmpty()
-        prefs.edit().putString("access_token", token)
-            .putString("refresh_token", nextRefresh)
-            .putLong("token_expires_at", System.currentTimeMillis() + result.optLong("expires_in", 3600L) * 1000L)
-            .putString("user_id", userId).apply()
+            ?: saved?.optString("user_id").orEmpty()
+        secureSession.write(JSONObject()
+            .put("access_token", token)
+            .put("refresh_token", nextRefresh)
+            .put("token_expires_at", System.currentTimeMillis() + result.optLong("expires_in", 3600L) * 1000L)
+            .put("user_id", userId))
         return token
     }
 
