@@ -137,19 +137,19 @@ end;
 $fn$;
 
 create or replace function public.set_game_room_ready(p_room_id uuid,p_ready boolean)
-returns boolean language plpgsql security definer set search_path=''
+returns jsonb language plpgsql security definer set search_path=''
 as $fn$
 begin
   if auth.uid() is null then raise exception 'Sign in first.'; end if;
   update public.game_room_members set is_ready=coalesce(p_ready,false)
     where room_id=p_room_id and user_id=auth.uid() and left_at is null;
   if not found then raise exception 'You are not an active member of this room.'; end if;
-  return true;
+  return jsonb_build_object('ready',coalesce(p_ready,false));
 end;
 $fn$;
 
 create or replace function public.leave_game_room(p_room_id uuid)
-returns boolean language plpgsql security definer set search_path=''
+returns jsonb language plpgsql security definer set search_path=''
 as $fn$
 declare
   v_host uuid;
@@ -157,7 +157,7 @@ declare
 begin
   if auth.uid() is null then raise exception 'Sign in first.'; end if;
   select host_id into v_host from public.game_rooms where id=p_room_id for update;
-  if not found then return false; end if;
+  if not found then return jsonb_build_object('left',false); end if;
   update public.game_room_members set left_at=now(),is_ready=false
     where room_id=p_room_id and user_id=auth.uid() and left_at is null;
   if v_host=auth.uid() then
@@ -166,11 +166,32 @@ begin
     if v_next is null then
       update public.game_rooms set status='cancelled' where id=p_room_id and status='waiting';
     else
-      update public.game_rooms set host_id=v_next where id=p_room_id and status='waiting';
+      update public.game_rooms set host_id=v_next where id=p_room_id;
+      update public.game_room_members set role='player' where room_id=p_room_id and role='host';
       update public.game_room_members set role='host' where room_id=p_room_id and user_id=v_next;
     end if;
   end if;
-  return true;
+  return jsonb_build_object('left',true);
+end;
+$fn$;
+
+create or replace function public.start_game_room(p_room_id uuid)
+returns jsonb language plpgsql security definer set search_path=''
+as $fn$
+declare v_room public.game_rooms%rowtype; v_count integer; v_not_ready integer;
+begin
+  if auth.uid() is null then raise exception 'Sign in first.'; end if;
+  select * into v_room from public.game_rooms where id=p_room_id for update;
+  if not found then raise exception 'Game room not found.'; end if;
+  if v_room.host_id<>auth.uid() then raise exception 'Only the room host can start the match.'; end if;
+  if v_room.status<>'waiting' or v_room.expires_at<=now() then raise exception 'This room cannot be started.'; end if;
+  select count(*),count(*) filter(where not is_ready) into v_count,v_not_ready
+    from public.game_room_members where room_id=p_room_id and left_at is null;
+  if v_count<2 then raise exception 'At least two players are required.'; end if;
+  if v_count>v_room.max_players then raise exception 'This room is over capacity.'; end if;
+  if v_not_ready>0 then raise exception 'Everyone must be ready before the match starts.'; end if;
+  update public.game_rooms set status='in_progress' where id=p_room_id;
+  return jsonb_build_object('started',true);
 end;
 $fn$;
 
@@ -178,10 +199,12 @@ revoke all on function public.create_game_room(text,text,text,integer) from publ
 revoke all on function public.join_game_room(text,text) from public,anon;
 revoke all on function public.set_game_room_ready(uuid,boolean) from public,anon;
 revoke all on function public.leave_game_room(uuid) from public,anon;
+revoke all on function public.start_game_room(uuid) from public,anon;
 grant execute on function public.create_game_room(text,text,text,integer) to authenticated;
 grant execute on function public.join_game_room(text,text) to authenticated;
 grant execute on function public.set_game_room_ready(uuid,boolean) to authenticated;
 grant execute on function public.leave_game_room(uuid) to authenticated;
+grant execute on function public.start_game_room(uuid) to authenticated;
 
 create policy "room members can receive private game broadcasts"
 on realtime.messages for select to authenticated
