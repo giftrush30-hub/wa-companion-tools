@@ -34,6 +34,7 @@ class LudoActivity : Activity() {
         for (r in 14 downTo 9) add(r to 6)
         for (c in 5 downTo 0) add(8 to c)
         add(7 to 0)
+        add(6 to 0)
     }
     private val starts = listOf(0,13,26,39)
     private val safeTrack = setOf(0,8,13,21,26,34,39,47)
@@ -44,10 +45,10 @@ class LudoActivity : Activity() {
         (13 downTo 9).map { it to 7 }
     )
     private val bases = listOf(
-        listOf(2f to 2f,4f to 2f,2f to 4f,4f to 4f),
-        listOf(11f to 2f,13f to 2f,11f to 4f,13f to 4f),
-        listOf(11f to 11f,13f to 11f,11f to 13f,13f to 13f),
-        listOf(2f to 11f,4f to 11f,2f to 13f,4f to 13f)
+        listOf(2.5f to 2.5f,4.5f to 2.5f,2.5f to 4.5f,4.5f to 4.5f),
+        listOf(11.5f to 2.5f,13.5f to 2.5f,11.5f to 4.5f,13.5f to 4.5f),
+        listOf(11.5f to 11.5f,13.5f to 11.5f,11.5f to 13.5f,13.5f to 13.5f),
+        listOf(2.5f to 11.5f,4.5f to 11.5f,2.5f to 13.5f,4.5f to 13.5f)
     )
     private lateinit var players: List<Player>
     private val tokens = mutableListOf<MutableList<Token>>()
@@ -73,9 +74,10 @@ class LudoActivity : Activity() {
 
     private fun startGame() {
         val names=listOf("RED","GREEN","YELLOW","BLUE")
-        players=(0 until selectedPlayers).map { i -> Player(names[i],colors[i],starts[i],lanes[i],bases[i]) }
+        val seats=when(selectedPlayers){2->listOf(0,2);3->listOf(0,1,2);else->listOf(0,1,2,3)}
+        players=seats.map { i -> Player(names[i],colors[i],starts[i],lanes[i],bases[i]) }
         tokens.clear(); repeat(selectedPlayers) { tokens.add(MutableList(4){Token()}) }
-        current=0; roll=null; consecutiveSixes=0; gameOver=false
+        current=0; roll=null; consecutiveSixes=0; gameOver=false; readyToRoll=false
         val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(12),dp(14),dp(12),dp(18)); setBackgroundColor(Color.rgb(246,249,247)) }
         setContentView(ScrollView(this).apply { addView(root) })
         root.addView(label("LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
@@ -125,16 +127,16 @@ class LudoActivity : Activity() {
 
     private fun legalTokens(value:Int)=tokens[current].indices.filter { i ->
         val p=tokens[current][i].progress
-        (p==-1 && value==6) || (p>=0 && p<57 && p+value<=57 && !blockedByPair(p,p+value))
+        (p==-1 && value==6) || (p>=0 && p<56 && p+value<=56 && !blockedByPair(p,p+value))
     }
 
     private fun blockedByPair(from:Int,next:Int):Boolean {
-        val lastTrackStep=minOf(next,51)
+        val lastTrackStep=minOf(next,50)
         if(from+1>lastTrackStep) return false
         return (from+1..lastTrackStep).any { step ->
             val target=(players[current].start+step)%52
             tokens.indices.filter{it!=current}.any { other ->
-                tokens[other].count { it.progress in 0..51 && (players[other].start+it.progress)%52==target }>=2
+                tokens[other].count { it.progress in 0..50 && (players[other].start+it.progress)%52==target }>=2
             }
         }
     }
@@ -145,7 +147,7 @@ class LudoActivity : Activity() {
         var bonus=value==6
         if(token.progress==-1) token.progress=0 else token.progress+=value
         var captured=false
-        if(token.progress in 0..51) {
+        if(token.progress in 0..50) {
             val global=(players[current].start+token.progress)%52
             if(global !in safeTrack) tokens.indices.filter{it!=current}.forEach { other ->
                 tokens[other].forEach { rival ->
@@ -156,9 +158,9 @@ class LudoActivity : Activity() {
             }
         }
         if(captured) bonus=true
-        if(token.progress==57) bonus=true
+        if(token.progress==56) bonus=true
         roll=null; tokenButtons.removeAllViews(); board.invalidate()
-        if(tokens[current].all{it.progress==57}) {
+        if(tokens[current].all{it.progress==56}) {
             gameOver=true; status.text="🏆 ${players[current].name} wins the Ludo practice match!"
             rollButton.text="MATCH COMPLETE"; rollButton.isEnabled=false; return
         }
@@ -171,7 +173,7 @@ class LudoActivity : Activity() {
     }
     private fun updateTurn(note:String="") {
         if(gameOver) return
-        status.text="${players[current].name}'s turn • Home: ${tokens[current].count{it.progress==57}}/4\nPass the phone, then roll."+if(note.isNotBlank()) "\n$note" else ""
+        status.text="${players[current].name}'s turn • Home: ${tokens[current].count{it.progress==56}}/4\nPass the phone, then roll."+if(note.isNotBlank()) "\n$note" else ""
         readyToRoll=false
         rollButton.isEnabled=true; rollButton.text="PASS PHONE • TAP WHEN READY"; tokenButtons.removeAllViews(); board.invalidate()
     }
@@ -226,8 +228,8 @@ class LudoActivity : Activity() {
             tokens.forEachIndexed{pi,list->list.forEachIndexed{ti,t->
                 val(x,y)=when {
                     t.progress==-1->players[pi].base[ti]
-                    t.progress==57->7.5f to 7.5f
-                    t.progress in 52..56->{val q=players[pi].lane[t.progress-52];q.second+0.5f to q.first+0.5f}
+                    t.progress==56->7.5f to 7.5f
+                    t.progress in 51..55->{val q=players[pi].lane[t.progress-51];q.second+0.5f to q.first+0.5f}
                     else->{val q=track[(players[pi].start+t.progress)%52];q.second+0.5f to q.first+0.5f}
                 }
                 val cx=left+x*cell;val cy=top+y*cell
