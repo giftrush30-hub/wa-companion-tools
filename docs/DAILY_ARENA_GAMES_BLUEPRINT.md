@@ -77,10 +77,10 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 
 ### Live backend foundations and Android entry points
 - Daily Arena is connected from the existing app; existing Discover, Vault, Diary and Referral Hub areas remain separate.
-- **Hot Seat:** live published-poll retrieval, authenticated one-vote submission, duplicate-vote protection and community result retrieval are implemented.
+- **Hot Seat:** live published-poll retrieval, authenticated one-vote submission, duplicate-vote protection, community result retrieval and question reporting are implemented.
 - **Quick Fire:** playable Android quiz screen, first published 10-question Naija Mix quiz, server-held answer keys, authenticated answer checking, explanations and one-answer-per-question protection are implemented. Quiz score is currently a session score only; it is not Games Points.
 - **Meme War:** first published caption challenge is seeded. Players can submit one caption per challenge; entries remain pending review until approved. Approved captions can be listed and voted on; each player can vote once per caption and cannot vote for their own entry. Users can report captions.
-- **Meme moderation:** moderator queue and approve/reject controls are implemented in the Android source. The database checks the trusted `app_metadata.role = 'admin'` claim for moderator access. Assign an admin role only through a trusted Supabase admin process; never use editable user metadata for this.
+- **Moderation and safety:** moderator queue and approve/reject controls for Meme War captions, plus a Daily Arena report review queue (reviewing/resolved/dismissed), are implemented in the Android source. The database checks the trusted `app_metadata.role = 'admin'` claim for moderator access. Assign an admin role only through a trusted Supabase admin process; never use editable user metadata for this.
 - Meme War currently uses a text prompt/caption format; a real image-template library and image upload/display experience remain part of the later visual/media upgrade.
 - Supabase now contains Hot Seat, Quick Fire, Meme War and reporting tables, with RLS and server-side checks for the implemented features.
 
