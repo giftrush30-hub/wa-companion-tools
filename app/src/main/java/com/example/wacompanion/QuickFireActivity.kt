@@ -1,10 +1,12 @@
 package com.example.wacompanion
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.os.CountDownTimer
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -25,6 +27,10 @@ class QuickFireActivity : Activity() {
     private var questionIndex = 0
     private var score = 0
     private var locked = false
+    private var streak = 0
+    private var bestStreak = 0
+    private var selectedDifficulty = "mixed"
+    private var questionTimer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,23 +48,40 @@ class QuickFireActivity : Activity() {
         page.addView(headerArea)
         questionArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         page.addView(questionArea)
-        loadQuiz()
+        chooseDifficulty()
+    }
+
+    private fun chooseDifficulty() {
+        val labels = arrayOf("Mixed challenge • 10 questions", "Easy • 5 questions", "Standard • 5 questions", "Expert • 5 questions")
+        val values = arrayOf("mixed", "easy", "standard", "expert")
+        AlertDialog.Builder(this)
+            .setTitle("Choose your Quick Fire level")
+            .setItems(labels) { _, which ->
+                selectedDifficulty = values[which]
+                loadQuiz()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun loadQuiz() {
+        questionTimer?.cancel()
         worker.execute {
             try {
-                val loaded = backend.activeQuiz()
+                val loaded = backend.activeQuiz(selectedDifficulty)
                 runOnUiThread {
                     headerArea.removeAllViews()
                     questionArea.removeAllViews()
                     questionIndex = 0
                     score = 0
+                    streak = 0
+                    bestStreak = 0
                     quiz = loaded
                     if (loaded == null || loaded.questions.isEmpty()) {
                         status.text = "No published quiz is available yet. Please check back soon."
                     } else {
                         headerArea.addView(label(loaded.title, 20, ink, true))
+                        headerArea.addView(label("MODE: " + loaded.difficulty.uppercase() + " • TIMER + STREAK CHALLENGE", 12, green, true))
                         if (loaded.description.isNotBlank()) headerArea.addView(label(loaded.description, 14, muted))
                         renderQuestion()
                     }
@@ -76,9 +99,10 @@ class QuickFireActivity : Activity() {
             return
         }
         locked = false
+        questionTimer?.cancel()
         val question = current.questions[questionIndex]
         questionArea.removeAllViews()
-        status.text = "Question ${questionIndex + 1} of ${current.questions.size}"
+        status.text = "Question ${questionIndex + 1} of ${current.questions.size} • Streak: $streak"
         questionArea.addView(label(question.text, 18, ink, true))
         val choices = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         question.options.forEach { option ->
@@ -95,17 +119,25 @@ class QuickFireActivity : Activity() {
         }
         questionArea.addView(choices)
         questionArea.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(14)) })
+        startQuestionTimer()
     }
 
     private fun submitAnswer(question: QuickFireBackend.Question, selected: Int, choices: LinearLayout) {
         locked = true
+        questionTimer?.cancel()
         for (i in 0 until choices.childCount) choices.getChildAt(i).isEnabled = false
         status.text = "Checking your answer securely…"
         worker.execute {
             try {
                 val result = backend.submit(question.id, selected)
                 runOnUiThread {
-                    if (result.correct && !result.alreadyAnswered) score += question.points
+                    if (result.correct && !result.alreadyAnswered) {
+                        score += question.points
+                        streak++
+                        bestStreak = maxOf(bestStreak, streak)
+                    } else {
+                        streak = 0
+                    }
                     val feedback = LinearLayout(this).apply {
                         orientation = LinearLayout.VERTICAL
                         setPadding(dp(14), dp(12), dp(14), dp(12))
@@ -139,16 +171,49 @@ class QuickFireActivity : Activity() {
         }
     }
 
+
+    private fun startQuestionTimer() {
+        val seconds = when (selectedDifficulty) {
+            "easy" -> 25
+            "standard" -> 18
+            "expert" -> 12
+            else -> 18
+        }
+        questionTimer = object : CountDownTimer(seconds * 1000L, 1000L) {
+            override fun onTick(millisUntilFinished: Long) {
+                val remaining = (millisUntilFinished / 1000L).toInt() + 1
+                status.text = "Question \${questionIndex + 1} of \${quiz?.questions?.size ?: 0} • \${remaining}s • Streak: $streak"
+            }
+            override fun onFinish() {
+                if (locked) return
+                locked = true
+                streak = 0
+                status.text = "Time is up! Your streak has reset."
+                questionArea.addView(label("TIME'S UP", 18, Color.rgb(166, 72, 38), true))
+                questionArea.addView(Button(this@QuickFireActivity).apply {
+                    text = if (questionIndex + 1 == (quiz?.questions?.size ?: 0)) "See my result" else "Next question"
+                    isAllCaps = false
+                    setOnClickListener {
+                        questionIndex++
+                        renderQuestion()
+                    }
+                })
+            }
+        }.start()
+    }
+
     private fun showSummary() {
+        questionTimer?.cancel()
         questionArea.removeAllViews()
         status.text = "Quiz complete"
         val total = quiz?.questions?.sumOf { it.points } ?: 0
         questionArea.addView(label("Quiz score: $score / $total", 21, green, true))
+        questionArea.addView(label("Best correct-answer streak: $bestStreak", 16, ink, true))
         questionArea.addView(label("Your answers are checked and recorded by the server. This is a quiz score, not spendable Games Points. Rewards and leaderboards will be connected in a later milestone.", 14, muted))
         questionArea.addView(Button(this).apply {
             text = "Play another random round"
             isAllCaps = false
-            setOnClickListener { status.text = "Finding a fresh question set…"; loadQuiz() }
+            setOnClickListener { chooseDifficulty() }
         })
         questionArea.addView(Button(this).apply {
             text = "Back to Daily Arena"
@@ -169,6 +234,7 @@ class QuickFireActivity : Activity() {
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     override fun onDestroy() {
+        questionTimer?.cancel()
         worker.shutdownNow()
         super.onDestroy()
     }
