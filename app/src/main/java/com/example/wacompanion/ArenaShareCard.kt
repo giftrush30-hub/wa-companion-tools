@@ -128,16 +128,24 @@ object ArenaShareCard {
         titleLayout.draw(canvas)
         canvas.restore()
 
+        val bodyTop = (300 + titleLayout.height + 35).toFloat().coerceAtMost(660f)
+        val safeBody = body.take(420).let { if (body.length > 420) it + "…" else it }
         val bodyPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             textSize = 48f
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             setShadowLayer(5f, 0f, 2f, Color.BLACK)
         }
-        val bodyLayout = StaticLayout(
-            body, bodyPaint, 930, Layout.Alignment.ALIGN_NORMAL, 1.22f, 0f, false
+        var bodyLayout = StaticLayout(
+            safeBody, bodyPaint, 930, Layout.Alignment.ALIGN_NORMAL, 1.22f, 0f, false
         )
-        val bodyTop = (300 + titleLayout.height + 35).toFloat().coerceAtMost(660f)
+        val availableBodyHeight = (1160f - bodyTop).toInt()
+        while (bodyLayout.height > availableBodyHeight && bodyPaint.textSize > 28f) {
+            bodyPaint.textSize -= 2f
+            bodyLayout = StaticLayout(
+                safeBody, bodyPaint, 930, Layout.Alignment.ALIGN_NORMAL, 1.18f, 0f, false
+            )
+        }
         canvas.save()
         canvas.translate(66f, bodyTop)
         bodyLayout.draw(canvas)
