@@ -189,3 +189,10 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Big Quiz offline practice now has 30 questions, five named progress checkpoints (Starter, Skilled, Sharp, Master and Expert) and a final Quiz Champion level. These are practice milestones only, not paid prizes or Games Points.
 - The Ludo activity currently uses a custom square-loop 52-cell practice board with four coloured home lanes. It is a playable local rules foundation, not yet the polished traditional cross-shaped board or an online multiplayer build. The next Ludo pass should improve the board geometry and add a clear turn hand-off/animation treatment before network play.
 - The WHOT! activity implements the 54-card deck and the chosen special-card variant described above. House rules vary, so the selected rule summary is shown in-game rather than pretending there is only one universal version.
+
+
+### Games Arena polish pass — 3 November 2026
+- **WHOT! table presentation:** Playable cards now use distinct suit-colour treatments (Ball blue, Angle green, Cross purple, Carpet orange, Star gold and WHOT dark navy). Cards that cannot be played are visibly muted and disabled, making the current hand easier to scan.
+- **WHOT! exhausted-market rule:** Fixed the no-draw-card dead-end. When the draw pile is empty and the discard pile has no recyclable cards, the round now ends; the player(s) holding the fewest cards win, with a tie explicitly shown. The result can be shared.
+- **Big Quiz presentation:** Added a 30-level progress bar, a stronger score/level status line and four distinct answer-button colours. Completion fills the progress bar, and replay resets it.
+- These are source updates only. No Android build, device test, APK creation or deployment was performed. The traditional cross-shaped Ludo board and full turn-handoff polish remain outstanding.
