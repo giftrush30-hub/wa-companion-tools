@@ -248,6 +248,34 @@ class BigQuizActivity : Activity() {
         progressBar.progress = questions.size
         questionArea.addView(label("You got $correct out of ${questions.size} correct.",23,green,true))
         val percentage = correct * 100 / questions.size
+        val progress = getSharedPreferences("big_quiz_progress", MODE_PRIVATE)
+        val categoryKey = selectedCategory.lowercase().replace(Regex("[^a-z0-9]+"), "_")
+        val bestKey = "best_$categoryKey"
+        val previousBest = progress.getInt(bestKey, -1)
+        val newBest = previousBest < correct
+        val completed = progress.getInt("completed_rounds", 0) + 1
+        val bestScore = maxOf(previousBest, correct)
+        val editor = progress.edit().putInt(bestKey, bestScore).putInt("completed_rounds", completed)
+        val unlocked = mutableListOf<String>()
+        if (!progress.getBoolean("achievement_first_finish", false)) {
+            editor.putBoolean("achievement_first_finish", true)
+            unlocked.add("FIRST FINISH • Completed your first Big Quiz round")
+        }
+        if (percentage >= 75 && !progress.getBoolean("achievement_expert", false)) {
+            editor.putBoolean("achievement_expert", true)
+            unlocked.add("EXPERT MIND • Scored at least 75%")
+        }
+        if (percentage >= 90 && !progress.getBoolean("achievement_champion", false)) {
+            editor.putBoolean("achievement_champion", true)
+            unlocked.add("QUIZ CHAMPION • Scored at least 90%")
+        }
+        if (percentage == 100 && !progress.getBoolean("achievement_perfect", false)) {
+            editor.putBoolean("achievement_perfect", true)
+            unlocked.add("PERFECT ROUND • Answered every question correctly")
+        }
+        editor.apply()
+        val achievementCount = listOf("achievement_first_finish","achievement_expert","achievement_champion","achievement_perfect")
+            .count { progress.getBoolean(it, false) }
         val message = when {
             percentage >= 90 -> "Quiz Champion! Outstanding performance."
             percentage >= 75 -> "Expert level. Your brain came prepared."
@@ -258,6 +286,12 @@ class BigQuizActivity : Activity() {
         }
         questionArea.addView(label("ACCURACY: $percentage%",12,muted,true))
         questionArea.addView(label(message,16,ink))
+        questionArea.addView(label(if(newBest) "🏅 NEW PERSONAL BEST • $correct/\${questions.size}" else "PERSONAL BEST • $bestScore/\${questions.size}",14,green,true))
+        questionArea.addView(label("ROUNDS COMPLETED: $completed  •  ACHIEVEMENTS: $achievementCount/4",12,muted,true))
+        if (unlocked.isNotEmpty()) {
+            questionArea.addView(label("NEW ACHIEVEMENT UNLOCKED",13,green,true))
+            unlocked.forEach { questionArea.addView(label("🏆 $it",13,ink,true)) }
+        }
         questionArea.addView(Button(this).apply {
             text = "Share my Big Quiz result"
             isAllCaps = false
