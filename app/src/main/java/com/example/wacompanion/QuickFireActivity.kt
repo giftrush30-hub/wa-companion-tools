@@ -19,6 +19,7 @@ class QuickFireActivity : Activity() {
     private val muted = Color.rgb(91, 108, 119)
     private lateinit var page: LinearLayout
     private lateinit var status: TextView
+    private lateinit var questionArea: LinearLayout
     private var quiz: QuickFireBackend.Quiz? = null
     private var questionIndex = 0
     private var score = 0
@@ -36,6 +37,8 @@ class QuickFireActivity : Activity() {
         page.addView(label("Think fast. Learn something new.", 15, muted))
         status = label("Loading quiz…", 15, muted)
         page.addView(status)
+        questionArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        page.addView(questionArea)
         loadQuiz()
     }
 
@@ -67,8 +70,9 @@ class QuickFireActivity : Activity() {
         }
         locked = false
         val question = current.questions[questionIndex]
-        status.text = "Question ${questionIndex + 1} of ${current.questions.size}  •  ${question.points} points"
-        page.addView(label(question.text, 18, ink, true))
+        questionArea.removeAllViews()
+        status.text = "Question ${questionIndex + 1} of ${current.questions.size}"
+        questionArea.addView(label(question.text, 18, ink, true))
         val choices = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         question.options.forEachIndexed { index, option ->
             val button = Button(this).apply {
@@ -82,8 +86,8 @@ class QuickFireActivity : Activity() {
             }
             choices.addView(button)
         }
-        page.addView(choices)
-        page.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(14)) })
+        questionArea.addView(choices)
+        questionArea.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(14)) })
     }
 
     private fun submitAnswer(question: QuickFireBackend.Question, selected: Int, choices: LinearLayout) {
@@ -101,13 +105,13 @@ class QuickFireActivity : Activity() {
                         setBackgroundColor(Color.WHITE)
                     }
                     feedback.addView(label(
-                        if (result.alreadyAnswered) "You already answered this question." else if (result.correct) "Correct! +${question.points}" else "Not quite — keep going!",
+                        if (result.alreadyAnswered) "You already answered this question." else if (result.correct) "Correct!" else "Not quite — keep going!",
                         16, if (result.correct) green else ink, true
                     ))
                     feedback.addView(label("Correct answer: ${question.options.getOrNull(result.correctIndex) ?: "Unavailable"}", 14, ink, true))
                     if (result.explanation.isNotBlank()) feedback.addView(label(result.explanation, 14, muted))
-                    page.addView(feedback)
-                    page.addView(Button(this).apply {
+                    questionArea.addView(feedback)
+                    questionArea.addView(Button(this).apply {
                         text = if (questionIndex + 1 == (quiz?.questions?.size ?: 0)) "See my result" else "Next question"
                         isAllCaps = false
                         setOnClickListener {
@@ -128,10 +132,12 @@ class QuickFireActivity : Activity() {
     }
 
     private fun showSummary() {
+        questionArea.removeAllViews()
         status.text = "Quiz complete"
-        page.addView(label("You scored $score points in this session.", 21, green, true))
-        page.addView(label("Your answers are checked and recorded by the server. Games Points rewards and leaderboards will be connected in a later milestone.", 14, muted))
-        page.addView(Button(this).apply {
+        val total = quiz?.questions?.sumOf { it.points } ?: 0
+        questionArea.addView(label("Quiz score: $score / $total", 21, green, true))
+        questionArea.addView(label("Your answers are checked and recorded by the server. This is a quiz score, not spendable Games Points. Rewards and leaderboards will be connected in a later milestone.", 14, muted))
+        questionArea.addView(Button(this).apply {
             text = "Back to Daily Arena"
             isAllCaps = false
             setOnClickListener { finish() }
