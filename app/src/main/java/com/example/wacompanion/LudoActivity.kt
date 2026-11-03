@@ -85,7 +85,11 @@ class LudoActivity : Activity() {
         current=0; roll=null; consecutiveSixes=0; gameOver=false; readyToRoll=false
         rootLayout=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(12),dp(14),dp(12),dp(18)); setBackgroundColor(Color.rgb(246,249,247)) }
         setContentView(ScrollView(this).apply { addView(rootLayout) })
-        rootLayout.addView(label("LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
+        rootLayout.addView(label(if (intent.hasExtra("game_room_id")) "LUDO • ONLINE ROOM" else "LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
+        if (intent.hasExtra("game_room_id")) rootLayout.addView(Button(this).apply {
+            text = "💬 Chat & voice with players"; isAllCaps = false
+            setOnClickListener { openRoomChat() }
+        })
         rootLayout.addView(label("One phone • $selectedPlayers players • Offline practice",13,Color.DKGRAY))
         board=LudoBoard(); rootLayout.addView(board,LinearLayout.LayoutParams(-1,dp(330)))
         diceView=label("⚄",54,Color.rgb(7,91,69),true).apply {
@@ -330,4 +334,14 @@ class LudoActivity : Activity() {
     }
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
     private fun dp(v:Float)=(v*resources.displayMetrics.density)
+    private fun openRoomChat() {
+        val id = intent.getStringExtra("game_room_id") ?: return
+        startActivity(Intent(this, GamesMultiplayerActivity::class.java).apply {
+            putExtra("open_room_id", id)
+            putExtra("game_display_name", intent.getStringExtra("game_display_name"))
+            putExtra("chat_only", true)
+        })
+    }
+
+
 }
