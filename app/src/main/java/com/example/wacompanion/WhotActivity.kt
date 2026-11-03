@@ -1,6 +1,7 @@
 package com.example.wacompanion
 
 import android.app.Activity
+import android.content.Intent
 import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -69,7 +70,7 @@ class WhotActivity : Activity() {
         current=0;pendingDraw=0;pendingType=0;gameOver=false
         root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(16),dp(14),dp(24));setBackgroundColor(Color.rgb(246,249,247))}
         setContentView(ScrollView(this).apply{addView(root)})
-        root.addView(label(if(intent.hasExtra("game_room_id")) "WHOT! • ONLINE ROOM" else "WHOT! • NAIJA CARD TABLE",24,green,true))
+        root.addView(label(if(intent.hasExtra("game_room_id")) "WHOT! • ROOM CHAT CONNECTED" else "WHOT! • NAIJA CARD TABLE",24,green,true))
         if(intent.hasExtra("game_room_id"))root.addView(Button(this).apply{
             text="💬 Chat & voice with players";isAllCaps=false;setOnClickListener{openRoomChat()}
         })
