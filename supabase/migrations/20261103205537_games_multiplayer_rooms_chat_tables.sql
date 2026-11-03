@@ -106,7 +106,8 @@ begin
   insert into public.game_room_members(room_id,user_id,display_name,role)
     values(v_room.id,v_user,btrim(p_display_name),'host');
   return jsonb_build_object('room_id',v_room.id,'room_code',v_room.room_code,'game_type',v_room.game_type,
-    'visibility',v_room.visibility,'status',v_room.status,'max_players',v_room.max_players);
+    'visibility',v_room.visibility,'status',v_room.status,'host_id',v_room.host_id,'max_players',v_room.max_players,
+    'created_at',v_room.created_at,'expires_at',v_room.expires_at);
 end;
 $fn$;
 
