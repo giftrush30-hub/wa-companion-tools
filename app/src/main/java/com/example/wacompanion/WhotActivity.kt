@@ -189,6 +189,7 @@ class WhotActivity : Activity() {
             orientation=LinearLayout.VERTICAL
             gravity=Gravity.CENTER
             setPadding(dp(8),dp(if(compact)6 else 8),dp(8),dp(if(compact)6 else 8))
+            minimumHeight=dp(if(compact)90 else 110)
             background=GradientDrawable().apply{
                 shape=GradientDrawable.RECTANGLE
                 cornerRadius=dp(13).toFloat()
