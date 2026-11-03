@@ -1,6 +1,7 @@
 package com.example.wacompanion
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -49,7 +50,13 @@ class DailyArenaActivity : Activity() {
         content.addView(hotSeat)
         content.addView(gap(12))
 
-        addFeature(content, "QUICK FIRE", "Short quizzes covering general knowledge, Nigerian culture, entertainment, technology and more. Coming next.")
+        addFeature(content, "QUICK FIRE", "Short quizzes covering general knowledge, Nigerian culture, entertainment, technology and more.")
+        content.addView(Button(this).apply {
+            text = "Play Quick Fire"
+            isAllCaps = false
+            setOnClickListener { startActivity(Intent(this@DailyArenaActivity, QuickFireActivity::class.java)) }
+        })
+        content.addView(gap(9))
         addFeature(content, "MEME WAR", "Original caption challenges with voting, reporting and moderation. Coming next.")
         addFeature(content, "GAMES ARENA", "Big Quiz, multiplayer Ludo and WHOT! with fair-play protections. Coming next.")
         addFeature(content, "POINTS & REWARDS", "Cosmetics, avatars, profile decorations and game customisation only.")
