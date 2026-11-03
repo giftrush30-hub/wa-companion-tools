@@ -73,8 +73,30 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Batch related changes and verify CI/APK artifacts before calling a build successful.
 - No production deployment until functional, security and device testing is complete.
 
-## Current implementation status
-- Phase 1 home-screen entry for Daily Arena added.
-- Phase 1 Daily Arena foundation preview screen added. It clearly identifies future online features as not yet live.
-- Existing Supabase database currently contains only the six Discover tables; no entertainment tables have been created.
-- No live points, voting, public submissions, profiles, multiplayer, leaderboards or rewards have been enabled yet.
+## Current implementation status (updated 3 November 2026)
+
+### Live backend foundations and Android entry points
+- Daily Arena is connected from the existing app; existing Discover, Vault, Diary and Referral Hub areas remain separate.
+- **Hot Seat:** live published-poll retrieval, authenticated one-vote submission, duplicate-vote protection and community result retrieval are implemented.
+- **Quick Fire:** playable Android quiz screen, first published 10-question Naija Mix quiz, server-held answer keys, authenticated answer checking, explanations and one-answer-per-question protection are implemented. Quiz score is currently a session score only; it is not Games Points.
+- **Meme War:** first published caption challenge is seeded. Players can submit one caption per challenge; entries remain pending review until approved. Approved captions can be listed and voted on; each player can vote once per caption and cannot vote for their own entry. Users can report captions.
+- **Meme moderation:** moderator queue and approve/reject controls are implemented in the Android source. The database checks the trusted `app_metadata.role = 'admin'` claim for moderator access. Assign an admin role only through a trusted Supabase admin process; never use editable user metadata for this.
+- Meme War currently uses a text prompt/caption format; a real image-template library and image upload/display experience remain part of the later visual/media upgrade.
+- Supabase now contains Hot Seat, Quick Fire, Meme War and reporting tables, with RLS and server-side checks for the implemented features.
+
+### Not yet implemented
+- Shared Games Points wallet, reward ledger, cosmetics store, achievements and Trophy Room.
+- Big Quiz competition mode and lifelines.
+- Ludo and WHOT! authoritative multiplayer, rooms, matchmaking and reconnection.
+- Public profiles, seasons and leaderboards.
+- Full image templates, stickers, richer visual assets and interface redesign.
+- Final device testing and production release.
+
+### Engineering guardrails
+- Points remain a separate entertainment-only economy and must never buy business ads, sponsored listings, visibility, views or followers.
+- Never expose Supabase service-role keys or trust client-supplied scores/balances.
+- All reward decisions must be server-authoritative, capped and idempotent.
+- Public user-generated content must pass moderation; reports must be reviewable.
+- Do not launch incomplete multiplayer as live.
+- Batch related changes; do not spend deployment/build credits on every tiny visual adjustment.
+- No production deployment until functional, security and device testing is complete.
