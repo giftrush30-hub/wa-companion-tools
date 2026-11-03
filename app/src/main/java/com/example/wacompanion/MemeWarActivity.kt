@@ -196,6 +196,25 @@ class MemeWarActivity : Activity() {
                 setBackgroundColor(Color.rgb(242, 246, 244))
             }
             card.addView(input)
+            imagePreview = ImageView(this).apply {
+                visibility = View.GONE
+                adjustViewBounds = true
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(180)
+                )
+            }
+            card.addView(imagePreview)
+            imageStatus = label("You can add a photo or submit text only.", 12, muted)
+            card.addView(imageStatus)
+            card.addView(Button(this).apply {
+                text = "Add a photo"
+                isAllCaps = false
+                setOnClickListener {
+                    val picker = Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }
+                    startActivityForResult(Intent.createChooser(picker, "Choose a Meme War photo"), 4201)
+                }
+            })
             card.addView(label("QUICK STICKERS", 12, green, true))
             val stickerRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             listOf("😂", "🔥", "😭", "💀", "✨", "👀", "💯", "🤝").forEach { sticker ->
@@ -226,7 +245,9 @@ class MemeWarActivity : Activity() {
                     status.text = "Submitting your caption for review…"
                     worker.execute {
                         try {
-                            backend.submitCaption(item.id, caption)
+                            val photoUrl = selectedImageUri?.let { uploadSelectedImage(it) }
+                            backend.submitCaption(item.id, caption, photoUrl)
+                            selectedImageUri = null
                             val refreshed = backend.mySubmission(item.id)
                             runOnUiThread {
                                 mySubmission = refreshed
@@ -256,6 +277,17 @@ class MemeWarActivity : Activity() {
         entries.forEach { entry ->
             val card = panel()
             card.addView(label(entry.caption, 17, ink, true))
+            if (!entry.imageUrl.isNullOrBlank()) {
+                val photo = ImageView(this).apply {
+                    adjustViewBounds = true
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(190)
+                    )
+                }
+                card.addView(photo)
+                loadRemoteImage(entry.imageUrl, photo)
+            }
             card.addView(label("${entry.votes} vote(s)", 13, muted))
             val actions = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
