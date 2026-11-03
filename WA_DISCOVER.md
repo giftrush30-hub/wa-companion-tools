@@ -12,7 +12,7 @@ WA Discover is a Nigeria-wide discovery directory inside WA Companion. It helps 
 - Free basic listings remain available to approved sellers. Optional paid promotions are priced as listed below and must be clearly labelled **Sponsored**.
 - The initial launch audience is all Nigeria, with location filters.
 - Buyers should be able to browse without creating an account.
-- Sellers will need a secure way to register and manage their directory entry.
+- Sellers create a secure account to submit and manage their directory entry; new entries remain pending until reviewed.
 
 ## Advertising packages and Paystack preparation
 
@@ -50,28 +50,23 @@ No product photo/video uploads, product listings or payment processing are neede
 
 ## Backend schema status
 
-The current `supabase/schema.sql` has been simplified for this directory model:
-- `discover_categories`
-- `discover_businesses`
-- `discover_reports`
-- `discover_events`
+The current `supabase/schema.sql` includes `discover_categories`, `discover_businesses`, `discover_reports`, `discover_events`, `discover_promotion_packages` and `discover_promotion_orders`.
 
 Public users can read approved business profiles and active categories. Sellers need an authenticated account to submit a pending business and can edit their own details. A database trigger prevents ordinary sellers from changing ownership or approval status. Admin authorization uses a trusted Supabase `app_metadata.role = discover_admin` claim; it must only be granted through trusted server-side admin tooling, never user-editable metadata.
 
-**The initial schema has now been applied to the connected Supabase project** (`coodsyfdhjpqfxanqhwm`). Tables and RLS policies were confirmed in the project. The admin helper function search path and foreign-key indexes were also hardened. The Android app is not connected to Supabase yet, and seller authentication/search have not been implemented. Security advisor warnings still need review before public launch. Do not paste service-role keys into the app or GitHub.
+**The initial schema has now been applied to the connected Supabase project** (`coodsyfdhjpqfxanqhwm`). Tables and RLS policies were confirmed in the project. The admin helper function search path and foreign-key indexes were also hardened. The Android app now connects to Supabase using a client-safe publishable key. Buyer keyword/state/city search and seller sign-up/sign-in plus pending listing submission are implemented in source. The RLS performance policies were optimized; the current security advisor returns no findings. Physical-device and end-to-end tests are still required. Do not paste service-role keys into the app or GitHub.
 
 ## Current milestone
 
-The Android screen has seller draft preparation, local private draft saving/restoration, and buyer hand-off actions to open a seller-supplied catalogue link or WhatsApp chat. These do not publish a listing or provide public search. The latest source build has passed GitHub Actions compilation; physical-device testing remains outstanding.
+The Android screen now has live approved-business search, seller account creation/sign-in, seller listing submission as pending review, local draft saving, and WhatsApp/catalogue hand-off. The latest seller-flow build is running in GitHub Actions; do not call it verified until that run succeeds. Physical-device and backend end-to-end testing remain outstanding.
 
 ## Next implementation stages
 
-1. Connect Android using a client-safe publishable/anon key and strict row-level security.
-2. Add seller authentication and secure business submission.
-3. Add buyer search and state/city/category filters for approved businesses.
-4. Add reporting, moderation and abuse controls.
-5. Review and resolve Supabase security advisor findings before public launch.
-6. After the directory is live and real buyer activity exists, enable the prepared Sponsored packages with server-verified Paystack payments.
+1. Confirm the latest Android build and test seller registration/submission on a real phone.
+2. Add real category filtering and session refresh/sign-out handling.
+3. Add reporting, moderation and abuse controls.
+4. Test public search, seller ownership and approval restrictions end to end.
+5. After real buyer activity exists, enable Sponsored packages with server-verified Paystack payments.
 
 Never put a Supabase service-role key or payment secret in Android source code or GitHub. Do not charge sellers before there is real buyer traffic.
 
@@ -86,4 +81,4 @@ The current Android screen includes two direct buyer actions:
 - **Open a WhatsApp catalogue link**: the buyer pastes a link intentionally shared by a seller; Android opens it with the installed app or browser.
 - **Chat with a business on WhatsApp**: the buyer enters an international phone number; the app opens the wa.me chat link. For Nigeria, enter 234 followed by the national number without its leading zero.
 
-These are link hand-off tools, not public discovery search. The public searchable directory remains pending until a shared backend exists. The app must not claim that a pasted link is verified or that a WhatsApp message was sent; the buyer reviews and sends any message in WhatsApp themselves.
+These are link hand-off tools, not public discovery search. The public searchable directory is connected to Supabase and returns approved listings only. The app must not claim that a pasted link is verified or that a WhatsApp message was sent; the buyer reviews and sends any message in WhatsApp themselves.
