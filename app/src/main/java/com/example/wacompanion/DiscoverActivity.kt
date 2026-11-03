@@ -199,6 +199,14 @@ class DiscoverActivity : Activity() {
             .show()
     }
 
+    private fun showBackendNotice() {
+        AlertDialog.Builder(this)
+            .setTitle("Business search is coming")
+            .setMessage("These categories will become real filters when the shared WA Discover directory is connected. No businesses are being hidden or shown by these buttons yet.")
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
     private fun showSellerNotice() {
         val fields = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -214,17 +222,19 @@ class DiscoverActivity : Activity() {
             fields.addView(input, LinearLayout.LayoutParams(-1, dp(52)))
             return input
         }
-        val business = addField("Business name")
-        val category = addField("Category (e.g. Fashion, Food, Phones)")
-        val state = addField("State")
-        val city = addField("City or town")
-        val phone = addField("WhatsApp number with country code", android.text.InputType.TYPE_CLASS_PHONE)
-        val catalogue = addField("WhatsApp Business catalogue link (optional)")
+        val saved = getSharedPreferences("wa_discover_seller_draft", MODE_PRIVATE)
+        val business = addField("Business name").apply { setText(saved.getString("business", "")) }
+        val category = addField("Category (e.g. Fashion, Food, Phones)").apply { setText(saved.getString("category", "")) }
+        val state = addField("State").apply { setText(saved.getString("state", "")) }
+        val city = addField("City or town").apply { setText(saved.getString("city", "")) }
+        val phone = addField("WhatsApp number with country code", android.text.InputType.TYPE_CLASS_PHONE).apply { setText(saved.getString("phone", "")) }
+        val catalogue = addField("WhatsApp Business catalogue link (optional)").apply { setText(saved.getString("catalogue", "")) }
         val about = EditText(this).apply {
             hint = "Short description of your business"
             textSize = 15f
             minLines = 2
         }
+        about.setText(saved.getString("about", ""))
         fields.addView(about, LinearLayout.LayoutParams(-1, dp(82)))
         val content = ScrollView(this).apply { addView(fields) }
         val dialog = AlertDialog.Builder(this)
