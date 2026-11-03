@@ -65,7 +65,10 @@ class WhotActivity : Activity() {
         current=0;pendingDraw=0;pendingType=0;gameOver=false
         root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(16),dp(14),dp(24));setBackgroundColor(Color.rgb(246,249,247))}
         setContentView(ScrollView(this).apply{addView(root)})
-        root.addView(label("WHOT! • NAIJA CARD TABLE",24,green,true))
+        root.addView(label(if(intent.hasExtra("game_room_id")) "WHOT! • ONLINE ROOM" else "WHOT! • NAIJA CARD TABLE",24,green,true))
+        if(intent.hasExtra("game_room_id"))root.addView(Button(this).apply{
+            text="💬 Chat & voice with players";isAllCaps=false;setOnClickListener{openRoomChat()}
+        })
         root.addView(label("Pass-and-play practice • $playerCount players • No Games Points",13,Color.DKGRAY))
         status=label("",16,ink,true);root.addView(status)
         val topPanel=panel();topPanel.addView(label("CALL CARD",11,green,true))
@@ -318,4 +321,14 @@ class WhotActivity : Activity() {
     private fun panel()=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(12),dp(10),dp(12),dp(10));setBackgroundColor(Color.WHITE)}
     private fun label(s:String,size:Int,color:Int,bold:Boolean=false)=TextView(this).apply{text=s;textSize=size.toFloat();setTextColor(color);if(bold)setTypeface(null,android.graphics.Typeface.BOLD);setPadding(2,dp(4),2,dp(6))}
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
+    private fun openRoomChat(){
+        val id=intent.getStringExtra("game_room_id")?:return
+        startActivity(Intent(this,GamesMultiplayerActivity::class.java).apply{
+            putExtra("open_room_id",id)
+            putExtra("game_display_name",intent.getStringExtra("game_display_name"))
+            putExtra("chat_only",true)
+        })
+    }
+
+
 }
