@@ -53,17 +53,20 @@ class DiscoverActivity : Activity() {
         page.addView(hero)
         page.addView(space(16))
 
-        val search = EditText(this).apply {
-            hint = "Search businesses, products or services"
-            textSize = 15f
-            isSingleLine = true
-            setPadding(dp(13), dp(12), dp(13), dp(12))
-            setBackgroundColor(Color.WHITE)
-            isFocusable = false
-            isClickable = true
-            setOnClickListener { showBackendNotice() }
-        }
-        page.addView(search)
+        page.addView(text("START DISCOVERING", 13, green, true))
+        page.addView(space(8))
+        page.addView(Button(this).apply {
+            text = "Open a WhatsApp catalogue link"
+            isAllCaps = false
+            setOnClickListener { promptCatalogueLink() }
+        })
+        page.addView(Button(this).apply {
+            text = "Chat with a business on WhatsApp"
+            isAllCaps = false
+            setOnClickListener { promptWhatsAppNumber() }
+        })
+        page.addView(space(12))
+        page.addView(text("Public business search is still being built. For now, open a catalogue link shared by a seller or start a chat using their number.", 13, muted))
         page.addView(space(14))
 
         page.addView(text("EXPLORE BUSINESSES", 13, green, true))
@@ -139,11 +142,60 @@ class DiscoverActivity : Activity() {
         setContentView(scroll)
     }
 
-    private fun showBackendNotice() {
+    private fun promptCatalogueLink() {
+        val input = EditText(this).apply {
+            hint = "Paste the seller's catalogue or product link"
+            textSize = 15f
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+        }
         AlertDialog.Builder(this)
-            .setTitle("Business search is coming")
-            .setMessage("Search and category filters will become live after the shared business directory is connected. We are not displaying pretend businesses.")
-            .setPositiveButton("OK", null)
+            .setTitle("Open WhatsApp catalogue")
+            .setMessage("Paste a catalogue or product link the seller shared with you.")
+            .setView(input)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Open") { _, _ ->
+                val link = input.text.toString().trim()
+                if (link.startsWith("https://") || link.startsWith("http://")) {
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)))
+                    } catch (_: Exception) {
+                        AlertDialog.Builder(this).setMessage("No app or browser could open that link.")
+                            .setPositiveButton("OK", null).show()
+                    }
+                } else {
+                    AlertDialog.Builder(this).setMessage("Please paste a full link beginning with https://.")
+                        .setPositiveButton("OK", null).show()
+                }
+            }
+            .show()
+    }
+
+    private fun promptWhatsAppNumber() {
+        val input = EditText(this).apply {
+            hint = "Number with country code, e.g. 2348012345678"
+            inputType = android.text.InputType.TYPE_CLASS_PHONE
+            textSize = 15f
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Chat with a seller")
+            .setMessage("For Nigeria, use 234 followed by the number, without the first zero.")
+            .setView(input)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Continue") { _, _ ->
+                val number = input.text.toString().filter { it.isDigit() }
+                if (number.length in 10..15) {
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://wa.me/$number")))
+                    } catch (_: Exception) {
+                        AlertDialog.Builder(this).setMessage("WhatsApp or a browser could not open this number.")
+                            .setPositiveButton("OK", null).show()
+                    }
+                } else {
+                    AlertDialog.Builder(this).setMessage("Please enter a valid international number.")
+                        .setPositiveButton("OK", null).show()
+                }
+            }
             .show()
     }
 
