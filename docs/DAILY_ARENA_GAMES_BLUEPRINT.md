@@ -249,3 +249,10 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - This is offline practice progression only. It does not award, spend or affect Games Points, paid promotion, public rankings or competitive claims. Local records are not synced across devices or accounts.
 - Product pattern: Kahoot's guidance around replay variety and learner feedback informed the use of persistent personal improvement signals rather than rewarding raw volume. Keep progression transparent and avoid pay-to-win benefits.
 - Not build-tested or device-tested; no APK or deployment was produced.
+
+### Ludo and WHOT local match records — 3 November 2026
+- **Ludo:** after a completed victory, the result screen now records the number of completed matches and victories on that device, displays a first-victory / victory-builder milestone, and shows up to five recent results. The log is local to the installation.
+- **WHOT!:** both a normal first-to-empty-hand win and an exhausted-market result are recorded. The result panel displays completed matches, player wins, first-match / first-win milestones, and up to five recent results. A tied exhausted-market result is recorded as a completed match but does not inflate the win count.
+- These are private, local practice records only. No Games Points, cash value, paid promotion, online leaderboard or account sync is involved. Names shown in these local pass-and-play logs are generic seat labels (e.g. PLAYER 1 / RED), not account identities.
+- This batch extends the Big Quiz personal-best and achievement pattern to the other two offline games. It does not claim online multiplayer or server-verified results.
+- Static source inspection only; no Android build, APK, device test or deployment was performed.
