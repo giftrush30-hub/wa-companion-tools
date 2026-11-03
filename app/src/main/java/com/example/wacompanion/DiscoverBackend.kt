@@ -54,7 +54,7 @@ class DiscoverBackend(context: Context) {
         filters += "approval_status=eq.approved"
         if (term.isNotBlank()) {
             val safe = term.trim().replace(",", " ").replace("%", "").replace("*", "")
-            filters += "or=(name.ilike.*$safe*,description.ilike.*$safe*)"
+            filters += encode("or=(name.ilike.*$safe*,description.ilike.*$safe*)")
         }
         if (state.isNotBlank()) filters += "state=ilike.*${encode(state.trim())}*"
         if (city.isNotBlank()) filters += "city=ilike.*${encode(city.trim())}*"
