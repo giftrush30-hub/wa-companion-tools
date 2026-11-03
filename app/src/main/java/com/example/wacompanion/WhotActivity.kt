@@ -46,13 +46,17 @@ class WhotActivity : Activity() {
     override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);choosePlayers()}
 
     private fun choosePlayers(){
+        val onlineCount=intent.getIntExtra("game_player_count",0)
+        if(intent.hasExtra("game_room_id") && onlineCount in 2..4){playerCount=onlineCount;newGame();return}
         AlertDialog.Builder(this).setTitle("WHOT! • Choose players")
             .setItems(arrayOf("2 players","3 players","4 players")){_,which->playerCount=which+2;newGame()}
             .setCancelable(false).show()
     }
 
     private fun newGame(){
-        players=listOf("PLAYER 1","PLAYER 2","PLAYER 3","PLAYER 4").take(playerCount)
+        val onlineNames=intent.getStringArrayListExtra("game_player_names").orEmpty()
+        players=if(intent.hasExtra("game_room_id") && onlineNames.size==playerCount) onlineNames.toList()
+            else listOf("PLAYER 1","PLAYER 2","PLAYER 3","PLAYER 4").take(playerCount)
         hands.clear();repeat(playerCount){hands.add(mutableListOf())}
         discard.clear();market.clear()
         suits.forEach{s->numbers[s].orEmpty().forEach{n->market.add(Card(s,n))}}
