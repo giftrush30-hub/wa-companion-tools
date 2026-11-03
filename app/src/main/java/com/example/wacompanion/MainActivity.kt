@@ -78,7 +78,7 @@ class MainActivity : Activity() {
         root.addView(label("Your WhatsApp stays installed and unchanged.", 13, Color.rgb(6, 100, 70)))
         root.addView(space(18))
 
-        card("DAILY MESSAGE & CAPTION GENERATOR", "Get fresh Nigerian-friendly ideas for greetings, faith, love, motivation and business. Copy or share the one you like.") { dailyMessageTool() }
+        card("NAIJA WHATSAPP STICKERS", "Preview original Nigerian reactions and add the starter sticker pack to WhatsApp with your confirmation.") { stickerStudio() }\n        card("DAILY MESSAGE & CAPTION GENERATOR", "Get fresh Nigerian-friendly ideas for greetings, faith, love, motivation and business. Copy or share the one you like.") { dailyMessageTool() }
         card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
         card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
@@ -122,6 +122,49 @@ class MainActivity : Activity() {
         root.addView(label("Note: This is a companion utility, not a modified WhatsApp client. It cannot read private chats, hide typing indicators, or send messages automatically.", 12, Color.GRAY))
     }
 
+
+    private fun stickerStudio() {
+        root.addView(label("NAIJA REACTIONS • STARTER PACK", 16, Color.rgb(6, 63, 50), true))
+        root.addView(label("Six original Nigerian reaction stickers. Add the pack once, then use the stickers from WhatsApp's sticker tray.", 13, Color.DKGRAY))
+        val samples = listOf("Omo! Wetin be this? 😳", "I no fit shout! 😂", "Abeg o! 🙏", "Na wa o! 😮", "God abeg! 🙏", "E choke! 🔥")
+        samples.forEach { phrase ->
+            val preview = TextView(this).apply {
+                text = phrase
+                textSize = 20f
+                setTextColor(Color.rgb(6, 63, 50))
+                setPadding(dp(14), dp(14), dp(14), dp(14))
+                setBackgroundColor(Color.WHITE)
+            }
+            root.addView(preview)
+            root.addView(space(5))
+        }
+        button("Add Naija Reactions to WhatsApp") {
+            try {
+                val intent = Intent("com.whatsapp.intent.action.ENABLE_STICKER_PACK").apply {
+                    putExtra("sticker_pack_id", NaijaStickerProvider.PACK_ID)
+                    putExtra("sticker_pack_authority", NaijaStickerProvider.AUTHORITY)
+                    putExtra("sticker_pack_name", "Naija Reactions")
+                }
+                startActivity(intent)
+            } catch (_: android.content.ActivityNotFoundException) {
+                toast("WhatsApp was not found. Install or update WhatsApp and try again.")
+            } catch (_: Exception) {
+                toast("Could not open WhatsApp sticker confirmation.")
+            }
+        }
+        button("Add to WhatsApp Business") {
+            try {
+                val intent = Intent("com.whatsapp.intent.action.ENABLE_STICKER_PACK").apply {
+                    setPackage("com.whatsapp.w4b")
+                    putExtra("sticker_pack_id", NaijaStickerProvider.PACK_ID)
+                    putExtra("sticker_pack_authority", NaijaStickerProvider.AUTHORITY)
+                    putExtra("sticker_pack_name", "Naija Reactions")
+                }
+                startActivity(intent)
+            } catch (_: Exception) { toast("WhatsApp Business was not found or could not open the sticker confirmation.") }
+        }
+        root.addView(label("WhatsApp must show its own confirmation before the pack is added. Stickers are generated on this phone and do not require downloading a large pack.", 11, Color.GRAY))
+    }
 
     private fun dailyMessageTool() {
         val collections = linkedMapOf(
