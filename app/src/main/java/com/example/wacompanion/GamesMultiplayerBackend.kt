@@ -120,18 +120,23 @@ class GamesMultiplayerBackend(context: Context) {
         }.reversed()
     }
 
-    fun sendMessage(roomId: String, body: String) {
+    fun sendMessage(roomId: String, body: String): ChatMessage {
         val active = session()
         val clean = body.trim()
         if (clean.isEmpty() || clean.length > 300) {
             throw IllegalArgumentException("Message must be between 1 and 300 characters.")
         }
-        discover.request(
+        val inserted = discover.request(
             "/rest/v1/game_chat_messages",
             "POST",
             JSONObject().put("room_id", roomId).put("sender_id", active.userId).put("body", clean),
-            active.accessToken
-        )
+            active.accessToken,
+            returnRepresentation = true
+        ) as JSONArray
+        if (inserted.length() == 0) throw IllegalStateException("The message was not saved.")
+        val row = inserted.getJSONObject(0)
+        return ChatMessage(row.getString("id"), row.getString("room_id"), row.getString("sender_id"),
+            row.getString("body"), row.getString("created_at"))
     }
 
     fun setReady(roomId: String, ready: Boolean) {
@@ -173,7 +178,7 @@ class GamesMultiplayerBackend(context: Context) {
     }
 
     private fun parseRoom(row: JSONObject): Room = Room(
-        id = row.getString("room_id").ifBlank { row.optString("id") },
+        id = row.optString("room_id").ifBlank { row.optString("id") },
         code = row.optString("room_code"),
         gameType = row.optString("game_type"),
         visibility = row.optString("visibility"),
