@@ -70,10 +70,6 @@ class MemeWarActivity : Activity() {
     }
 
     private fun uploadSelectedImage(uri: Uri): String {
-        val mime = contentResolver.getType(uri) ?: "image/jpeg"
-        if (mime !in setOf("image/jpeg", "image/png", "image/webp")) {
-            throw IllegalArgumentException("Choose a JPG, PNG or WEBP image.")
-        }
         val bitmap = contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
             ?: throw IllegalStateException("Could not read the selected image.")
         val maxSide = 1440
@@ -103,6 +99,9 @@ class MemeWarActivity : Activity() {
     }
 
     private fun loadChallenge(excludeChallengeId: String? = null) {
+        selectedImageUri = null
+        imagePreview = null
+        imageStatus = null
         worker.execute {
             try {
                 val loaded = backend.activeChallenge(excludeChallengeId)
@@ -137,7 +136,15 @@ class MemeWarActivity : Activity() {
         card.addView(label(item.title, 20, ink, true))
         card.addView(label(item.instructions, 15, muted))
         if (!item.templateImageUrl.isNullOrBlank()) {
-            card.addView(label("A challenge image is attached to this round.", 13, green))
+            val template = ImageView(this).apply {
+                adjustViewBounds = true
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(190)
+                )
+            }
+            card.addView(template)
+            loadRemoteImage(item.templateImageUrl, template)
         }
         challengeArea.addView(card)
         challengeArea.addView(Button(this).apply {
