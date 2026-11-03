@@ -1,6 +1,6 @@
 -- WA Discover: lean WhatsApp-first business directory.
 -- Apply manually in the Supabase SQL Editor after creating your project.
--- No product images, media uploads, paid promotions, or public seller accounts in v1.
+-- No product media uploads or public seller accounts in v1. Promotion packages are catalogue-only until verified checkout is implemented.
 -- Admin access is granted only through trusted Supabase app_metadata, never user-editable user_metadata.
 
 create extension if not exists pgcrypto;
@@ -117,7 +117,7 @@ language plpgsql
 set search_path = public
 as $$
 begin
-  if auth.role() <> 'service_role' and not public.is_wa_discover_admin() then
+  if coalesce(auth.role(), '') <> 'service_role' and not public.is_wa_discover_admin() then
     if tg_op = 'INSERT' then
       if new.owner_id <> auth.uid() or new.approval_status <> 'pending' then
         raise exception 'Businesses must be submitted by their owner for review';
@@ -239,6 +239,19 @@ create policy "Admins update promotion orders"
   on public.discover_promotion_orders for update to authenticated
   using (public.is_wa_discover_admin())
   with check (public.is_wa_discover_admin());
+
+
+-- Explicit Data API grants: RLS policies remain the row-level security boundary.
+grant usage on schema public to anon, authenticated;
+grant select on public.discover_categories, public.discover_promotion_packages to anon, authenticated;
+grant select on public.discover_businesses to anon, authenticated;
+grant insert, update on public.discover_businesses to authenticated;
+grant insert on public.discover_reports to anon, authenticated;
+grant select, update on public.discover_reports to authenticated;
+grant insert on public.discover_events to anon, authenticated;
+grant select on public.discover_events to authenticated;
+grant select, insert on public.discover_promotion_orders to authenticated;
+grant update on public.discover_promotion_orders to authenticated;
 
 -- IMPORTANT:
 -- 1. This SQL has NOT been run against a live Supabase project.
