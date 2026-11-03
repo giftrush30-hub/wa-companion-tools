@@ -57,7 +57,13 @@ class DailyArenaActivity : Activity() {
             setOnClickListener { startActivity(Intent(this@DailyArenaActivity, QuickFireActivity::class.java)) }
         })
         content.addView(gap(9))
-        addFeature(content, "MEME WAR", "Original caption challenges with voting, reporting and moderation. Coming next.")
+        addFeature(content, "MEME WAR", "Write original captions, vote for approved entries and report inappropriate content.")
+        content.addView(Button(this).apply {
+            text = "Enter Meme War"
+            isAllCaps = false
+            setOnClickListener { startActivity(Intent(this@DailyArenaActivity, MemeWarActivity::class.java)) }
+        })
+        content.addView(gap(9))
         addFeature(content, "GAMES ARENA", "Big Quiz, multiplayer Ludo and WHOT! with fair-play protections. Coming next.")
         addFeature(content, "POINTS & REWARDS", "Cosmetics, avatars, profile decorations and game customisation only.")
         addFeature(content, "LEADERBOARDS", "Separate Quiz, Ludo, WHOT! and All-Round rankings. Coming next.")
