@@ -98,6 +98,15 @@ class MemeWarActivity : Activity() {
                     status.text = if (mine == null) "Your turn: submit one caption for this challenge." else
                         "Your caption status: ${mine.optString("status").uppercase()}. Each player gets one entry per challenge."
                     renderComposer(item, mine)
+                    if (backend.isAdmin()) {
+                        challengeArea.addView(Button(this@MemeWarActivity).apply {
+                            text = "Open moderation queue"
+                            isAllCaps = false
+                            setOnClickListener {
+                                startActivity(Intent(this@MemeWarActivity, MemeModerationActivity::class.java))
+                            }
+                        })
+                    }
                     renderEntries(entries)
                 }
             } catch (e: Exception) {
