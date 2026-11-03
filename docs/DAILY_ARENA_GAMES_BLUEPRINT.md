@@ -219,3 +219,11 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Token movement now animates along the shared track or into the home lane, then resolves captures, safe squares, bonus turns and victory only after the piece reaches its destination.
 - Existing dice rules, token progress, capture rules, pass-phone handoff and offline/no-points boundary are retained.
 - Source change committed to GitHub main. No Android build, device test, APK or deployment was run; animation timing and rendering still need on-device review.
+
+## Big Quiz category and show-flow update - 2026-11-03
+- Updated `app/src/main/java/com/example/wacompanion/BigQuizActivity.kt` to offer a subject picker before play: All Categories (30), Nigeria & Africa (5), Science & Nature (7), Maths & Logic (9), Digital & Technology (3), World & Society (4), and Business & Money (1).
+- The selected subject filters the existing verified-in-source question bank; no question text or answer keys were changed. Category selection resets score, progress and the one-use 50:50 lifeline.
+- Added clearer show identity, selected-category label, question numbering, and more prominent question presentation. Results now offer a direct route to choose another category.
+- Practice remains offline and awards no Games Points or competitive ranking. No new reward economy or monetization was introduced.
+- Research informed the design: Kahoot guidance recommends varied, clearly presented question experiences, difficulty-appropriate timing and concise options; the CDC quiz guidance highlights explanations and useful end-of-quiz feedback. This update does not yet add timers or new question formats.
+- Source committed to GitHub main. No build, APK, device test or deployment performed.
