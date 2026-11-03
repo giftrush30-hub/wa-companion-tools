@@ -89,6 +89,7 @@ class MainActivity : Activity() {
         card("PERSONAL BRAND BUILDER", "Save your name, business identity and contact call-to-action for consistent status cards.") { personalBrandBuilder() }
         card("PRODUCT CATALOGUE MAKER", "Create product cards with photos, prices and descriptions, save your items and share them with customers.") { productCatalogueMaker() }
         card("BUSINESS ORDER DASHBOARD", "See your order count, money collected, outstanding balances and delivery progress at a glance.") { orderDashboard() }
+        card("CUSTOMER DEBT & FOLLOW-UP MANAGER", "Track who owes money, due dates, follow-up notes and payment reminders.") { debtFollowUpManager() }
         card("CUSTOMER ORDER TRACKER", "Record customer orders, payments and balances, track progress and share updates.") { orderTracker() }
         card("REPLY-TO-STATUS ASSISTANT", "Bring in a status or describe it, then get thoughtful reply ideas in different tones.") { replyAssistant() }
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
@@ -518,6 +519,119 @@ class MainActivity : Activity() {
         root.addView(saved)
         refreshSaved()
         root.addView(label("This is a planning calendar, not automatic posting. You choose when to share each status.", 11, Color.GRAY))
+    }
+
+    private fun debtFollowUpManager() {
+        root.addView(label("CUSTOMER DEBT & FOLLOW-UP", 17, Color.rgb(6, 63, 50), true))
+        root.addView(label("Track unpaid balances and decide when to contact each customer. Reminders are for you; messages are never sent automatically.", 12, Color.DKGRAY))
+        val customer = EditText(this).apply { hint = "Customer name"; isSingleLine = true }
+        val amount = EditText(this).apply { hint = "Outstanding amount (₦)"; inputType = 2 }
+        val reason = EditText(this).apply { hint = "What is the payment for?"; isSingleLine = true }
+        val note = EditText(this).apply { hint = "Last contact / promise / follow-up note"; minLines = 2; maxLines = 3 }
+        val due = Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, 7); set(Calendar.HOUR_OF_DAY, 9); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }
+        val dueButton = Button(this).apply {
+            isAllCaps = false
+            text = "Due date: " + SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault()).format(due.time)
+        }
+        dueButton.setOnClickListener {
+            DatePickerDialog(this, { _, year, month, day ->
+                due.set(year, month, day, 9, 0, 0)
+                dueButton.text = "Due date: " + SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault()).format(due.time)
+            }, due.get(Calendar.YEAR), due.get(Calendar.MONTH), due.get(Calendar.DAY_OF_MONTH)).show()
+        }
+        root.addView(customer); root.addView(amount); root.addView(reason); root.addView(note); root.addView(dueButton)
+        button("Save debt record") {
+            val who = customer.text.toString().trim()
+            val value = amount.text.toString().toDoubleOrNull()
+            val what = reason.text.toString().trim()
+            if (who.isBlank() || what.isBlank() || value == null || value <= 0) {
+                toast("Enter a customer, reason and valid outstanding amount.")
+            } else {
+                val fields = listOf(who, value.toString(), what, due.timeInMillis.toString(), note.text.toString().trim())
+                val record = fields.joinToString("\u001e")
+                val old = prefs.getString("debt_followups", "") ?: ""
+                prefs.edit().putString("debt_followups", old + (if (old.isBlank()) "" else "\u001f") + record).apply()
+                scheduleReminder("Follow up with " + who + " about ₦" + java.text.NumberFormat.getNumberInstance(Locale("en", "NG")).format(value) + " for " + what + ". Check payment status and update your records.", due.timeInMillis)
+                customer.setText(""); amount.setText(""); reason.setText(""); note.setText("")
+                toast("Debt saved. A follow-up reminder has been scheduled.")
+                renderDebtFollowups()
+            }
+        }
+        root.addView(space(12))
+        root.addView(label("SAVED FOLLOW-UPS", 14, Color.rgb(6, 63, 50), true))
+        renderDebtFollowups()
+        root.addView(label("Keep reminders polite and factual. Record payment promises or disputes, and close the record once payment is confirmed.", 11, Color.GRAY))
+    }
+
+    private fun renderDebtFollowups() {
+        val holder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val records = (prefs.getString("debt_followups", "") ?: "").split("\u001f").filter { it.isNotBlank() }
+        if (records.isEmpty()) {
+            holder.addView(label("No debt follow-ups saved yet.", 12, Color.GRAY))
+        } else {
+            val formatter = java.text.NumberFormat.getNumberInstance(Locale("en", "NG"))
+            records.forEachIndexed { index, record ->
+                val fields = record.split("\u001e")
+                val who = fields.getOrNull(0).orEmpty()
+                val amount = fields.getOrNull(1)?.toDoubleOrNull() ?: 0.0
+                val reason = fields.getOrNull(2).orEmpty()
+                val dueMillis = fields.getOrNull(3)?.toLongOrNull() ?: 0L
+                val note = fields.getOrNull(4).orEmpty()
+                val date = if (dueMillis > 0) SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(java.util.Date(dueMillis)) else "Not set"
+                val overdue = dueMillis > 0 && dueMillis < System.currentTimeMillis()
+                val panel = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(dp(10), dp(10), dp(10), dp(10))
+                    setBackgroundColor(Color.WHITE)
+                }
+                panel.addView(label(who + " • " + reason, 14, Color.rgb(6, 63, 50), true))
+                panel.addView(label("Outstanding: ₦" + formatter.format(amount), 13, Color.DKGRAY, true))
+                panel.addView(label((if (overdue) "OVERDUE • " else "Due • ") + date, 12, if (overdue) Color.rgb(180, 55, 35) else Color.GRAY))
+                if (note.isNotBlank()) panel.addView(label("Last note: " + note, 12, Color.DKGRAY))
+                val share = Button(this).apply { text = "Prepare WhatsApp reminder"; isAllCaps = false }
+                share.setOnClickListener {
+                    shareToWhatsApp("Hello " + who + ", I hope you are well. This is a friendly follow-up about the outstanding ₦" + formatter.format(amount) + " for " + reason + ", due on " + date + ". Please let me know when we can expect payment. Thank you.")
+                }
+                panel.addView(share)
+                val noteButton = Button(this).apply { text = "Add follow-up note"; isAllCaps = false }
+                noteButton.setOnClickListener {
+                    val input = EditText(this).apply { hint = "Record reply, promise date or discussion" }
+                    android.app.AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Update follow-up note")
+                        .setView(input)
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Save") { _, _ ->
+                            val updated = fields.toMutableList()
+                            while (updated.size < 5) updated.add("")
+                            updated[4] = input.text.toString().trim()
+                            val mutable = records.toMutableList()
+                            mutable[index] = updated.joinToString("\u001e")
+                            prefs.edit().putString("debt_followups", mutable.joinToString("\u001f")).apply()
+                            renderDebtFollowups()
+                            toast("Follow-up note saved.")
+                        }.show()
+                }
+                panel.addView(noteButton)
+                val settled = Button(this).apply { text = "Mark as paid / remove"; isAllCaps = false }
+                settled.setOnClickListener {
+                    android.app.AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Close this debt record?")
+                        .setMessage("Only do this after confirming that payment has actually arrived.")
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Confirm") { _, _ ->
+                            val mutable = records.toMutableList()
+                            mutable.removeAt(index)
+                            prefs.edit().putString("debt_followups", mutable.joinToString("\u001f")).apply()
+                            renderDebtFollowups()
+                            toast("Debt record closed.")
+                        }.show()
+                }
+                panel.addView(settled)
+                holder.addView(panel)
+                holder.addView(space(7))
+            }
+        }
+        root.addView(holder)
     }
 
     private fun orderDashboard() {
