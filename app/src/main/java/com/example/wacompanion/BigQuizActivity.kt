@@ -42,7 +42,8 @@ class BigQuizActivity : Activity() {
         Question("Which gas do plants absorb from the atmosphere for photosynthesis?", listOf("Oxygen","Carbon dioxide","Nitrogen","Hydrogen"),1,"Plants use carbon dioxide as a carbon source during photosynthesis."),
         Question("What is 0.25 written as a fraction in simplest form?", listOf("1/2","1/3","1/4","1/5"),2,"0.25 is 25/100, which simplifies to 1/4."),
         Question("Which branch of government is primarily responsible for interpreting laws?", listOf("Executive","Legislature","Judiciary","Civil service"),2,"Courts and the judiciary interpret and apply the law."),
-        Question("If all bloops are razzies and all razzies are lazzies, which statement must be true?", listOf("All lazzies are bloops","All bloops are lazzies","No bloops are lazzies","Some razzies are not lazzies"),1,"If bloops are inside the razzy group, and razzies are inside the lazzy group, all bloops are lazzies.")
+        Question("If all bloops are razzies and all razzies are lazzies, which statement must be true?", listOf("All lazzies are bloops","All bloops are lazzies","No bloops are lazzies","Some razzies are not lazzies"),1,"If bloops are inside the razzy group, and razzies are inside the lazzy group, all bloops are lazzies."),
+        Question("What is the chemical formula for water?", listOf("CO2","H2O","O2","NaCl"),1,"A water molecule contains two hydrogen atoms and one oxygen atom.")
     )
     private val ink = Color.rgb(18,42,55)
     private val green = Color.rgb(7,91,69)
