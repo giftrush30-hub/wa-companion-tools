@@ -183,3 +183,9 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - These local versions are intentionally separate from online play. Private rooms, matchmaking, reconnects, server-authoritative dice/card shuffles and match validation remain future work.
 - Ludo rule research used a conventional reference for six-to-leave-base, safe squares, captures, exact-roll home and blockades, while noting that Ludo house rules vary. WHOT rule research used Pagat's Nigerian variant guide, which documents the 54-card deck and special-card variants. Sources: https://leludo.org/rules and https://www.pagat.com/com/whot.html
 - The app's Games Points remain unavailable in these local games. Points cannot buy business promotion, ads, views, followers or visibility.
+
+
+### Games Arena follow-up — Big Quiz expansion
+- Big Quiz offline practice now has 30 questions, five named progress checkpoints (Starter, Skilled, Sharp, Master and Expert) and a final Quiz Champion level. These are practice milestones only, not paid prizes or Games Points.
+- The Ludo activity currently uses a custom square-loop 52-cell practice board with four coloured home lanes. It is a playable local rules foundation, not yet the polished traditional cross-shaped board or an online multiplayer build. The next Ludo pass should improve the board geometry and add a clear turn hand-off/animation treatment before network play.
+- The WHOT! activity implements the 54-card deck and the chosen special-card variant described above. House rules vary, so the selected rule summary is shown in-game rather than pretending there is only one universal version.
