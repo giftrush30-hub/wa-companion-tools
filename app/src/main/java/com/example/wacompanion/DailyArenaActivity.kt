@@ -69,6 +69,14 @@ class DailyArenaActivity : Activity() {
         addFeature(content, "GAMES ARENA", "Big Quiz, multiplayer Ludo and WHOT! with fair-play protections. Coming next.")
         addFeature(content, "POINTS & REWARDS", "Cosmetics, avatars, profile decorations and game customisation only.")
         addFeature(content, "LEADERBOARDS", "Separate Quiz, Ludo, WHOT! and All-Round rankings. Coming next.")
+        if (MemeWarBackend(this).isAdmin()) {
+            content.addView(Button(this).apply {
+                text = "Open Daily Arena safety review"
+                isAllCaps = false
+                setOnClickListener { startActivity(Intent(this@DailyArenaActivity, ArenaModerationActivity::class.java)) }
+            })
+            content.addView(gap(9))
+        }
 
         val note = panel()
         note.addView(text("TWO SEPARATE ECONOMIES", 12, green, true))
