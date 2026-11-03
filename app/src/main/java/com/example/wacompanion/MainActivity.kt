@@ -78,6 +78,7 @@ class MainActivity : Activity() {
         root.addView(label("Your WhatsApp stays installed and unchanged.", 13, Color.rgb(6, 100, 70)))
         root.addView(space(18))
 
+        card("DAILY MESSAGE & CAPTION GENERATOR", "Get fresh Nigerian-friendly ideas for greetings, faith, love, motivation and business. Copy or share the one you like.") { dailyMessageTool() }
         card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
         card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
@@ -121,6 +122,76 @@ class MainActivity : Activity() {
         root.addView(label("Note: This is a companion utility, not a modified WhatsApp client. It cannot read private chats, hide typing indicators, or send messages automatically.", 12, Color.GRAY))
     }
 
+
+    private fun dailyMessageTool() {
+        val collections = linkedMapOf(
+            "Naija vibes" to listOf(
+                "Omo, small small progress still be progress. No give up.",
+                "No let today's wahala make you forget tomorrow's possibilities.",
+                "Abeg, protect your peace and keep your focus.",
+                "One step at a time. We go reach there."
+            ),
+            "Faith" to listOf(
+                "God's grace is enough for today. Keep moving in faith.",
+                "May strength meet you where you feel tired, and hope rise again.",
+                "Your season can change. Keep praying, preparing and doing your part.",
+                "May the Lord guide your steps and bless the work of your hands."
+            ),
+            "Love & friendship" to listOf(
+                "You make ordinary moments feel special. I appreciate you.",
+                "Real love shows up with patience, honesty and care.",
+                "Just checking on you. I hope today is treating you kindly.",
+                "Some people make life lighter simply by being in it. Thank you."
+            ),
+            "Motivation" to listOf(
+                "Keep building quietly. Let your progress speak in time.",
+                "A slow beginning is still a beginning. Start where you are.",
+                "Consistency can take you places excitement alone cannot.",
+                "Rest if you need to, but do not give up on what matters."
+            ),
+            "Small business" to listOf(
+                "Thank you for choosing our business. Your support keeps us growing.",
+                "Good products, honest prices and customer care. Send a message to order.",
+                "We appreciate every referral, enquiry and purchase. Thank you!",
+                "Need something reliable? We are ready to help. Send us a message."
+            )
+        )
+        val category = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, collections.keys.toList())
+        }
+        root.addView(label("CHOOSE A COLLECTION", 13, Color.rgb(6, 63, 50), true))
+        root.addView(category)
+        val output = TextView(this).apply {
+            text = "Tap “Give me an idea” to create a message."
+            textSize = 18f
+            setTextColor(Color.rgb(20, 55, 48))
+            setPadding(dp(12), dp(18), dp(12), dp(18))
+            setBackgroundColor(Color.WHITE)
+        }
+        root.addView(output)
+        fun generate() {
+            val options = collections[category.selectedItem.toString()].orEmpty()
+            val previous = output.tag as? String
+            val choices = options.filter { it != previous }
+            val chosen = (choices.ifEmpty { options }).random()
+            output.text = chosen
+            output.tag = chosen
+        }
+        button("Give me an idea") { generate() }
+        button("Copy message") {
+            val value = output.tag as? String
+            if (value.isNullOrBlank()) toast("Generate a message first.") else {
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager)
+                    .setPrimaryClip(ClipData.newPlainText("Daily message", value))
+                toast("Message copied.")
+            }
+        }
+        button("Share to WhatsApp") {
+            val value = output.tag as? String
+            if (value.isNullOrBlank()) toast("Generate a message first.") else shareToWhatsApp(value)
+        }
+        root.addView(label("Messages are built into the app and work offline. Review and personalise before sharing.", 11, Color.GRAY))
+    }
 
     private fun memeStudio() {
         val search = EditText(this).apply { hint = "Search reactions"; isSingleLine = true }
