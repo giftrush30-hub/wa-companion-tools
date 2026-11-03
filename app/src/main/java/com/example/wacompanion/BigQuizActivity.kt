@@ -14,7 +14,7 @@ import android.widget.TextView
 /** Offline Big Quiz practice. No competitive score or Games Points are awarded in this local first milestone. */
 class BigQuizActivity : Activity() {
     private data class Question(val text: String, val options: List<String>, val answer: Int, val explanation: String)
-    private val questions = listOf(
+    private val questionBank = listOf(
         Question("Which Nigerian city became the Federal Capital Territory in 1991?", listOf("Lagos","Abuja","Kano","Ibadan"),1,"Abuja replaced Lagos as Nigeria's capital in 1991."),
         Question("Which planet is known as the Red Planet?", listOf("Venus","Mars","Jupiter","Mercury"),1,"Iron-rich dust gives Mars its familiar reddish appearance."),
         Question("Who wrote Things Fall Apart?", listOf("Wole Soyinka","Chinua Achebe","Buchi Emecheta","J. P. Clark"),1,"Chinua Achebe's novel was first published in 1958."),
@@ -46,6 +46,17 @@ class BigQuizActivity : Activity() {
         Question("If all bloops are razzies and all razzies are lazzies, which statement must be true?", listOf("All lazzies are bloops","All bloops are lazzies","No bloops are lazzies","Some razzies are not lazzies"),1,"If bloops are inside the razzy group, and razzies are inside the lazzy group, all bloops are lazzies."),
         Question("What is the chemical formula for water?", listOf("CO2","H2O","O2","NaCl"),1,"A water molecule contains two hydrogen atoms and one oxygen atom.")
     )
+    private var questions: List<Question> = questionBank
+    private val categories = linkedMapOf(
+        "All categories" to (0..29).toList(),
+        "Nigeria & Africa" to listOf(0,2,7,13,16),
+        "Science & Nature" to listOf(1,5,9,11,19,25,29),
+        "Maths & Logic" to listOf(4,6,12,14,18,23,24,26,28),
+        "Digital & Technology" to listOf(8,17,22),
+        "World & Society" to listOf(15,20,21,27),
+        "Business & Money" to listOf(10)
+    )
+    private var selectedCategory = "All categories"
     private val ink = Color.rgb(18,42,55)
     private val green = Color.rgb(7,91,69)
     private val muted = Color.rgb(91,108,119)
@@ -68,7 +79,7 @@ class BigQuizActivity : Activity() {
         }
         setContentView(ScrollView(this).apply { addView(root) })
         root.addView(label("BIG QUIZ",28,green,true))
-        root.addView(label("The practice challenge • 30 questions",14,muted))
+        root.addView(label("THE QUIZ SHOW • OFFLINE PRACTICE",14,muted,true))
         status = label("",14,muted,true)
         root.addView(status)
         progressBar = ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal).apply {
@@ -80,7 +91,24 @@ class BigQuizActivity : Activity() {
         root.addView(progressBar,LinearLayout.LayoutParams(-1,dp(8)).apply { bottomMargin=dp(14) })
         questionArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(questionArea)
-        renderQuestion()
+        chooseCategory()
+    }
+
+    private fun chooseCategory() {
+        val names = categories.keys.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("BIG QUIZ • CHOOSE YOUR ARENA")
+            .setMessage("Pick a subject or take the full 30-question championship challenge.")
+            .setItems(names) { _, which ->
+                selectedCategory = names[which]
+                questions = categories[selectedCategory].map { questionBank[it] }
+                index = 0
+                correct = 0
+                fiftyUsed = false
+                renderQuestion()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun renderQuestion() {
@@ -88,7 +116,7 @@ class BigQuizActivity : Activity() {
         locked = false
         hiddenOptions.clear()
         val q = questions[index]
-        status.text = "LEVEL ${index+1} / ${questions.size}     •     CORRECT: $correct"
+        status.text = "${selectedCategory.uppercase()}  •  LEVEL ${index+1}/${questions.size}  •  SCORE: $correct"
         progressBar.progress = index
         questionArea.removeAllViews()
         val milestone = when (index + 1) {
@@ -101,8 +129,10 @@ class BigQuizActivity : Activity() {
             else -> "THE PRACTICE LADDER"
         }
         questionArea.addView(label(milestone,12,green,true))
+        questionArea.addView(label("CATEGORY: $selectedCategory",11,muted,true))
         questionArea.addView(label("LEVEL ${index+1}",12,muted,true))
-        questionArea.addView(label(q.text,21,ink,true))
+        questionArea.addView(label("QUESTION ${index+1}",12,muted,true))
+        questionArea.addView(label(q.text,23,ink,true))
         val answers = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         q.options.forEachIndexed { optionIndex, option ->
             val button = Button(this).apply {
@@ -133,7 +163,8 @@ class BigQuizActivity : Activity() {
                 }
             })
         }
-        questionArea.addView(label("Practice only: this round is offline. No Games Points or competitive ranking are awarded.",12,muted))
+        questionArea.addView(label("Think it through. Lock in your answer when ready.",12,muted))
+        questionArea.addView(label("Offline practice • No Games Points or competitive ranking.",11,muted))
     }
 
     private fun choose(selected: Int, answers: LinearLayout) {
@@ -181,6 +212,11 @@ class BigQuizActivity : Activity() {
                     "I scored $correct out of ${questions.size} in WA Companion Big Quiz practice. Can you beat my score?",
                     "YOUR TURN  •  GAMES ARENA")
             }
+        })
+        questionArea.addView(Button(this).apply {
+            text = "Choose another category"
+            isAllCaps = false
+            setOnClickListener { chooseCategory() }
         })
         questionArea.addView(Button(this).apply {
             text = "Play again"
