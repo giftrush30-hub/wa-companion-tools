@@ -77,11 +77,11 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 
 ### Live backend foundations and Android entry points
 - Daily Arena is connected from the existing app; existing Discover, Vault, Diary and Referral Hub areas remain separate.
-- **Hot Seat:** live published-poll retrieval, authenticated one-vote submission, duplicate-vote protection, community result retrieval and question reporting are implemented.
-- **Quick Fire:** playable Android quiz screen, first published 10-question Naija Mix quiz, server-held answer keys, authenticated answer checking, explanations and one-answer-per-question protection are implemented. Quiz score is currently a session score only; it is not Games Points.
-- **Meme War:** first published caption challenge is seeded. Players can submit one caption per challenge; entries remain pending review until approved. Approved captions can be listed and voted on; each player can vote once per caption and cannot vote for their own entry. Users can report captions.
+- **Hot Seat:** 16 published polls across Life & Growth, Naija Life, Business & Money, Entertainment, Relationships, Tech & Future, Community, Lifestyle and Learning. Polls rotate randomly, players can skip to another question, results show vote totals and percentages, and reporting/moderation are available. Supports poll, this-or-that and hot-take labels.
+- **Quick Fire:** 70 questions across five published packs: Naija Mix, Naija & Culture, Tech & Digital Life, Science & The World, and Entertainment & Sport. Each round randomly selects a pack, shuffles question order, selects up to 10 questions and shuffles answer order while preserving server-side answer checking. Explanations and one-answer-per-question protection are active. Quiz score is currently a session score only; it is not Games Points.
+- **Meme War:** 11 published prompt challenges across everyday Naija, money, family, city life, work, lifestyle and tech. Players can submit one caption per challenge, optionally attach a photo (up to 5 MB; JPG/PNG/WEBP), and add quick emoji stickers. Entries remain pending review until approved. Approved photo/caption posts are ranked by community votes; each player can vote once per caption and cannot vote for their own entry. Users can report captions.
 - **Moderation and safety:** moderator queue and approve/reject controls for Meme War captions, plus a Daily Arena report review queue (reviewing/resolved/dismissed), are implemented in the Android source. The database checks the trusted `app_metadata.role = 'admin'` claim for moderator access. Assign an admin role only through a trusted Supabase admin process; never use editable user metadata for this.
-- Meme War currently uses a text prompt/caption format; a real image-template library and image upload/display experience remain part of the later visual/media upgrade.
+- Meme War photo upload and display now use a dedicated public Supabase Storage bucket with authenticated per-user upload folders. The current quick-sticker row uses emoji characters; a curated original PNG sticker pack, ready-made image templates, caption-on-template editor and full visual redesign remain future visual work.
 - Supabase now contains Hot Seat, Quick Fire, Meme War and reporting tables, with RLS and server-side checks for the implemented features.
 
 ### Not yet implemented
@@ -100,3 +100,9 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Do not launch incomplete multiplayer as live.
 - Batch related changes; do not spend deployment/build credits on every tiny visual adjustment.
 - No production deployment until functional, security and device testing is complete.
+
+### Product research and borrowed design patterns
+- Kahoot! (official help): randomized question order and answer order; multiple formats such as quiz, true/false, type-answer, puzzle and polls. Daily Arena applies random pack/question/answer selection now; advanced formats can be added without copying Kahoot's branding or assets. https://support.kahoot.com/hc/en-us/articles/27877912748051-How-to-randomize-questions-for-Kahoot-games and https://support.kahoot.com/hc/en-us/articles/115002308428-Kahoot-question-types
+- Slido (official product/help): multiple poll types, audience Q&A, upvoting and pre-publication moderation. Hot Seat uses rotating topics, poll categories, skip/next flow, aggregate results and reporting/moderation. https://www.slido.com/product?lang=en and https://community.slido.com/q-a-settings-222/use-moderation-and-manage-audience-questions-477
+- Instagram community safety guidance: built-in reporting and action on violating posts/captions. Meme War keeps pre-approval, reporting and moderation before content appears publicly. https://archive.is/66bu1
+- Supabase security documentation: public-schema tables need RLS and least-privilege grants; Storage upload access should be constrained by bucket and authenticated user folder. https://supabase.com/docs/guides/database/postgres/row-level-security and https://supabase.com/docs/guides/storage/security/access-control
