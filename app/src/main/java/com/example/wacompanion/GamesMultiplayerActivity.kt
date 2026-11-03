@@ -218,13 +218,14 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         })
         status = label("Connecting…", 13, green, true)
         body.addView(status)
+        body.addView(label("Room chat and voice are shared live. Game moves and scores are not yet synchronized between phones.", 12, muted))
         roster = label("Waiting for players…", 14, ink)
         body.addView(roster)
         readyButton = Button(this).apply { text = "I'm ready"; isAllCaps = false; setOnClickListener { setReady(!ready) } }
         body.addView(readyButton)
         readyButton.visibility = if (active.status == "waiting" && !chatOnly) View.VISIBLE else View.GONE
         if (active.hostId == userId && active.status == "waiting" && !chatOnly) body.addView(Button(this).apply {
-            text = "Start match"; isAllCaps = false; setOnClickListener { startMatch() }
+            text = "Start room session"; isAllCaps = false; setOnClickListener { startMatch() }
         })
         body.addView(label("LIVE TEXT CHAT", 15, green, true))
         chat = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(8), dp(8), dp(8), dp(8)) }
