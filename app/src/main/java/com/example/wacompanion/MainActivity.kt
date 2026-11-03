@@ -80,6 +80,9 @@ class MainActivity : Activity() {
         root.addView(label("Your WhatsApp stays installed and unchanged.", 13, Color.rgb(6, 100, 70)))
         root.addView(space(18))
 
+        card("WA DISCOVER • BUSINESS MARKETPLACE", "Explore the upcoming Nigerian business marketplace, where customers can discover sellers beyond their contacts.") {
+            startActivity(Intent(this, DiscoverActivity::class.java))
+        }
         card("NAIJA WHATSAPP STICKERS", "Preview original Nigerian reactions and add the starter sticker pack to WhatsApp with your confirmation.") { stickerStudio() }
         card("DAILY MESSAGE & CAPTION GENERATOR", "Get fresh Nigerian-friendly ideas for greetings, faith, love, motivation and business. Copy or share the one you like.") { dailyMessageTool() }
         card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }

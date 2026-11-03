@@ -5,6 +5,7 @@
         android:allowBackup="true"
         android:label="WA Companion Tools"
         android:theme="@style/AppTheme">
+        <activity android:name=".DiscoverActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
