@@ -218,7 +218,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         })
         status = label("Connecting…", 13, green, true)
         body.addView(status)
-        body.addView(label("Room chat is shared live. Voice requires LiveKit service credentials. Game moves and scores are not yet synchronized between phones.", 12, muted))
+        body.addView(label("Room messages are saved and refreshed for all players. Voice requires LiveKit credentials. Game moves and scores are not yet synchronized between phones.", 12, muted))
         roster = label("Waiting for players…", 14, ink)
         body.addView(roster)
         readyButton = Button(this).apply { text = "I'm ready"; isAllCaps = false; setOnClickListener { setReady(!ready) } }
@@ -271,7 +271,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         ready = players.firstOrNull { it.userId == userId }?.isReady ?: ready
         readyButton.text = if (ready) "Cancel ready" else "I'm ready"
         if (value.status == "in_progress" && !gameLaunched && !chatOnly) {
-            status.text = "MATCH STARTED • Tap Start match to enter"
+            status.text = "MATCH STARTED • Tap Enter match to join"
             if (value.hostId != userId) {
                 // A joining player gets a launch button once the host starts.
                 if (body.findViewWithTag<View>("join-start") == null) body.addView(Button(this).apply {
