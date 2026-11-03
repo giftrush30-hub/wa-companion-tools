@@ -177,7 +177,7 @@ class MemeWarActivity : Activity() {
     }
 
     private fun renderComposer(item: MemeWarBackend.Challenge, mine: org.json.JSONObject?) {
-        challengeArea.removeViews(1, (challengeArea.childCount - 1).coerceAtLeast(0))
+        challengeArea.removeViews(3, (challengeArea.childCount - 3).coerceAtLeast(0))
         val card = panel()
         card.addView(label("YOUR CAPTION", 13, green, true))
         if (mine != null) {
