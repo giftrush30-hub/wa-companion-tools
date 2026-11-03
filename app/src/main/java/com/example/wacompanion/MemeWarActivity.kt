@@ -221,7 +221,7 @@ class MemeWarActivity : Activity() {
                 ArenaShareCard.share(
                     this@MemeWarActivity,
                     "MEME WAR CHALLENGE",
-                    "${item.title}\\n\\n${item.instructions}\\n\\nWrite the funniest clean caption you can think of. Tag a friend who would win this round!",
+                    "${item.title}\n\n${item.instructions}\n\nWrite the funniest clean caption you can think of. Tag a friend who would win this round!",
                     "MAKE YOUR CAPTION  •  DAILY ARENA",
                     item.templateImageUrl,
                     "Share Meme War challenge image"
@@ -433,7 +433,7 @@ class MemeWarActivity : Activity() {
                     ArenaShareCard.share(
                         this@MemeWarActivity,
                         "MEME WAR CAPTION",
-                        entry.caption + "\\n\\n${entry.votes} community vote(s). Which caption is your favourite?",
+                        entry.caption + "\n\n${entry.votes} community vote(s). Which caption is your favourite?",
                         "VOTE FOR YOUR FAVOURITE  •  DAILY ARENA",
                         entry.imageUrl,
                         "Share Meme War caption image"
