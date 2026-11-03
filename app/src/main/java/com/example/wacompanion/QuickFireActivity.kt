@@ -182,7 +182,7 @@ class QuickFireActivity : Activity() {
         questionTimer = object : CountDownTimer(seconds * 1000L, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
                 val remaining = (millisUntilFinished / 1000L).toInt() + 1
-                status.text = "Question \${questionIndex + 1} of \${quiz?.questions?.size ?: 0} • \${remaining}s • Streak: $streak"
+                status.text = "Question ${questionIndex + 1} of ${quiz?.questions?.size ?: 0} • ${remaining}s • Streak: $streak"
             }
             override fun onFinish() {
                 if (locked) return
