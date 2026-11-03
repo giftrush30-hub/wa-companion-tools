@@ -211,8 +211,8 @@ on realtime.messages for select to authenticated
 using (
   realtime.messages.extension in ('broadcast','presence')
   and case
-    when split_part(realtime.topic(),':',3) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-    then private.is_game_room_member(split_part(realtime.topic(),':',3)::uuid)
+    when realtime.topic() like 'room:%' and split_part(realtime.topic(),':',2) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
+    then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
     else false
   end
 );
@@ -222,8 +222,29 @@ on realtime.messages for insert to authenticated
 with check (
   realtime.messages.extension in ('broadcast','presence')
   and case
-    when split_part(realtime.topic(),':',3) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-    then private.is_game_room_member(split_part(realtime.topic(),':',3)::uuid)
+    when split_part(realtime.topic(),':',2) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
+    else false
+  end
+);
+
+    then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
+    else false
+  end
+);
+
+create policy "room members can send private game broadcasts"
+on realtime.messages for insert to authenticated
+with check (
+  realtime.messages.extension in ('broadcast','presence')
+  and case
+    when realtime.topic() like 'room:%' and split_part(realtime.topic(),':',2) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
+    then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
+    else false
+  end
+);
+
+    then private.is_game_room_member(split_part(realtime.topic(),':',2)::uuid)
     else false
   end
 );
