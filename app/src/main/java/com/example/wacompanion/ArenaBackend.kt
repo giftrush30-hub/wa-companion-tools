@@ -51,6 +51,18 @@ class ArenaBackend(context: Context) {
         discover.request("/rest/v1/arena_hot_seat_votes", "POST", payload, session.accessToken)
     }
 
+    fun reportPoll(pollId: String, reason: String, details: String? = null) {
+        val session = discover.currentSession()
+            ?: throw IllegalStateException("Sign in first to report a question.")
+        val payload = JSONObject()
+            .put("reporter_id", session.userId)
+            .put("target_type", "hot_seat_poll")
+            .put("target_id", pollId)
+            .put("reason", reason)
+        if (!details.isNullOrBlank()) payload.put("details", details.trim().take(1000))
+        discover.request("/rest/v1/arena_reports", "POST", payload, session.accessToken)
+    }
+
     fun results(pollId: String): List<Result> {
         val session = discover.currentSession()
             ?: throw IllegalStateException("Sign in to view poll results.")
