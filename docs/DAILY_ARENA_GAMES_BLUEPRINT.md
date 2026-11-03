@@ -96,11 +96,11 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 
 
 ### Daily Arena sharing and content expansion — 3 November 2026
-- Android share-sheet actions added for Hot Seat questions/results, Quick Fire questions/results, Meme War challenge prompts and approved Meme War captions. The system chooser lets players select WhatsApp, WhatsApp Status where supported, or another installed sharing app. Shared text invites recipients back to WA Companion Daily Arena; it does not expose private vote identities or player account details.
+- Android share-sheet actions generate actual 4:5 PNG image cards for Hot Seat questions/results, Quick Fire questions/results, Meme War challenge prompts and approved Meme War captions. The system chooser lets players select WhatsApp, WhatsApp Status where supported, or another installed sharing app. Cards do not expose private vote identities or player account details.
 - Added **Quick Fire: Naija Brain & Banter**, a new published pack with 30 questions: 10 easy, 10 standard and 10 expert. The pack mixes practical judgement, everyday Nigerian humour, media literacy, money reasoning, critical thinking and decision-making. Questions aim to be funny without humiliating people or relying on stereotypes.
 - Live Supabase inventory check confirmed 30 questions in the new pack with the intended 10/10/10 difficulty split. Total published Quick Fire content is now 145 questions across nine packs, assuming the existing 115-question inventory remains unchanged.
 - Product research for this batch: Kahoot's official question-type guide supports mixing knowledge checks with opinion-gathering and open-ended formats; Slido highlights word clouds, open text, ranking polls, audience Q&A and moderation; Wayground (Quizizz) describes memes and multiple interactive question types as engagement tools. We are applying the general interaction patterns, not copying their branding or assets.
-- Note: sharing currently sends a text-based card/message through Android's share chooser. Direct image export of Meme War artwork for Status is a separate enhancement and is not claimed as complete.
+- The share-card renderer is implemented in `ArenaShareCard.kt`; it creates local PNG artwork and shares it using AndroidX FileProvider content URIs. This source change has not yet been build-tested or verified on a physical device.
 
 ### Engineering guardrails
 - Points remain a separate entertainment-only economy and must never buy business ads, sponsored listings, visibility, views or followers.
@@ -146,3 +146,11 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Users can choose WhatsApp, WhatsApp Status where supported, or another compatible app. The output is a real image attachment rather than a text-only message. A remote photo failure falls back to a designed graphic card.
 - Inspiration: Kahoot documents a mix of knowledge checks and opinion-gathering formats; audience participation and visualized responses informed the share-card framing. These are original WA Companion graphics, not copied assets.
 - Not verified on-device and not build-tested in this batch. No APK was produced and no deployment was made.
+
+
+### Hot Seat content expansion — 3 November 2026
+- Added 20 additional published Hot Seat prompts through the idempotent migration `20261103140000_hot_seat_fun_thoughtful_question_expansion.sql`.
+- The new batch covers funny everyday Naija moments, money decisions, relationships, character, digital habits, teamwork and thought-provoking future-self questions. It includes multiple poll styles: standard polls, hot takes and this-or-that dilemmas.
+- New questions use light humour without targeting protected groups, humiliating individuals or encouraging unsafe behaviour. Options are designed to prompt conversation rather than imply one universally correct answer.
+- Live Supabase query returned all 20 newly inserted prompts and their option rows. The prior published inventory was 16, so the intended combined inventory is now 36 published Hot Seat polls.
+- Inspiration: Kahoot's official catalogue distinguishes knowledge testing from opinion collection and offers formats including polls, word clouds, open-ended answers, puzzles and sliders; Slido offers multiple-choice, word cloud, rating, open-text and ranking polls. Daily Arena is applying the underlying variety principles. Word cloud, ranking and open-text modes are future work; they are not represented as live features yet. https://support.kahoot.com/hc/en-us/articles/115002308428-Kahoot-question-types and https://www.slido.com/product?lang=en
