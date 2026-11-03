@@ -38,8 +38,8 @@ class ArenaBackend(context: Context) {
                 val id = row.getString("id")
                 val starts = row.optString("starts_at")
                 val ends = row.optString("ends_at")
-                (starts.isBlank() || starts == "null" || starts <= java.time.Instant.now().toString()) &&
-                    (ends.isBlank() || ends == "null" || ends > java.time.Instant.now().toString()) &&
+                (starts.isBlank() || starts == "null" || starts.replace(" ", "T") <= java.time.Instant.now().toString()) &&
+                    (ends.isBlank() || ends == "null" || ends.replace(" ", "T") > java.time.Instant.now().toString()) &&
                     id !in votedIds && id != excludePollId
             }
         val fallback = (0 until polls.length()).map { polls.getJSONObject(it) }
