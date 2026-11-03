@@ -38,10 +38,12 @@ object ArenaShareCard {
         Thread {
             try {
                 val photo = imageUrl?.takeIf { it.startsWith("https://") }?.let { url ->
-                    URL(url).openConnection().apply {
-                        connectTimeout = 8000
-                        readTimeout = 10000
-                    }.getInputStream().use { BitmapFactory.decodeStream(it) }
+                    runCatching {
+                        URL(url).openConnection().apply {
+                            connectTimeout = 8000
+                            readTimeout = 10000
+                        }.getInputStream().use { BitmapFactory.decodeStream(it) }
+                    }.getOrNull()
                 }
                 val bitmap = createCard(title, body, footer, photo)
                 photo?.recycle()
