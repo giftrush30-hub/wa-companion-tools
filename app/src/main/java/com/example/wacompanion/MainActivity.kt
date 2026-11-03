@@ -79,6 +79,9 @@ class MainActivity : Activity() {
         root.addView(space(18))
 
         card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }
+        card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
+        card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
+        card("SMALL BUSINESS FOLLOW-UP DESK", "Keep customer names, order notes and follow-ups on this phone.") { businessDesk() }
         card("QUICK REPLIES", "Save messages you use often, then copy or share them into WhatsApp.") {
             quickReplySection()
         }
@@ -219,6 +222,91 @@ class MainActivity : Activity() {
             }
             startActivity(Intent.createChooser(send, "Share your reaction"))
         } catch (_: Exception) { toast("Could not create image. Please try again.") }
+    }
+
+
+    private fun statusStudio() {
+        val starters = listOf("May this new day bring you peace, strength and fresh opportunities.",
+            "Thank you for supporting my small business. Every order means a lot!",
+            "Happy birthday! May your new year be full of grace and beautiful wins.",
+            "New week. New strength. New opportunities. Keep moving forward.",
+            "Quality service, honest value and customer care. Send a message to order.")
+        starters.forEach { phrase ->
+            val b = Button(this).apply { text = phrase; isAllCaps = false }
+            b.setOnClickListener { shareMemeImage(phrase) }; root.addView(b)
+        }
+        val custom = EditText(this).apply { hint = "Write your own status or advert"; minLines = 2 }
+        root.addView(custom)
+        button("Design and share status card") {
+            val value = custom.text.toString().trim()
+            if (value.isBlank()) toast("Write your status first.") else shareMemeImage(value)
+        }
+        root.addView(label("Created offline. Choose WhatsApp Status in the Android share menu.", 11, Color.GRAY))
+    }
+
+    private fun messageLab() {
+        val input = EditText(this).apply { hint = "Type a message to improve"; minLines = 3 }
+        root.addView(input)
+        val style = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item,
+                listOf("Clear and polite", "Nigerian Pidgin", "Professional business", "Warm and friendly", "Firm but respectful"))
+        }
+        root.addView(style)
+        val output = TextView(this).apply { textSize = 15f; setTextColor(Color.rgb(6, 63, 50)); setPadding(0, dp(10), 0, dp(10)) }
+        root.addView(output)
+        button("Improve my message") {
+            val original = input.text.toString().trim()
+            if (original.isBlank()) toast("Type a message first.") else {
+                val base = original.replaceFirstChar { it.lowercase() }
+                val improved = when (style.selectedItemPosition) {
+                    1 -> "Abeg, " + base + " Make we understand each other. Thank you."
+                    2 -> "Good day. " + base + " Kindly let me know if you need further information. Thank you."
+                    3 -> "Hello! " + base + " I appreciate you."
+                    4 -> "Please, " + base + " I would appreciate your response. Thank you."
+                    else -> original.trimEnd('.', ' ') + ". Thank you for your understanding."
+                }
+                output.text = improved; output.tag = improved
+            }
+        }
+        button("Copy improved message") {
+            val value = output.tag as? String
+            if (value.isNullOrBlank()) toast("Improve a message first.") else {
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Improved message", value))
+                toast("Copied.")
+            }
+        }
+        button("Share improved message") {
+            val value = output.tag as? String
+            if (value.isNullOrBlank()) toast("Improve a message first.") else shareToWhatsApp(value)
+        }
+        root.addView(label("Offline phrase styling, not live AI translation. Review the meaning before sending.", 11, Color.GRAY))
+    }
+
+    private fun businessDesk() {
+        val customer = EditText(this).apply { hint = "Customer name or nickname"; isSingleLine = true }
+        val contact = EditText(this).apply { hint = "Phone number (optional)"; isSingleLine = true; inputType = 3 }
+        val task = EditText(this).apply { hint = "Order, promise or follow-up note"; minLines = 2 }
+        val amount = EditText(this).apply { hint = "Amount in naira (optional)"; isSingleLine = true; inputType = 2 }
+        root.addView(customer); root.addView(contact); root.addView(task); root.addView(amount)
+        val list = TextView(this).apply { textSize = 13f; setTextColor(Color.DKGRAY); setPadding(0, dp(10), 0, dp(6)) }
+        fun refresh() {
+            val entries = prefs.getString("business_followups", "") ?: ""
+            list.text = if (entries.isBlank()) "No customer follow-ups saved yet." else "SAVED FOLLOW-UPS\n\n" + entries
+        }
+        button("Save customer follow-up") {
+            val name = customer.text.toString().trim(); val note = task.text.toString().trim()
+            if (name.isBlank() || note.isBlank()) toast("Enter a customer name and follow-up note.") else {
+                val money = amount.text.toString().trim(); val phone = contact.text.toString().trim()
+                val record = "• " + name + (if (phone.isBlank()) "" else " (" + phone + ")") +
+                    (if (money.isBlank()) "" else " — ₦" + money) + "\n  " + note
+                val old = prefs.getString("business_followups", "") ?: ""
+                prefs.edit().putString("business_followups", old + (if (old.isBlank()) "" else "\n\n") + record).apply()
+                customer.setText(""); contact.setText(""); task.setText(""); amount.setText("")
+                refresh(); toast("Saved on this phone.")
+            }
+        }
+        root.addView(list); refresh()
+        root.addView(label("Records stay on this phone. Clearing app data or uninstalling may erase them.", 11, Color.GRAY))
     }
 
     private fun quickReplySection() {
