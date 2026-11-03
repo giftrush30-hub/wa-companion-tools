@@ -80,7 +80,7 @@ class DiscoverActivity : Activity() {
             setOnClickListener { promptWhatsAppNumber() }
         })
         page.addView(space(12))
-        page.addView(text("Public business search is still being built. For now, open a catalogue link shared by a seller or start a chat using their number.", 13, muted))
+        page.addView(text("Search approved WA Discover businesses by name, product, service or location. New seller listings remain private until reviewed and approved.", 13, muted))
         page.addView(space(14))
 
         page.addView(text("EXPLORE BUSINESSES", 13, green, true))
@@ -94,7 +94,7 @@ class DiscoverActivity : Activity() {
                 setTextColor(green)
                 setPadding(dp(13), dp(9), dp(13), dp(9))
                 setBackgroundColor(Color.WHITE)
-                setOnClickListener { showBackendNotice() }
+                setOnClickListener { searchLive("", "", "", searchResults) }
             }
             val params = LinearLayout.LayoutParams(-2, -2).apply {
                 rightMargin = dp(8)
@@ -129,9 +129,9 @@ class DiscoverActivity : Activity() {
             setPadding(dp(16), dp(16), dp(16), dp(16))
             setBackgroundColor(Color.WHITE)
         }
-        status.addView(text("Business discovery is being connected", 17, green, true))
+        status.addView(text("A growing directory of approved Nigerian businesses", 17, green, true))
         status.addView(space(7))
-        status.addView(text("The directory needs a small shared online database before real businesses can register and appear in search. We are avoiding our own product-photo and video storage in this first version.", 14, muted))
+        status.addView(text("WA Discover uses a shared online directory. Sellers submit business details for review; approved listings appear in search. Product photos and videos stay in WhatsApp Business catalogues.", 14, muted))
         status.addView(space(10))
         status.addView(text("No sample sellers, fake products or invented view counts are displayed.", 12, muted, true))
         page.addView(status)
@@ -260,8 +260,8 @@ class DiscoverActivity : Activity() {
 
     private fun showBackendNotice() {
         AlertDialog.Builder(this)
-            .setTitle("Business search is coming")
-            .setMessage("These categories will become real filters when the shared WA Discover directory is connected. No businesses are being hidden or shown by these buttons yet.")
+            .setTitle("Choose a search above")
+            .setMessage("Use the search fields to find approved businesses. Category-specific filters are the next improvement.")
             .setPositiveButton("OK", null)
             .show()
     }
