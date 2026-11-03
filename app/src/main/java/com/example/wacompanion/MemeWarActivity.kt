@@ -215,6 +215,17 @@ class MemeWarActivity : Activity() {
         }
         challengeArea.addView(card)
         challengeArea.addView(Button(this).apply {
+            text = "Share this Meme War challenge"
+            isAllCaps = false
+            setOnClickListener {
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "😂 MEME WAR CHALLENGE: ${item.title}\n\n${item.instructions}\n\nDrop your funniest clean caption in WA Companion → Daily Arena → Meme War. Tag a friend who would nail this!")
+                }
+                startActivity(Intent.createChooser(send, "Share Meme War challenge"))
+            }
+        })
+        challengeArea.addView(Button(this).apply {
             text = "Try another challenge"
             isAllCaps = false
             setOnClickListener { loadChallenge(item.id) }
@@ -412,6 +423,17 @@ class MemeWarActivity : Activity() {
                 loadRemoteImage(entry.imageUrl, photo)
             }
             card.addView(label("${entry.votes} vote(s)", 13, muted))
+            card.addView(Button(this).apply {
+                text = "Share this caption"
+                isAllCaps = false
+                setOnClickListener {
+                    val send = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, "🤣 MEME WAR\n\n${entry.caption}\n\nVote for your favourite in WA Companion → Daily Arena → Meme War!")
+                    }
+                    startActivity(Intent.createChooser(send, "Share Meme War caption"))
+                }
+            })
             val actions = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(0, dp(5), 0, 0)
