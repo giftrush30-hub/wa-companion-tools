@@ -259,3 +259,13 @@ grant update on public.discover_promotion_orders to authenticated;
 -- 3. Never put a Supabase service-role key in Android source code.
 -- 4. Promotion prices are prepared, but checkout is inactive until server-side Paystack verification exists.
 -- 5. Public events are coarse click counts, not WhatsApp Status views or sales.
+
+
+-- Security and foreign-key index hardening
+alter function public.is_wa_discover_admin() set search_path = public, pg_temp;
+
+create index if not exists discover_businesses_category_id_idx on public.discover_businesses(category_id);
+create index if not exists discover_businesses_owner_id_idx on public.discover_businesses(owner_id);
+create index if not exists discover_events_business_id_idx on public.discover_events(business_id);
+create index if not exists discover_promotion_orders_package_code_idx on public.discover_promotion_orders(package_code);
+create index if not exists discover_reports_business_id_idx on public.discover_reports(business_id);
