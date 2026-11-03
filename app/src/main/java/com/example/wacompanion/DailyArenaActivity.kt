@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -21,6 +22,7 @@ class DailyArenaActivity : Activity() {
     private lateinit var content: LinearLayout
     private lateinit var status: TextView
     private lateinit var pollArea: LinearLayout
+    private lateinit var suggestionArea: LinearLayout
     private val arena by lazy { ArenaBackend(this) }
     private var activePoll: ArenaBackend.Poll? = null
     private var voted = false
@@ -52,6 +54,14 @@ class DailyArenaActivity : Activity() {
         hotSeat.addView(status)
         pollArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         hotSeat.addView(pollArea)
+        hotSeat.addView(gap(8))
+        hotSeat.addView(Button(this).apply {
+            text = "Suggest a Hot Seat question"
+            isAllCaps = false
+            setOnClickListener { showSuggestionDialog() }
+        })
+        suggestionArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        hotSeat.addView(suggestionArea)
         content.addView(hotSeat)
         content.addView(gap(12))
 
@@ -86,6 +96,7 @@ class DailyArenaActivity : Activity() {
         note.addView(text("Games Points can never buy business ads, sponsored placement, views, followers or visibility. Business promotion remains money-based.", 14, ink))
         content.addView(note)
         loadPoll()
+        loadSuggestions()
     }
 
     private fun loadPoll(excludePollId: String? = null) {
@@ -219,6 +230,88 @@ class DailyArenaActivity : Activity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+
+    private fun showSuggestionDialog() {
+        val fields = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(18), dp(8), dp(18), 0)
+        }
+        fun field(hint: String, lines: Int = 1) = EditText(this).apply {
+            this.hint = hint
+            minLines = lines
+            maxLines = lines
+            setPadding(dp(10), dp(8), dp(10), dp(8))
+        }
+        val question = field("Your question (12–180 characters)", 3)
+        val topic = field("Topic e.g. Naija Life")
+        val option1 = field("Answer option 1")
+        val option2 = field("Answer option 2")
+        val option3 = field("Answer option 3 (optional)")
+        val option4 = field("Answer option 4 (optional)")
+        listOf(question,topic,option1,option2,option3,option4).forEach { fields.addView(it) }
+        AlertDialog.Builder(this)
+            .setTitle("Suggest a community question")
+            .setMessage("Questions are reviewed before appearing. Keep them friendly and respectful.")
+            .setView(fields)
+            .setPositiveButton("Send for review") { _, _ ->
+                worker.execute {
+                    try {
+                        arena.submitSuggestion(
+                            question.text.toString(), topic.text.toString(),
+                            listOf(option1.text.toString(), option2.text.toString(), option3.text.toString(), option4.text.toString())
+                        )
+                        runOnUiThread { status.text = "Suggestion received. It will appear after moderator approval." }
+                    } catch (e: Exception) {
+                        runOnUiThread { status.text = e.message ?: "Could not submit your suggestion." }
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun loadSuggestions() {
+        worker.execute {
+            try {
+                val items = arena.suggestions()
+                runOnUiThread { renderSuggestions(items) }
+            } catch (_: Exception) {
+                // Guests can still answer Hot Seat; community submissions require sign-in.
+            }
+        }
+    }
+
+    private fun renderSuggestions(items: List<ArenaBackend.Suggestion>) {
+        suggestionArea.removeAllViews()
+        if (items.isEmpty()) return
+        suggestionArea.addView(text("COMMUNITY QUESTION IDEAS", 13, green, true))
+        items.take(8).forEach { item ->
+            val card = panel()
+            card.addView(text(item.topic.uppercase(), 11, green, true))
+            card.addView(text(item.question, 15, ink, true))
+            card.addView(text(item.options.joinToString("  •  "), 12, muted))
+            card.addView(Button(this).apply {
+                text = if (item.votedByMe) "Supported • " + item.votes else "Support this idea • " + item.votes
+                isAllCaps = false
+                isEnabled = !item.votedByMe
+                setOnClickListener {
+                    isEnabled = false
+                    worker.execute {
+                        try {
+                            arena.voteSuggestion(item.id)
+                            val refreshed = arena.suggestions()
+                            runOnUiThread { renderSuggestions(refreshed) }
+                        } catch (e: Exception) {
+                            runOnUiThread { status.text = e.message ?: "Could not support this suggestion." }
+                        }
+                    }
+                }
+            })
+            suggestionArea.addView(card)
+            suggestionArea.addView(gap(6))
+        }
     }
 
     private fun addFeature(parent: LinearLayout, title: String, description: String) {
