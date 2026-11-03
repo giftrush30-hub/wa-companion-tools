@@ -222,6 +222,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         body.addView(roster)
         readyButton = Button(this).apply { text = "I'm ready"; isAllCaps = false; setOnClickListener { setReady(!ready) } }
         body.addView(readyButton)
+        readyButton.visibility = if (active.status == "waiting" && !chatOnly) View.VISIBLE else View.GONE
         if (active.hostId == userId && active.status == "waiting" && !chatOnly) body.addView(Button(this).apply {
             text = "Start match"; isAllCaps = false; setOnClickListener { startMatch() }
         })
@@ -371,10 +372,37 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         }
     }
 
-    override fun onConnected() { main.post { connectingVoice = false; voiceButton.isEnabled = true; voiceButton.text = "🔇 Leave live voice"; status.text = "LIVE VOICE CONNECTED" } }
-    override fun onMicrophoneChanged(enabled: Boolean) { main.post { voiceButton.text = if (enabled) "🎙 Microphone on • Leave voice" else "🔇 Microphone muted" } }
-    override fun onDisconnected() { main.post { connectingVoice = false; voiceButton.isEnabled = true; voiceButton.text = "🎙 Join live voice" } }
-    override fun onError(message: String) { main.post { connectingVoice = false; voiceButton.isEnabled = true; voiceButton.text = "🎙 Join live voice"; status.text = message } }
+    override fun onConnected() { main.post {
+        connectingVoice = false
+        voiceButton.isEnabled = true
+        voiceButton.text = "🔇 Leave live voice"
+        micButton.isEnabled = true
+        speakerButton.isEnabled = true
+        micMuted = false
+        speakerMuted = false
+        micButton.text = "Mute microphone"
+        speakerButton.text = "Mute speaker"
+        status.text = "LIVE VOICE CONNECTED"
+    } }
+    override fun onMicrophoneChanged(enabled: Boolean) { main.post {
+        micMuted = !enabled
+        micButton.text = if (enabled) "Mute microphone" else "Unmute microphone"
+    } }
+    override fun onDisconnected() { main.post {
+        connectingVoice = false
+        voiceButton.isEnabled = true
+        voiceButton.text = "🎙 Join live voice"
+        micButton.isEnabled = false
+        speakerButton.isEnabled = false
+    } }
+    override fun onError(message: String) { main.post {
+        connectingVoice = false
+        voiceButton.isEnabled = true
+        voiceButton.text = "🎙 Join live voice"
+        micButton.isEnabled = false
+        speakerButton.isEnabled = false
+        status.text = message
+    } }
 
     private fun leave() {
         val active = room ?: return
