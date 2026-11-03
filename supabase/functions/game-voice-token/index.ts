@@ -29,7 +29,7 @@ async function signLiveKitToken(apiKey: string, apiSecret: string, identity: str
     name: displayName,
     nbf: now - 5,
     iat: now,
-    exp: now + 15 * 60,
+    exp: now + 2 * 60 * 60,
     video: {
       roomJoin: true,
       room: roomName,
@@ -109,5 +109,5 @@ Deno.serve(async (request) => {
 
   const roomName = "wa-game-" + roomId;
   const token = await signLiveKitToken(livekitKey, livekitSecret, user.id, displayName, roomName);
-  return json({ url: livekitUrl, token, room_name: roomName, expires_in: 900 });
+  return json({ url: livekitUrl, token, room_name: roomName, expires_in: 7200 });
 });
