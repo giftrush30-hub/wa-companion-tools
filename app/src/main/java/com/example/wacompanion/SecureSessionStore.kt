@@ -50,6 +50,14 @@ internal class SecureSessionStore(context: Context) {
     @Synchronized
     fun clear() {
         prefs.edit().clear().commit()
+        try {
+            KeyStore.getInstance("AndroidKeyStore").apply {
+                load(null)
+                if (containsAlias(alias)) deleteEntry(alias)
+            }
+        } catch (_: Exception) {
+            // A later sign-in can recreate the key if the platform keystore is temporarily unavailable.
+        }
     }
 
     private fun getOrCreateKey(): SecretKey {
