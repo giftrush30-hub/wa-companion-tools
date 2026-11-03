@@ -44,17 +44,53 @@ class BigQuizActivity : Activity() {
         Question("What is 0.25 written as a fraction in simplest form?", listOf("1/2","1/3","1/4","1/5"),2,"0.25 is 25/100, which simplifies to 1/4."),
         Question("Which branch of government is primarily responsible for interpreting laws?", listOf("Executive","Legislature","Judiciary","Civil service"),2,"Courts and the judiciary interpret and apply the law."),
         Question("If all bloops are razzies and all razzies are lazzies, which statement must be true?", listOf("All lazzies are bloops","All bloops are lazzies","No bloops are lazzies","Some razzies are not lazzies"),1,"If bloops are inside the razzy group, and razzies are inside the lazzy group, all bloops are lazzies."),
-        Question("What is the chemical formula for water?", listOf("CO2","H2O","O2","NaCl"),1,"A water molecule contains two hydrogen atoms and one oxygen atom.")
+        Question("What is the chemical formula for water?", listOf("CO2","H2O","O2","NaCl"),1,"A water molecule contains two hydrogen atoms and one oxygen atom."),
+        Question("What is the currency of Nigeria?", listOf("Cedi","Naira","Dalasi","Shilling"),1,"Nigeria's currency is the naira, divided into 100 kobo."),
+        Question("Where is the headquarters of the African Union?", listOf("Lagos","Addis Ababa","Accra","Cairo"),1,"The African Union Commission is headquartered in Addis Ababa, Ethiopia."),
+        Question("How many states make up the Federal Republic of Nigeria?", listOf("30","32","36","40"),2,"Nigeria has 36 states, alongside the Federal Capital Territory."),
+        Question("In which year did Ghana gain independence?", listOf("1945","1957","1960","1963"),1,"Ghana became independent from British rule on 6 March 1957."),
+        Question("Which African country is the largest by land area?", listOf("Sudan","Democratic Republic of the Congo","Algeria","Libya"),2,"Algeria is Africa's largest country by area."),
+        Question("What is Nigeria's official language?", listOf("Hausa","Yoruba","Igbo","English"),3,"English is Nigeria's official language; many Nigerian languages are also widely spoken."),
+        Question("At standard atmospheric pressure, what is the boiling point of pure water?", listOf("50°C","80°C","100°C","120°C"),2,"Pure water boils at 100°C at standard atmospheric pressure."),
+        Question("How many chambers does the human heart have?", listOf("Two","Three","Four","Five"),2,"The human heart has two atria and two ventricles."),
+        Question("What does DNA primarily carry?", listOf("Genetic information","Oxygen","Digestive enzymes","Electrical power"),0,"DNA stores hereditary instructions used in the development and functioning of living organisms."),
+        Question("What is the SI unit of force?", listOf("Joule","Watt","Newton","Pascal"),2,"Force is measured in newtons, named after physicist Isaac Newton."),
+        Question("Which star is closest to Earth?", listOf("Sirius","The Sun","Polaris","Proxima Centauri"),1,"The Sun is Earth's nearest star."),
+        Question("At what temperature does pure water freeze on the Celsius scale?", listOf("-10°C","0°C","10°C","32°C"),1,"Pure water freezes at 0°C under standard pressure."),
+        Question("What is 7 multiplied by 8?", listOf("48","54","56","64"),2,"Seven groups of eight make 56."),
+        Question("What is 2 raised to the power of 5?", listOf("10","16","25","32"),3,"2 × 2 × 2 × 2 × 2 equals 32."),
+        Question("What is 25% of 240?", listOf("40","50","60","80"),2,"25% is one quarter; 240 divided by 4 is 60."),
+        Question("A square has sides of 6 cm. What is its perimeter?", listOf("12 cm","18 cm","24 cm","36 cm"),2,"A square has four equal sides, so 4 × 6 cm = 24 cm."),
+        Question("What is three-fifths of 100?", listOf("20","40","60","80"),2,"100 divided by 5 is 20; three parts make 60."),
+        Question("What does HTML stand for?", listOf("HyperText Markup Language","High Transfer Machine Link","Home Tool Markup List","Hyperlink Text Management Logic"),0,"HTML is the standard markup language used to structure content on web pages."),
+        Question("What does RAM stand for?", listOf("Read Access Memory","Random Access Memory","Rapid Application Mode","Remote Allocation Module"),1,"RAM is temporary working memory used by a computer while tasks are running."),
+        Question("What is phishing?", listOf("A way to cool a computer","A fraudulent attempt to steal information","A type of screen","A safe backup method"),1,"Phishing uses deceptive messages or websites to trick people into revealing sensitive information."),
+        Question("Bluetooth is mainly used for what?", listOf("Short-range wireless communication","Long-distance satellite television","Printing newspapers","Charging every phone wirelessly"),0,"Bluetooth connects nearby devices wirelessly over short distances."),
+        Question("In a spreadsheet, what is the intersection of a row and a column called?", listOf("A slide","A cell","A folder","A browser"),1,"A spreadsheet cell is identified by its column letter and row number."),
+        Question("What does HTTPS indicate about a web connection?", listOf("The page is always truthful","The connection is encrypted using TLS","The site cannot contain adverts","The site is stored offline"),1,"HTTPS uses TLS to protect data exchanged between a browser and a website."),
+        Question("What is the capital city of Japan?", listOf("Kyoto","Osaka","Tokyo","Nagoya"),2,"Tokyo is Japan's capital and the seat of its national government."),
+        Question("Where is the United Nations headquarters?", listOf("Geneva","New York City","London","Brussels"),1,"The UN headquarters is in New York City."),
+        Question("Which mountain is the highest above sea level?", listOf("Kilimanjaro","Mount Everest","K2","Mount Kenya"),1,"Mount Everest, in the Himalayas, has the highest summit above sea level."),
+        Question("Brazil is located on which continent?", listOf("Africa","Europe","South America","Asia"),2,"Brazil is the largest country in South America."),
+        Question("What is the currency of Japan?", listOf("Won","Yuan","Yen","Baht"),2,"Japan's currency is the yen."),
+        Question("In a democracy, political authority is generally based on what?", listOf("Hereditary rule alone","The consent of the people","Military ownership","One family's private decision"),1,"Democratic systems derive governing authority from the people, commonly through elections and representation."),
+        Question("In business, what is revenue?", listOf("Money earned from sales and other business activities","Only the money left after all costs","A loan repayment","The value of unpaid holidays"),0,"Revenue is the income a business earns from its normal activities before expenses are deducted."),
+        Question("What is an expense?", listOf("A business cost","A customer's review","The owner's job title","A product's colour"),0,"Expenses are the costs a business incurs while operating."),
+        Question("How is net profit generally calculated?", listOf("Revenue plus expenses","Revenue minus all expenses","Expenses minus revenue","Sales multiplied by staff numbers"),1,"Net profit is what remains after all relevant expenses are deducted from revenue."),
+        Question("What is a budget?", listOf("A plan for expected income and spending","A list of customer birthdays","A business logo","A tax receipt only"),0,"A budget helps plan and track expected income and expenditure over a period."),
+        Question("Simple interest is calculated using which basic relationship?", listOf("Principal × rate × time","Principal + rate + time","Sales × expenses","Profit ÷ customers"),0,"Simple interest is principal multiplied by the interest rate and time, using consistent units."),
+        Question("If supply increases while demand stays the same, what generally happens to the market price?", listOf("It tends to rise","It tends to fall","It must double","It never changes"),1,"All else equal, an increase in supply tends to put downward pressure on price."),
+        Question("What does break-even mean for a business?", listOf("Revenue equals total costs","Revenue is always zero","Expenses are twice sales","The business has no customers"),0,"At the break-even point, total revenue equals total costs, so there is no profit or loss.")
     )
     private var questions: List<Question> = questionBank
     private val categories = linkedMapOf(
-        "All categories" to (0..29).toList(),
-        "Nigeria & Africa" to listOf(0,2,7,13,16),
-        "Science & Nature" to listOf(1,5,9,11,19,25,29),
-        "Maths & Logic" to listOf(4,6,12,14,18,23,24,26,28),
-        "Digital & Technology" to listOf(8,17,22),
-        "World & Society" to listOf(15,20,21,27),
-        "Business & Money" to listOf(10)
+        "All categories" to (0..65).toList(),
+        "Nigeria & Africa" to listOf(0,2,7,13,16,30,31,32,33,34,35),
+        "Science & Nature" to listOf(1,5,9,11,19,25,29,36,37,38,39,40,41),
+        "Maths & Logic" to listOf(4,6,12,14,18,23,24,26,28,42,43,44,45,46,47),
+        "Digital & Technology" to listOf(8,17,22,48,49,50,51,52,53),
+        "World & Society" to listOf(15,20,21,27,54,55,56,57,58,59),
+        "Business & Money" to listOf(10,60,61,62,63,64,65)
     )
     private var selectedCategory = "All categories"
     private val ink = Color.rgb(18,42,55)
@@ -98,7 +134,7 @@ class BigQuizActivity : Activity() {
         val names = categories.keys.toTypedArray()
         AlertDialog.Builder(this)
             .setTitle("BIG QUIZ • CHOOSE YOUR ARENA")
-            .setMessage("Pick a subject or take the full 30-question championship challenge.")
+            .setMessage("Pick a subject or take the full 66-question championship challenge.")
             .setItems(names) { _, which ->
                 selectedCategory = names[which]
                 questions = categories[selectedCategory].map { questionBank[it] }
@@ -119,13 +155,13 @@ class BigQuizActivity : Activity() {
         status.text = "${selectedCategory.uppercase()}  •  LEVEL ${index+1}/${questions.size}  •  SCORE: $correct"
         progressBar.progress = index
         questionArea.removeAllViews()
-        val milestone = when (index + 1) {
-            5 -> "CHECKPOINT • STARTER"
-            10 -> "CHECKPOINT • SKILLED"
-            15 -> "CHECKPOINT • SHARP"
-            20 -> "CHECKPOINT • MASTER"
-            25 -> "CHECKPOINT • EXPERT"
-            30 -> "FINAL LEVEL • QUIZ CHAMPION"
+        val milestone = when {
+            index + 1 == questions.size -> "FINAL LEVEL • QUIZ CHAMPION"
+            index + 1 == 5 -> "CHECKPOINT • STARTER"
+            index + 1 == 10 -> "CHECKPOINT • SKILLED"
+            index + 1 == 15 -> "CHECKPOINT • SHARP"
+            index + 1 == 20 -> "CHECKPOINT • MASTER"
+            index + 1 == 25 -> "CHECKPOINT • EXPERT"
             else -> "THE PRACTICE LADDER"
         }
         questionArea.addView(label(milestone,12,green,true))
