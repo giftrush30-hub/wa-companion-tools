@@ -71,6 +71,12 @@ class LudoActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); choosePlayers() }
 
     private fun choosePlayers() {
+        val onlineCount = intent.getIntExtra("game_player_count", 0)
+        if (intent.hasExtra("game_room_id") && onlineCount in 2..4) {
+            selectedPlayers = onlineCount
+            startGame()
+            return
+        }
         AlertDialog.Builder(this).setTitle("Set up your Ludo table")
             .setItems(arrayOf("2 players","3 players","4 players")) { _, which ->
                 selectedPlayers=which+2; startGame()
@@ -80,7 +86,8 @@ class LudoActivity : Activity() {
     private fun startGame() {
         val names=listOf("RED","GREEN","YELLOW","BLUE")
         val seats=when(selectedPlayers){2->listOf(0,2);3->listOf(0,1,2);else->listOf(0,1,2,3)}
-        players=seats.map { i -> Player(names[i],colors[i],starts[i],lanes[i],bases[i]) }
+        val onlineNames = intent.getStringArrayListExtra("game_player_names").orEmpty()
+        players=seats.mapIndexed { index, i -> Player(onlineNames.getOrNull(index) ?: names[i],colors[i],starts[i],lanes[i],bases[i]) }
         tokens.clear(); repeat(selectedPlayers) { tokens.add(MutableList(4){Token()}) }
         current=0; roll=null; consecutiveSixes=0; gameOver=false; readyToRoll=false
         rootLayout=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(12),dp(14),dp(12),dp(18)); setBackgroundColor(Color.rgb(246,249,247)) }
