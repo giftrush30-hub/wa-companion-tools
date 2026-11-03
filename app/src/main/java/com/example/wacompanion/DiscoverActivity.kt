@@ -84,7 +84,7 @@ class DiscoverActivity : Activity() {
         page.addView(space(14))
 
         page.addView(text("EXPLORE BUSINESSES", 13, green, true))
-        val categories = listOf("Fashion", "Food", "Phones", "Beauty", "Electronics", "Home", "Farming", "Services", "Other")
+        val categories = listOf("All", "Fashion", "Food & Groceries", "Phones & Accessories", "Beauty", "Electronics", "Home & Living", "Farming", "Services", "Other")
         val categoryScroll = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false }
         val categoryRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         categories.forEach { name ->
@@ -94,7 +94,21 @@ class DiscoverActivity : Activity() {
                 setTextColor(green)
                 setPadding(dp(13), dp(9), dp(13), dp(9))
                 setBackgroundColor(Color.WHITE)
-                setOnClickListener { searchLive("", "", "", searchResults) }
+                setOnClickListener {
+                    val categoryId = when (name) {
+                        "Fashion" -> "fashion"
+                        "Food & Groceries" -> "food"
+                        "Phones & Accessories" -> "phones"
+                        "Beauty" -> "beauty"
+                        "Electronics" -> "electronics"
+                        "Home & Living" -> "home"
+                        "Farming" -> "farming"
+                        "Services" -> "services"
+                        "Other" -> "other"
+                        else -> ""
+                    }
+                    searchLive("", "", "", searchResults, categoryId)
+                }
             }
             val params = LinearLayout.LayoutParams(-2, -2).apply {
                 rightMargin = dp(8)
@@ -401,12 +415,12 @@ class DiscoverActivity : Activity() {
         }
     }
 
-    private fun searchLive(term: String, state: String, city: String, output: LinearLayout) {
+    private fun searchLive(term: String, state: String, city: String, output: LinearLayout, categoryId: String = "") {
         output.removeAllViews()
         output.addView(text("Searching WA Discover…", 13, muted))
         io.execute {
             try {
-                val rows = backend.searchBusinesses(term, state, city)
+                val rows = backend.searchBusinesses(term, state, city, categoryId)
                 runOnUiThread {
                     output.removeAllViews()
                     if (rows.length() == 0) output.addView(text("No approved businesses found yet. Try another search.", 13, muted))
