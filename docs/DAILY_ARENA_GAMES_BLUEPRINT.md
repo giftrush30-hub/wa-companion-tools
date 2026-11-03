@@ -134,7 +134,7 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Meme War now supports Classic, Bold Yellow and Clean caption styles, top/bottom caption placement, fourteen Twemoji sticker images, and three additional photo-backed prompts.
 - Daily Arena now records private activity events from server-side triggers and shows four daily missions plus a seven-day participation history. The history is private to each account and does not award Games Points.
 - Product research: Kahoot official question types and randomization informed quiz mode/timer design; Slido's official Q&A product and moderation guides informed community suggestions, upvoting and pre-publication review; Unsplash free photo pages were checked for creator and license attribution. See references below.
-- Current published backend inventory: 16 Hot Seat polls, 145 Quick Fire questions in 8 packs, 15 Meme War challenges, 8 photo-backed Meme War templates.
+- Current published backend inventory: 36 Hot Seat polls, 175 Quick Fire questions in 10 packs, 25 Meme War challenges, 8 photo-backed Meme War templates.
 
 
 ### Visual image sharing expansion — 3 November 2026
@@ -165,3 +165,13 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Ludo and WHOT! remain in development. Their online matchmaking, private rooms, turn validation, reconnects, and rematches must be server-authoritative before being advertised as playable multiplayer.
 - The first Big Quiz practice content is currently bundled locally in the Android activity. It is not yet a server-managed daily competition or persistent player record.
 - No build verification, APK production, device test or deployment was performed for this batch.
+
+
+### Games Arena build kickoff — 3 November 2026
+- Added a Games Arena entry to the app home and a dedicated Games Arena hub screen.
+- Added the first playable **Big Quiz practice** activity: 15 curated questions, an ascending question ladder, one 50:50 lifeline per round, immediate answer explanations, a result summary and image-based sharing.
+- Practice is offline and deliberately does not award Games Points, affect competitive rankings or claim server-verified results. The question bank is currently bundled in the Android activity; moving it to a managed server bank and adding daily competitive play are later steps.
+- Ludo and WHOT! are visible as planned game tracks, not falsely advertised as playable online multiplayer.
+- Research for WHOT!: Pagat's rules reference documents the Nigerian card set and explains that some special-card effects vary by local play. Current Nigerian game apps also expose different default action-card and stacking settings. Therefore, the game must show its selected rules before a match and should allow room hosts to see the rule set before inviting others. References: https://www.pagat.com/com/whot.html and https://play.google.com/store/apps/details?id=com.tonielro.naijawhotfree
+- Research for Ludo: Leludo's rules guide describes safe squares, blockades, captures and exact-roll finishing; these are useful baseline rules to formalise for our board, while the server must still validate every move and dice result. Reference: https://leludo.org/rules
+- This is a source-code milestone only. No build verification, APK, device test or deployment was performed.
