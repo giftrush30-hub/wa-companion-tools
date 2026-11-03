@@ -9,7 +9,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
-import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
@@ -110,7 +109,6 @@ object ArenaShareCard {
             color = Color.rgb(255, 222, 142)
             textSize = 34f
             typeface = Typeface.create("sans-serif", Typeface.BOLD)
-            letterSpacing = 0.08f
         }
         canvas.drawText("WA COMPANION  /  DAILY ARENA", 66f, 145f, brand)
 
