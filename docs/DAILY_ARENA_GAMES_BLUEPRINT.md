@@ -256,3 +256,16 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - These are private, local practice records only. No Games Points, cash value, paid promotion, online leaderboard or account sync is involved. Names shown in these local pass-and-play logs are generic seat labels (e.g. PLAYER 1 / RED), not account identities.
 - This batch extends the Big Quiz personal-best and achievement pattern to the other two offline games. It does not claim online multiplayer or server-verified results.
 - Static source inspection only; no Android build, APK, device test or deployment was performed.
+
+## Games Arena multiplayer direction — 3 November 2026
+- **Arena Party is explicitly excluded.** There will be no separate social lounge or standalone voice room. Text chat and optional live voice belong inside an active multiplayer game room only.
+- Target experience: members can create private invite-code rooms or join public matchmaking rooms; each game room supports player presence, ready state, game-specific player limits, in-match text chat, optional voice, rematches and reconnection.
+- Multiplayer games in scope: Big Quiz (shared question/timer/score state), Ludo (server-authoritative dice, token movement, captures, turns and reconnect state), and WHOT! (private hands, shared deck/discard, special-card effects and turn validation).
+- Existing offline Big Quiz, Ludo and WHOT! practice remains available. Online play must be a separate mode and must not break offline practice.
+- **Backend foundation added:** Supabase tables `game_rooms`, `game_room_members`, and `game_chat_messages`; RLS restricts private room/member/chat reads to active room members, public waiting rooms can be discovered by signed-in members, and chat messages are limited to 300 characters. Room creation/join/ready/leave RPCs enforce authentication, supported game types, room capacity, code validity and host hand-off.
+- Room codes are eight uppercase hexadecimal characters. Ludo and WHOT! are limited to 2–4 players; Big Quiz supports 2–8. Private room access is by code; public rooms are discoverable.
+- Private Realtime channel authorization is scoped to active room membership for Broadcast and Presence on topic `games:room:<room-uuid>`. The Supabase Realtime project setting must enforce private channels before clients rely on these policies.
+- **Not yet implemented:** Android multiplayer lobby UI, Realtime client connection, synchronized game-state engines for all three games, in-game chat UI, LiveKit voice-token service/Android voice SDK, moderation UI for multiplayer, and device/network testing. Do not describe the feature as playable online until these are complete.
+- **Voice approach:** evaluate LiveKit for in-match voice only. Room tokens must be minted by a trusted server-side function; never ship a LiveKit API secret in the Android app. Voice remains opt-in with mic mute, speaker mute, speaking indicator, leave voice, block/report, and low-data text-only fallback.
+- No Games Points, business visibility, paid promotion, cash prizes or betting are attached to multiplayer rooms.
+- Supabase schema was applied to the connected project and the three tables were confirmed with RLS enabled. No Android build, APK, device test or deployment was performed.
