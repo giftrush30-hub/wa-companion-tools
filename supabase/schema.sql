@@ -1,25 +1,18 @@
--- WA Discover initial schema for Supabase PostgreSQL.
--- Run this in the Supabase SQL Editor only after creating the project.
--- Public users can read approved listings; sellers can manage only their own records.
+-- WA Discover: lean WhatsApp-first business directory.
+-- Apply manually in the Supabase SQL Editor after creating your project.
+-- No product images, media uploads, paid promotions, or public seller accounts in v1.
+-- Admin access is granted only through trusted Supabase app_metadata, never user-editable user_metadata.
 
 create extension if not exists pgcrypto;
 
-create table if not exists public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  display_name text,
-  phone_verified boolean not null default false,
-  is_admin boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.categories (
+create table if not exists public.discover_categories (
   id text primary key,
   name text not null unique,
   sort_order integer not null default 0,
   active boolean not null default true
 );
 
-insert into public.categories (id, name, sort_order) values
+insert into public.discover_categories (id, name, sort_order) values
   ('fashion', 'Fashion', 1),
   ('food', 'Food & Groceries', 2),
   ('phones', 'Phones & Accessories', 3),
@@ -31,246 +24,146 @@ insert into public.categories (id, name, sort_order) values
   ('other', 'Other', 9)
 on conflict (id) do nothing;
 
-create table if not exists public.businesses (
+create table if not exists public.discover_businesses (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null references public.profiles(id) on delete cascade,
-  name text not null check (char_length(name) between 2 and 100),
-  category_id text not null references public.categories(id),
-  description text not null default '' check (char_length(description) <= 1500),
-  whatsapp_number text not null,
-  state text not null,
-  city text not null,
-  address text,
-  logo_path text,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  name text not null check (char_length(trim(name)) between 2 and 100),
+  category_id text not null references public.discover_categories(id),
+  description text not null default '' check (char_length(description) <= 1000),
+  whatsapp_number text not null check (whatsapp_number ~ '^[1-9][0-9]{9,14}$'),
+  catalogue_url text check (
+    catalogue_url is null or
+    (catalogue_url ~ '^https://[^[:space:]]+$' and char_length(catalogue_url) <= 500)
+  ),
+  state text not null check (char_length(trim(state)) between 2 and 60),
+  city text not null check (char_length(trim(city)) between 2 and 80),
   approval_status text not null default 'pending'
     check (approval_status in ('pending', 'approved', 'rejected', 'suspended')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.listings (
-  id uuid primary key default gen_random_uuid(),
-  business_id uuid not null references public.businesses(id) on delete cascade,
-  owner_id uuid not null references public.profiles(id) on delete cascade,
-  title text not null check (char_length(title) between 2 and 120),
-  description text not null default '' check (char_length(description) <= 2000),
-  listing_type text not null default 'product'
-    check (listing_type in ('product', 'service')),
-  price_ngn numeric(14,2) check (price_ngn is null or price_ngn >= 0),
-  price_on_request boolean not null default false,
-  image_path text,
-  active boolean not null default true,
-  approval_status text not null default 'pending'
-    check (approval_status in ('pending', 'approved', 'rejected', 'suspended')),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+create index if not exists discover_businesses_public_search_idx
+  on public.discover_businesses (state, city, category_id, name)
+  where approval_status = 'approved';
 
-create table if not exists public.promotions (
+create table if not exists public.discover_reports (
   id uuid primary key default gen_random_uuid(),
-  listing_id uuid not null references public.listings(id) on delete cascade,
-  owner_id uuid not null references public.profiles(id) on delete cascade,
-  package_code text not null check (package_code in ('local_50', 'wide_100', 'featured_300', 'spotlight_1000')),
-  amount_ngn integer not null check (amount_ngn > 0),
-  starts_at timestamptz,
-  ends_at timestamptz,
-  payment_reference text unique,
-  payment_status text not null default 'pending'
-    check (payment_status in ('pending', 'paid', 'failed', 'refunded')),
-  approval_status text not null default 'pending'
-    check (approval_status in ('pending', 'approved', 'rejected', 'paused')),
+  business_id uuid not null references public.discover_businesses(id) on delete cascade,
+  reason text not null check (char_length(trim(reason)) between 5 and 500),
+  status text not null default 'open'
+    check (status in ('open', 'reviewing', 'resolved', 'dismissed')),
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.listing_events (
+create table if not exists public.discover_events (
   id bigint generated always as identity primary key,
-  listing_id uuid not null references public.listings(id) on delete cascade,
-  event_type text not null check (event_type in ('impression', 'open', 'save', 'whatsapp_tap')),
-  visitor_key text,
-  actor_id uuid references public.profiles(id) on delete set null,
+  business_id uuid not null references public.discover_businesses(id) on delete cascade,
+  event_type text not null check (event_type in ('profile_open', 'catalogue_tap', 'whatsapp_tap')),
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.listing_reports (
-  id uuid primary key default gen_random_uuid(),
-  listing_id uuid references public.listings(id) on delete set null,
-  business_id uuid references public.businesses(id) on delete set null,
-  reporter_id uuid references public.profiles(id) on delete set null,
-  reason text not null check (char_length(reason) between 5 and 1000),
-  status text not null default 'open' check (status in ('open', 'reviewing', 'resolved', 'dismissed')),
-  created_at timestamptz not null default now(),
-  check (listing_id is not null or business_id is not null)
-);
-
-create index if not exists businesses_public_location_idx
-  on public.businesses (state, city, category_id) where approval_status = 'approved';
-create index if not exists listings_public_feed_idx
-  on public.listings (created_at desc) where active = true and approval_status = 'approved';
-create index if not exists listings_business_idx on public.listings (business_id);
-create index if not exists listing_events_listing_date_idx on public.listing_events (listing_id, created_at desc);
-
-create or replace function public.is_discover_admin()
+create or replace function public.is_wa_discover_admin()
 returns boolean
 language sql
 stable
-security definer
-set search_path = public
 as $$
-  select exists (
-    select 1 from public.profiles
-    where id = auth.uid() and is_admin = true
-  );
+  select coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'discover_admin';
 $$;
 
--- Prevent ordinary sellers from approving their own records or granting themselves privileges.
-create or replace function public.guard_profile_privileges()
+-- Sellers may edit their business details, but cannot change owner or approval status.
+create or replace function public.guard_discover_business()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 begin
-  if not public.is_discover_admin() then
-    if new.is_admin is distinct from old.is_admin
-       or new.phone_verified is distinct from old.phone_verified then
-      raise exception 'Only marketplace administrators can change account verification or admin privileges';
+  if not public.is_wa_discover_admin() then
+    if tg_op = 'INSERT' then
+      if new.owner_id <> auth.uid() or new.approval_status <> 'pending' then
+        raise exception 'Businesses must be submitted by their owner for review';
+      end if;
+    else
+      if new.owner_id is distinct from old.owner_id
+         or new.approval_status is distinct from old.approval_status then
+        raise exception 'Only WA Discover administrators can change ownership or approval status';
+      end if;
     end if;
   end if;
+  new.updated_at = now();
   return new;
 end;
-$;
+$$;
 
-create or replace function public.guard_business_moderation()
-returns trigger
-language plpgsql
-set search_path = public
-as $
-begin
-  if not public.is_discover_admin() then
-    if new.owner_id is distinct from old.owner_id
-       or new.approval_status is distinct from old.approval_status then
-      raise exception 'Only marketplace administrators can change business ownership or approval status';
-    end if;
-  end if;
-  return new;
-end;
-$;
+drop trigger if exists discover_business_guard on public.discover_businesses;
+create trigger discover_business_guard
+  before insert or update on public.discover_businesses
+  for each row execute function public.guard_discover_business();
 
-create or replace function public.guard_listing_moderation()
-returns trigger
-language plpgsql
-set search_path = public
-as $
-begin
-  if not public.is_discover_admin() then
-    if new.owner_id is distinct from old.owner_id
-       or new.approval_status is distinct from old.approval_status then
-      raise exception 'Only marketplace administrators can change listing ownership or approval status';
-    end if;
-  end if;
-  return new;
-end;
-$;
+alter table public.discover_categories enable row level security;
+alter table public.discover_businesses enable row level security;
+alter table public.discover_reports enable row level security;
+alter table public.discover_events enable row level security;
 
-drop trigger if exists protect_profile_privileges on public.profiles;
-create trigger protect_profile_privileges before update on public.profiles
-  for each row execute function public.guard_profile_privileges();
-drop trigger if exists protect_business_moderation on public.businesses;
-create trigger protect_business_moderation before update on public.businesses
-  for each row execute function public.guard_business_moderation();
-drop trigger if exists protect_listing_moderation on public.listings;
-create trigger protect_listing_moderation before update on public.listings
-  for each row execute function public.guard_listing_moderation();
+drop policy if exists "Anyone reads active discover categories" on public.discover_categories;
+create policy "Anyone reads active discover categories"
+  on public.discover_categories for select to anon, authenticated
+  using (active = true);
 
-alter table public.profiles enable row level security;
-alter table public.categories enable row level security;
-alter table public.businesses enable row level security;
-alter table public.listings enable row level security;
-alter table public.promotions enable row level security;
-alter table public.listing_events enable row level security;
-alter table public.listing_reports enable row level security;
+drop policy if exists "Public reads approved discover businesses" on public.discover_businesses;
+create policy "Public reads approved discover businesses"
+  on public.discover_businesses for select to anon, authenticated
+  using (approval_status = 'approved' or owner_id = auth.uid() or public.is_wa_discover_admin());
 
-drop policy if exists "Profiles readable by owner or admin" on public.profiles;
-create policy "Profiles readable by owner or admin" on public.profiles
-  for select to authenticated using (id = auth.uid() or public.is_discover_admin());
-drop policy if exists "Users create own profile" on public.profiles;
-create policy "Users create own profile" on public.profiles
-  for insert to authenticated with check (id = auth.uid() and is_admin = false);
-drop policy if exists "Users update own profile" on public.profiles;
-create policy "Users update own profile" on public.profiles
-  for update to authenticated using (id = auth.uid()) with check (id = auth.uid() and is_admin = false);
+drop policy if exists "Sellers submit pending discover businesses" on public.discover_businesses;
+create policy "Sellers submit pending discover businesses"
+  on public.discover_businesses for insert to authenticated
+  with check (owner_id = auth.uid() and approval_status = 'pending');
 
-drop policy if exists "Anyone reads active categories" on public.categories;
-create policy "Anyone reads active categories" on public.categories
-  for select to anon, authenticated using (active = true);
+drop policy if exists "Sellers update own discover businesses" on public.discover_businesses;
+create policy "Sellers update own discover businesses"
+  on public.discover_businesses for update to authenticated
+  using (owner_id = auth.uid() or public.is_wa_discover_admin())
+  with check (owner_id = auth.uid() or public.is_wa_discover_admin());
 
-drop policy if exists "Public reads approved businesses" on public.businesses;
-create policy "Public reads approved businesses" on public.businesses
-  for select to anon, authenticated using (approval_status = 'approved' or owner_id = auth.uid() or public.is_discover_admin());
-drop policy if exists "Owners create businesses" on public.businesses;
-create policy "Owners create businesses" on public.businesses
-  for insert to authenticated with check (owner_id = auth.uid() and approval_status = 'pending');
-drop policy if exists "Owners update own businesses" on public.businesses;
-create policy "Owners update own businesses" on public.businesses
-  for update to authenticated using (owner_id = auth.uid() or public.is_discover_admin())
-  with check (owner_id = auth.uid() or public.is_discover_admin());
+drop policy if exists "Anyone may report a discover business" on public.discover_reports;
+create policy "Anyone may report a discover business"
+  on public.discover_reports for insert to anon, authenticated
+  with check (char_length(trim(reason)) between 5 and 500);
 
-drop policy if exists "Public reads approved listings" on public.listings;
-create policy "Public reads approved listings" on public.listings
-  for select to anon, authenticated using (
-    (approval_status = 'approved' and active = true)
-    or owner_id = auth.uid()
-    or public.is_discover_admin()
-  );
-drop policy if exists "Owners create pending listings" on public.listings;
-create policy "Owners create pending listings" on public.listings
-  for insert to authenticated with check (
-    owner_id = auth.uid() and approval_status = 'pending'
-    and exists (
-      select 1 from public.businesses b
+drop policy if exists "Only admins read discover reports" on public.discover_reports;
+create policy "Only admins read discover reports"
+  on public.discover_reports for select to authenticated
+  using (public.is_wa_discover_admin());
+
+drop policy if exists "Only admins moderate discover reports" on public.discover_reports;
+create policy "Only admins moderate discover reports"
+  on public.discover_reports for update to authenticated
+  using (public.is_wa_discover_admin())
+  with check (public.is_wa_discover_admin());
+
+drop policy if exists "Public records discover engagement events" on public.discover_events;
+create policy "Public records discover engagement events"
+  on public.discover_events for insert to anon, authenticated
+  with check (exists (
+    select 1 from public.discover_businesses b
+    where b.id = business_id and b.approval_status = 'approved'
+  ));
+
+drop policy if exists "Business owners and admins read discover events" on public.discover_events;
+create policy "Business owners and admins read discover events"
+  on public.discover_events for select to authenticated
+  using (
+    public.is_wa_discover_admin()
+    or exists (
+      select 1 from public.discover_businesses b
       where b.id = business_id and b.owner_id = auth.uid()
     )
   );
-drop policy if exists "Owners update own listings" on public.listings;
-create policy "Owners update own listings" on public.listings
-  for update to authenticated using (owner_id = auth.uid() or public.is_discover_admin())
-  with check (owner_id = auth.uid() or public.is_discover_admin());
-
-drop policy if exists "Owners and admins read promotions" on public.promotions;
-create policy "Owners and admins read promotions" on public.promotions
-  for select to authenticated using (owner_id = auth.uid() or public.is_discover_admin());
-
-drop policy if exists "Public may record listing events" on public.listing_events;
-create policy "Public may record listing events" on public.listing_events
-  for insert to anon, authenticated with check (
-    event_type in ('impression', 'open', 'save', 'whatsapp_tap')
-    and exists (
-      select 1 from public.listings l
-      where l.id = listing_id and l.approval_status = 'approved' and l.active = true
-    )
-  );
-drop policy if exists "Owners and admins read listing events" on public.listing_events;
-create policy "Owners and admins read listing events" on public.listing_events
-  for select to authenticated using (
-    public.is_discover_admin()
-    or exists (
-      select 1 from public.listings l
-      where l.id = listing_id and l.owner_id = auth.uid()
-    )
-  );
-
-drop policy if exists "Anyone can submit listing reports" on public.listing_reports;
-create policy "Anyone can submit listing reports" on public.listing_reports
-  for insert to anon, authenticated with check (char_length(reason) between 5 and 1000);
-drop policy if exists "Admins review listing reports" on public.listing_reports;
-create policy "Admins review listing reports" on public.listing_reports
-  for select to authenticated using (public.is_discover_admin());
-drop policy if exists "Admins update listing reports" on public.listing_reports;
-create policy "Admins update listing reports" on public.listing_reports
-  for update to authenticated using (public.is_discover_admin())
-  with check (public.is_discover_admin());
 
 -- IMPORTANT:
--- Never place the Supabase service-role key in the Android app.
--- Configure private storage buckets and storage.objects policies separately before
--- allowing sellers to upload logos or listing photos.
--- Do not enable promotion purchases until payment verification is handled server-side.
+-- 1. This SQL has NOT been run against a live Supabase project.
+-- 2. Grant the discover_admin role only via trusted server-side admin tooling.
+-- 3. Never put a Supabase service-role key in Android source code.
+-- 4. Do not collect payments until server-side payment verification exists.
+-- 5. Public events are coarse click counts, not WhatsApp Status views or sales.
