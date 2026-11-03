@@ -23,7 +23,7 @@ grant update(status) on public.arena_hot_seat_suggestions to authenticated;
 grant select,insert on public.arena_hot_seat_suggestion_votes to authenticated;
 drop policy if exists "Players read approved or own Hot Seat suggestions" on public.arena_hot_seat_suggestions;
 create policy "Players read approved or own Hot Seat suggestions" on public.arena_hot_seat_suggestions for select to authenticated
-using (status='approved' or user_id=(select auth.uid()) or (select auth.jwt()->'app_metadata'->>'role')='admin');
+using (status='approved' or user_id=(select auth.uid()) or ((select auth.jwt()) -> 'app_metadata' ->> 'role')='admin');
 drop policy if exists "Players submit their own Hot Seat suggestions" on public.arena_hot_seat_suggestions;
 create policy "Players submit their own Hot Seat suggestions" on public.arena_hot_seat_suggestions for insert to authenticated
 with check (user_id=(select auth.uid()) and status='pending');
