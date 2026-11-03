@@ -18,7 +18,8 @@ create table if not exists public.arena_hot_seat_suggestion_votes (
 alter table public.arena_hot_seat_suggestions enable row level security;
 alter table public.arena_hot_seat_suggestion_votes enable row level security;
 revoke all on public.arena_hot_seat_suggestions,public.arena_hot_seat_suggestion_votes from anon,authenticated;
-grant select,insert,update on public.arena_hot_seat_suggestions to authenticated;
+grant select,insert on public.arena_hot_seat_suggestions to authenticated;
+grant update(status) on public.arena_hot_seat_suggestions to authenticated;
 grant select,insert on public.arena_hot_seat_suggestion_votes to authenticated;
 drop policy if exists "Players read approved or own Hot Seat suggestions" on public.arena_hot_seat_suggestions;
 create policy "Players read approved or own Hot Seat suggestions" on public.arena_hot_seat_suggestions for select to authenticated
