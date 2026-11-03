@@ -25,11 +25,11 @@ class DiscoverBackend(context: Context) {
 
     fun signUp(email: String, password: String): JSONObject =
         request("/auth/v1/signup", "POST", JSONObject()
-            .put("email", email).put("password", password), null)
+            .put("email", email).put("password", password), null) as JSONObject
 
     fun signIn(email: String, password: String): SellerSession {
         val result = request("/auth/v1/token?grant_type=password", "POST",
-            JSONObject().put("email", email).put("password", password), null)
+            JSONObject().put("email", email).put("password", password), null) as JSONObject
         val token = result.optString("access_token")
         val userId = result.optJSONObject("user")?.optString("id").orEmpty()
         if (token.isBlank() || userId.isBlank()) {
@@ -67,7 +67,7 @@ class DiscoverBackend(context: Context) {
         val payload = JSONObject(values.toString()).put("owner_id", session.userId)
             .put("approval_status", "pending")
         val result = request("/rest/v1/discover_businesses", "POST", payload, session.accessToken, true)
-        return if (result is JSONObject) result else JSONObject()
+        return if (result is JSONArray && result.length() > 0) result.getJSONObject(0) else JSONObject()
     }
 
     fun categories(): JSONArray {
