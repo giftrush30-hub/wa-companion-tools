@@ -74,70 +74,99 @@ class MainActivity : Activity() {
         scroll.addView(root)
         setContentView(scroll)
 
-        root.addView(label("WA COMPANION TOOLS", 23, Color.rgb(6, 63, 50), true))
-        root.addView(label("Extra tools that work alongside your official WhatsApp.", 14, Color.DKGRAY))
-        root.addView(space(16))
-        root.addView(label("Your WhatsApp stays installed and unchanged.", 13, Color.rgb(6, 100, 70)))
+        root.addView(label("WA COMPANION", 25, Color.rgb(6, 63, 50), true))
+        root.addView(label("Your useful WhatsApp companion.", 15, Color.DKGRAY))
+        root.addView(space(8))
+        root.addView(label("Simple tools. Your WhatsApp stays unchanged.", 13, Color.rgb(6, 100, 70)))
         root.addView(space(18))
 
-        card("WA DISCOVER • BUSINESS MARKETPLACE", "Explore the upcoming Nigerian business marketplace, where customers can discover sellers beyond their contacts.") {
+        card("DISCOVER", "Find Nigerian businesses and useful opportunities.") {
             startActivity(Intent(this, DiscoverActivity::class.java))
         }
-        card("NAIJA WHATSAPP STICKERS", "Preview original Nigerian reactions and add the starter sticker pack to WhatsApp with your confirmation.") { stickerStudio() }
-        card("DAILY MESSAGE & CAPTION GENERATOR", "Get fresh Nigerian-friendly ideas for greetings, faith, love, motivation and business. Copy or share the one you like.") { dailyMessageTool() }
-        card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }
-        card("DAILY STATUS CHALLENGE", "Get a fresh daily prompt, create your response and share it as a status.") { dailyChallenge() }
-        card("STATUS CONVERSATION GAMES", "Create fun polls, choose-one questions and conversation starters for your Status.") { statusConversationGames() }
-        card("7-DAY STATUS CALENDAR", "Plan, save and share a week of status ideas without needing internet.") { statusCalendar() }
-        card("PERSONAL BRAND BUILDER", "Save your name, business identity and contact call-to-action for consistent status cards.") { personalBrandBuilder() }
-        card("PRODUCT CATALOGUE MAKER", "Create product cards with photos, prices and descriptions, save your items and share them with customers.") { productCatalogueMaker() }
-        card("BUSINESS ORDER DASHBOARD", "See your order count, money collected, outstanding balances and delivery progress at a glance.") { orderDashboard() }
-        card("EXPENSE TRACKER & CASH OUT SUMMARY", "Record business spending and see where your money goes. All records stay on this phone.") { expenseTracker() }
-        card("CUSTOMER DEBT & FOLLOW-UP MANAGER", "Track who owes money, due dates, follow-up notes and payment reminders.") { debtFollowUpManager() }
-        card("CUSTOMER ORDER TRACKER", "Record customer orders, payments and balances, track progress and share updates.") { orderTracker() }
-        card("REPLY-TO-STATUS ASSISTANT", "Bring in a status or describe it, then get thoughtful reply ideas in different tones.") { replyAssistant() }
-        card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
-        card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
-        card("SMALL BUSINESS FOLLOW-UP DESK", "Keep customer names, order notes and follow-ups on this phone.") { businessDesk() }
-        card("PRICE, PROFIT & QUOTATION CALCULATOR", "Work out customer prices, estimated profit and a ready-to-share quotation in naira.") { quotationTool() }
-        card("QUICK REPLIES", "Save messages you use often, then copy or share them into WhatsApp.") {
-            quickReplySection()
+        card("MY VAULT", "Save notes, important writing and things you want to keep.") {
+            startActivity(Intent(this, PersonalSpaceActivity::class.java).putExtra("space", "vault"))
         }
-        card("MESSAGE REMINDERS", "Set a time to be reminded. At the right time, open the reminder and send it yourself in WhatsApp.") {
-            reminderSection()
+        card("MY DIARY", "Keep private daily memories and reflections.") {
+            startActivity(Intent(this, PersonalSpaceActivity::class.java).putExtra("space", "diary"))
         }
-        card("PRIVACY SHORTCUTS", "Open the official WhatsApp privacy and security settings. These shortcuts do not change hidden WhatsApp controls.") {
-            button("Open WhatsApp") {
-                val launch = packageManager.getLaunchIntentForPackage("com.whatsapp")
-                if (launch != null) startActivity(launch) else toast("WhatsApp is not installed.")
-            }
-            button("Open Android app settings") {
-                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.parse("package:com.whatsapp")))
-            }
+        card("REFERRAL HUB", "Discover and prepare to share useful referral opportunities.") {
+            startActivity(Intent(this, ReferralHubActivity::class.java))
         }
-        card("STATUS ORGANISER", "Keep your own notes about statuses you have permission to save. This tool does not scrape or secretly download anyone's status.") {
-            val note = EditText(this).apply { hint = "Add a note or paste a status caption"; minLines = 2 }
-            root.addView(note)
-            button("Save note") {
-                val old = prefs.getString("status_notes", "") ?: ""
-                val addition = note.text.toString().trim()
-                if (addition.isEmpty()) {
-                    toast("Write a note first.")
-                } else {
-                    val updated = (old + if (old.isBlank()) "" else "\n\n" + addition).trim()
-                    prefs.edit().putString("status_notes", updated).apply()
-                    note.setText("")
-                    toast("Note saved on this phone.")
-                    showNotes()
-                }
-            }
-            showNotes()
-        }
-        root.addView(space(10))
-        root.addView(label("Note: This is a companion utility, not a modified WhatsApp client. It cannot read private chats, hide typing indicators, or send messages automatically.", 12, Color.GRAY))
+
+        root.addView(space(8))
+        button("More tools") { showMoreTools() }
+        root.addView(space(12))
+        root.addView(label("Save what matters. Discover what is useful. Share only what you choose.", 13, Color.GRAY))
     }
 
+    private fun showMoreTools() {
+        val names = arrayOf(
+            "Naija WhatsApp Stickers", "Daily Message & Caption Generator",
+            "Nigerian Meme & Reaction Studio", "Daily Status Challenge",
+            "Status Conversation Games", "7-Day Status Calendar",
+            "Personal Brand Builder", "Product Catalogue Maker",
+            "Business Order Dashboard", "Expense Tracker",
+            "Customer Debt & Follow-up Manager", "Customer Order Tracker",
+            "Reply-to-Status Assistant", "Status & Flyer Studio",
+            "Naija Message Lab", "Small Business Follow-up Desk",
+            "Price, Profit & Quotation Calculator", "Quick Replies",
+            "Message Reminders", "Privacy Shortcuts", "Status Organiser"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("More tools")
+            .setItems(names) { _, which ->
+                when (which) {
+                    0 -> stickerStudio()
+                    1 -> dailyMessageTool()
+                    2 -> memeStudio()
+                    3 -> dailyChallenge()
+                    4 -> statusConversationGames()
+                    5 -> statusCalendar()
+                    6 -> personalBrandBuilder()
+                    7 -> productCatalogueMaker()
+                    8 -> orderDashboard()
+                    9 -> expenseTracker()
+                    10 -> debtFollowUpManager()
+                    11 -> orderTracker()
+                    12 -> replyAssistant()
+                    13 -> statusStudio()
+                    14 -> messageLab()
+                    15 -> businessDesk()
+                    16 -> quotationTool()
+                    17 -> quickReplySection()
+                    18 -> reminderSection()
+                    19 -> {
+                        root.addView(label("Privacy shortcuts", 18, Color.rgb(6, 63, 50), true))
+                        button("Open WhatsApp") {
+                            val launch = packageManager.getLaunchIntentForPackage("com.whatsapp")
+                            if (launch != null) startActivity(launch) else toast("WhatsApp is not installed.")
+                        }
+                        button("Open Android app settings") {
+                            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:com.whatsapp")))
+                        }
+                    }
+                    20 -> {
+                        root.addView(label("Status organiser", 18, Color.rgb(6, 63, 50), true))
+                        val note = EditText(this).apply { hint = "Add a note or paste a status caption"; minLines = 2 }
+                        root.addView(note)
+                        button("Save note") {
+                            val old = prefs.getString("status_notes", "") ?: ""
+                            val addition = note.text.toString().trim()
+                            if (addition.isEmpty()) toast("Write a note first.")
+                            else {
+                                prefs.edit().putString("status_notes", (old + if (old.isBlank()) "" else "\\n\\n" + addition).trim()).apply()
+                                note.setText("")
+                                toast("Note saved on this phone.")
+                                showNotes()
+                            }
+                        }
+                        showNotes()
+                    }
+                }
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
 
     private fun stickerStudio() {
         root.addView(label("NAIJA REACTIONS • STARTER PACK", 16, Color.rgb(6, 63, 50), true))
