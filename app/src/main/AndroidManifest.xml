@@ -20,6 +20,7 @@
         <activity android:name=".WhotActivity" android:exported="false" />
         <activity android:name=".LudoActivity" android:exported="false" />
         <activity android:name=".BigQuizActivity" android:exported="false" />
+        <activity android:name=".GamesMultiplayerActivity" android:exported="false" />
         <activity android:name=".GamesArenaActivity" android:exported="false" />
         <activity android:name=".DailyArenaActivity" android:exported="false" />
         <activity android:name=".DiscoverActivity" android:exported="false" />
