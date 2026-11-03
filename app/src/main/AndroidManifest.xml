@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <queries><package android:name="com.whatsapp" /><package android:name="com.whatsapp.w4b" /></queries>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <application
@@ -11,7 +11,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".ReminderReceiver" android:exported="false" />
+        <receiver android:name=".ReminderReceiver" android:exported="false" />\n        <provider android:name=".NaijaStickerProvider" android:authorities="com.example.wacompanion.stickers" android:enabled="true" android:exported="true" android:readPermission="com.whatsapp.sticker.READ" />
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
