@@ -300,8 +300,11 @@ class WhotActivity : Activity() {
             .putBoolean("first_match",true).putString("recent_results",history.take(8).joinToString("|"))
         if(firstWin)editor.putBoolean("first_win",true)
         editor.apply()
+        val milestones=mutableListOf<String>()
+        if(firstMatch)milestones.add("FIRST MATCH")
+        if(firstWin)milestones.add("FIRST WIN")
         return "Matches completed: $played  •  Player wins recorded: $wins" +
-            if(firstMatch) "  •  FIRST MATCH unlocked" else if(firstWin) "  •  FIRST WIN unlocked" else ""
+            if(milestones.isNotEmpty()) "  •  ${milestones.joinToString(" + ")} unlocked" else ""
     }
 
     private fun showRecordPanel(recordLine:String) {
