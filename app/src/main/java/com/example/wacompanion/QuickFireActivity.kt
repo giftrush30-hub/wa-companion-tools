@@ -19,6 +19,7 @@ class QuickFireActivity : Activity() {
     private val muted = Color.rgb(91, 108, 119)
     private lateinit var page: LinearLayout
     private lateinit var status: TextView
+    private lateinit var headerArea: LinearLayout
     private lateinit var questionArea: LinearLayout
     private var quiz: QuickFireBackend.Quiz? = null
     private var questionIndex = 0
@@ -37,6 +38,8 @@ class QuickFireActivity : Activity() {
         page.addView(label("Think fast. Learn something new.", 15, muted))
         status = label("Loading quiz…", 15, muted)
         page.addView(status)
+        headerArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        page.addView(headerArea)
         questionArea = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         page.addView(questionArea)
         loadQuiz()
@@ -51,8 +54,8 @@ class QuickFireActivity : Activity() {
                     if (loaded == null || loaded.questions.isEmpty()) {
                         status.text = "No published quiz is available yet. Please check back soon."
                     } else {
-                        page.addView(label(loaded.title, 20, ink, true))
-                        if (loaded.description.isNotBlank()) page.addView(label(loaded.description, 14, muted))
+                        headerArea.addView(label(loaded.title, 20, ink, true))
+                        if (loaded.description.isNotBlank()) headerArea.addView(label(loaded.description, 14, muted))
                         renderQuestion()
                     }
                 }
