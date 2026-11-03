@@ -1,12 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.INTERNET" />\n    <queries><package android:name="com.whatsapp" /><package android:name="com.whatsapp.w4b" /></queries>
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <queries>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+    </queries>
     <application
         android:allowBackup="true"
         android:label="WA Companion Tools"
         android:theme="@style/AppTheme">
-        <activity android:name=".DailyArenaActivity" android:exported="false" />\n        <activity android:name=".DiscoverActivity" android:exported="false" />
+        <activity android:name=".QuickFireActivity" android:exported="false" />
+        <activity android:name=".DailyArenaActivity" android:exported="false" />
+        <activity android:name=".DiscoverActivity" android:exported="false" />
         <activity android:name=".PersonalSpaceActivity" android:exported="false" />
         <activity android:name=".ReferralHubActivity" android:exported="false" />
         <activity android:name=".WhatsAppArchiveActivity" android:exported="false" />
@@ -16,8 +22,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".ReminderReceiver" android:exported="false" />\n        <provider android:name=".NaijaStickerProvider" android:authorities="com.example.wacompanion.stickers" android:enabled="true" android:exported="true" android:readPermission="com.whatsapp.sticker.READ" />
-        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true">
+        <receiver android:name=".ReminderReceiver" android:exported="false" />
+        <provider
+            android:name=".NaijaStickerProvider"
+            android:authorities="com.example.wacompanion.stickers"
+            android:enabled="true"
+            android:exported="true"
+            android:readPermission="com.whatsapp.sticker.READ" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
     </application>
