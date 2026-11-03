@@ -182,6 +182,18 @@ class MemeWarActivity : Activity() {
         card.addView(label("YOUR CAPTION", 13, green, true))
         if (mine != null) {
             card.addView(label(mine.optString("caption"), 16, ink))
+            val ownImageUrl = mine.optString("image_url").takeIf { it.isNotBlank() && it != "null" }
+            if (ownImageUrl != null) {
+                val ownPhoto = ImageView(this).apply {
+                    adjustViewBounds = true
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(180)
+                    )
+                }
+                card.addView(ownPhoto)
+                loadRemoteImage(ownImageUrl, ownPhoto)
+            }
             card.addView(label("This challenge accepts one caption per player. You can join the next round.", 13, muted))
         } else {
             val input = EditText(this).apply {
