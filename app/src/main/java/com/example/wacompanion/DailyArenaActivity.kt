@@ -72,7 +72,20 @@ class DailyArenaActivity : Activity() {
                     if (poll == null) {
                         status.text = "No live question yet. Check back soon."
                     } else {
-                        renderPoll(poll)
+                        voted = poll.myVoteOptionId != null
+                        if (voted) {
+                            status.text = "You have already voted. Here are the community results:"
+                            worker.execute {
+                                try {
+                                    val results = arena.results(poll.id)
+                                    runOnUiThread { showResults(poll, results) }
+                                } catch (e: Exception) {
+                                    runOnUiThread { status.text = "You have already voted. Results could not be loaded just now." }
+                                }
+                            }
+                        } else {
+                            renderPoll(poll)
+                        }
                     }
                 }
             } catch (e: Exception) {
