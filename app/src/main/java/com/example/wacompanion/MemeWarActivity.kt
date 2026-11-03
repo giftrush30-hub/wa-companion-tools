@@ -218,11 +218,14 @@ class MemeWarActivity : Activity() {
             text = "Share this Meme War challenge"
             isAllCaps = false
             setOnClickListener {
-                val send = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "😂 MEME WAR CHALLENGE: ${item.title}\n\n${item.instructions}\n\nDrop your funniest clean caption in WA Companion → Daily Arena → Meme War. Tag a friend who would nail this!")
-                }
-                startActivity(Intent.createChooser(send, "Share Meme War challenge"))
+                ArenaShareCard.share(
+                    this@MemeWarActivity,
+                    "MEME WAR CHALLENGE",
+                    "${item.title}\\n\\n${item.instructions}\\n\\nWrite the funniest clean caption you can think of. Tag a friend who would win this round!",
+                    "MAKE YOUR CAPTION  •  DAILY ARENA",
+                    item.templateImageUrl,
+                    "Share Meme War challenge image"
+                )
             }
         })
         challengeArea.addView(Button(this).apply {
@@ -427,11 +430,14 @@ class MemeWarActivity : Activity() {
                 text = "Share this caption"
                 isAllCaps = false
                 setOnClickListener {
-                    val send = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, "🤣 MEME WAR\n\n${entry.caption}\n\nVote for your favourite in WA Companion → Daily Arena → Meme War!")
-                    }
-                    startActivity(Intent.createChooser(send, "Share Meme War caption"))
+                    ArenaShareCard.share(
+                        this@MemeWarActivity,
+                        "MEME WAR CAPTION",
+                        entry.caption + "\\n\\n${entry.votes} community vote(s). Which caption is your favourite?",
+                        "VOTE FOR YOUR FAVOURITE  •  DAILY ARENA",
+                        entry.imageUrl,
+                        "Share Meme War caption image"
+                    )
                 }
             })
             val actions = LinearLayout(this).apply {
