@@ -218,7 +218,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         })
         status = label("Connecting…", 13, green, true)
         body.addView(status)
-        body.addView(label("Room chat and voice are shared live. Game moves and scores are not yet synchronized between phones.", 12, muted))
+        body.addView(label("Room chat is shared live. Voice requires LiveKit service credentials. Game moves and scores are not yet synchronized between phones.", 12, muted))
         roster = label("Waiting for players…", 14, ink)
         body.addView(roster)
         readyButton = Button(this).apply { text = "I'm ready"; isAllCaps = false; setOnClickListener { setReady(!ready) } }
