@@ -22,6 +22,54 @@ class MemeWarBackend(context: Context) {
         val votes: Long,
         val votedByMe: Boolean
     )
+    data class PendingSubmission(val id: String, val caption: String, val challengeTitle: String, val createdAt: String)
+
+    fun isAdmin(): Boolean {
+        val token = discover.currentSession()?.accessToken ?: return false
+        return try {
+            val payload = token.split(".").getOrNull(1) ?: return false
+            val decoded = android.util.Base64.decode(
+                payload.replace('-', '+').replace('_', '/') +
+                    "=".repeat((4 - payload.length % 4) % 4),
+                android.util.Base64.DEFAULT
+            )
+            JSONObject(String(decoded, Charsets.UTF_8))
+                .optJSONObject("app_metadata")
+                ?.optString("role") == "admin"
+        } catch (_: Exception) { false }
+    }
+
+    fun pendingSubmissions(): List<PendingSubmission> {
+        val session = requireSession()
+        val rows = discover.request(
+            "/rest/v1/arena_meme_submissions?select=id,caption,created_at,challenge_id&status=eq.pending&order=created_at.asc&limit=100",
+            "GET", null, session.accessToken
+        ) as JSONArray
+        return (0 until rows.length()).map { index ->
+            val row = rows.getJSONObject(index)
+            val challengeRows = discover.request(
+                "/rest/v1/arena_meme_challenges?select=title&id=eq.${row.getString("challenge_id")}&limit=1",
+                "GET", null, session.accessToken
+            ) as JSONArray
+            PendingSubmission(
+                row.getString("id"),
+                row.getString("caption"),
+                if (challengeRows.length() > 0) challengeRows.getJSONObject(0).optString("title") else "Meme War",
+                row.optString("created_at")
+            )
+        }
+    }
+
+    fun moderate(submissionId: String, approved: Boolean) {
+        val session = requireSession()
+        if (!isAdmin()) throw IllegalStateException("This moderation area is for authorised moderators only.")
+        discover.request(
+            "/rest/v1/arena_meme_submissions?id=eq.$submissionId",
+            "PATCH",
+            JSONObject().put("status", if (approved) "approved" else "rejected"),
+            session.accessToken
+        )
+    }
 
     fun activeChallenge(): Challenge? {
         val rows = discover.request(
