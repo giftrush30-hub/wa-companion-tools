@@ -34,6 +34,16 @@ class GamesArenaActivity : Activity() {
         intro.addView(label("Practice is available first. Competitive rankings and Games Points will only arrive after fair-play checks are ready.", 14, muted))
         root.addView(intro)
         root.addView(space(14))
+        val online = panel()
+        online.addView(label("🌐  PLAY WITH FRIENDS", 19, green, true))
+        online.addView(label("Create or join a room, invite friends with a code, chat while you play and optionally talk live by voice.", 14, ink))
+        online.addView(Button(this).apply {
+            text = "Open multiplayer rooms"
+            isAllCaps = false
+            setOnClickListener { startActivity(Intent(this@GamesArenaActivity, GamesMultiplayerActivity::class.java)) }
+        })
+        root.addView(online)
+        root.addView(space(12))
 
         val quiz = panel()
         quiz.addView(label("🏆  BIG QUIZ", 21, green, true))
@@ -48,7 +58,7 @@ class GamesArenaActivity : Activity() {
 
         val ludo = panel()
         ludo.addView(label("🎲  LUDO", 21, green, true))
-        ludo.addView(label("A 2–4 player local pass-and-play board game. Roll to leave base, capture rivals, reach home and earn bonus rolls. Online rooms and matchmaking are a later milestone.", 14, ink))
+        ludo.addView(label("A 2–4 player local pass-and-play board game. Roll to leave base, capture rivals, reach home and earn bonus rolls. Online rooms are available from Play With Friends.", 14, ink))
         ludo.addView(label("OFFLINE PASS & PLAY — AVAILABLE", 11, muted, true))
         ludo.addView(Button(this).apply {
             text = "Play Ludo on this phone"
@@ -60,7 +70,7 @@ class GamesArenaActivity : Activity() {
 
         val whot = panel()
         whot.addView(label("🃏  WHOT!", 21, green, true))
-        whot.addView(label("Nigerian WHOT! for 2–4 players on one phone. Match shapes or numbers, defend Pick Two/Pick Three, call a shape with WHOT 20 and be first to check up. Online rooms come later.", 14, ink))
+        whot.addView(label("Nigerian WHOT! for 2–4 players on one phone. Match shapes or numbers, defend Pick Two/Pick Three, call a shape with WHOT 20 and be first to check up. Online rooms are available from Play With Friends.", 14, ink))
         whot.addView(label("OFFLINE PASS & PLAY — AVAILABLE", 11, muted, true))
         whot.addView(Button(this).apply {
             text = "Play WHOT! on this phone"
