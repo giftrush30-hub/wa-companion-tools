@@ -175,7 +175,15 @@ class DailyArenaActivity : Activity() {
         pollArea.addView(Button(this).apply {
             text = "Share this question"
             isAllCaps = false
-            setOnClickListener { shareText("Hot Seat: ${poll.question}\n\nWhat would you choose? Vote and see what everyone thinks in WA Companion → Daily Arena.") }
+            setOnClickListener {
+                val choices = poll.options.joinToString("\\n") { "• " + it.text }
+                ArenaShareCard.share(
+                    this@DailyArenaActivity,
+                    "HOT SEAT",
+                    "${poll.question}\\n\\nWhat would YOU choose?\\n\\n${choices}",
+                    "CAST YOUR VOTE  •  DAILY ARENA"
+                )
+            }
         })
         addPollReportButton(poll.id)
     }
@@ -227,7 +235,19 @@ class DailyArenaActivity : Activity() {
         pollArea.addView(Button(this).apply {
             text = "Share this question"
             isAllCaps = false
-            setOnClickListener { shareText("Hot Seat: ${poll.question}\n\nThe community has cast ${totalVotes} vote(s). Join the debate in WA Companion → Daily Arena.") }
+            setOnClickListener {
+                val summary = poll.options.joinToString("\\n") { option ->
+                    val count = counts[option.id] ?: 0L
+                    val percent = if (totalVotes == 0L) 0 else ((count * 100) / totalVotes).toInt()
+                    "${option.text}: ${percent}%"
+                }
+                ArenaShareCard.share(
+                    this@DailyArenaActivity,
+                    "HOT SEAT RESULTS",
+                    "${poll.question}\\n\\n${summary}\\n\\nBased on ${totalVotes} community votes.",
+                    "WHAT'S YOUR TAKE?  •  DAILY ARENA"
+                )
+            }
         })
         addPollReportButton(poll.id)
     }
@@ -399,14 +419,6 @@ class DailyArenaActivity : Activity() {
             suggestionArea.addView(card)
             suggestionArea.addView(gap(6))
         }
-    }
-
-    private fun shareText(message: String) {
-        val send = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, message)
-        }
-        startActivity(Intent.createChooser(send, "Share Daily Arena question"))
     }
 
     private fun addFeature(parent: LinearLayout, title: String, description: String) {
