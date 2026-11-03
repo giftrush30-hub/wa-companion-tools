@@ -19,6 +19,7 @@ class MemeWarBackend(context: Context) {
     data class Submission(
         val id: String,
         val caption: String,
+        val imageUrl: String?,
         val createdAt: String,
         val votes: Long,
         val votedByMe: Boolean
@@ -154,7 +155,7 @@ class MemeWarBackend(context: Context) {
         return if (rows.length() == 0) null else rows.getJSONObject(0)
     }
 
-    fun submitCaption(challengeId: String, caption: String) {
+    fun submitCaption(challengeId: String, caption: String, imageUrl: String? = null) {
         val session = requireSession()
         val clean = caption.trim()
         if (clean.length !in 1..500) throw IllegalArgumentException("Your caption must be between 1 and 500 characters.")
@@ -164,7 +165,8 @@ class MemeWarBackend(context: Context) {
             JSONObject().put("challenge_id", challengeId)
                 .put("user_id", session.userId)
                 .put("caption", clean)
-                .put("status", "pending"),
+                .put("status", "pending")
+                .also { if (!imageUrl.isNullOrBlank()) it.put("image_url", imageUrl) },
             session.accessToken
         )
     }
@@ -172,7 +174,7 @@ class MemeWarBackend(context: Context) {
     fun approvedSubmissions(challengeId: String): List<Submission> {
         val session = requireSession()
         val rows = discover.request(
-            "/rest/v1/arena_meme_submissions?select=id,caption,created_at&challenge_id=eq.$challengeId&status=eq.approved&order=created_at.desc&limit=100",
+            "/rest/v1/arena_meme_submissions?select=id,caption,image_url,created_at&challenge_id=eq.$challengeId&status=eq.approved&order=created_at.desc&limit=100",
             "GET", null, session.accessToken
         ) as JSONArray
         val countsJson = discover.request(
@@ -191,8 +193,8 @@ class MemeWarBackend(context: Context) {
         return (0 until rows.length()).map {
             val row = rows.getJSONObject(it)
             val id = row.getString("id")
-            Submission(id, row.getString("caption"), row.optString("created_at"),
-                counts[id] ?: 0L, id in myVotes)
+            Submission(id, row.getString("caption"), row.optString("image_url").takeIf { it.isNotBlank() && it != "null" },
+                row.optString("created_at"), counts[id] ?: 0L, id in myVotes)
         }.sortedByDescending { it.votes }
     }
 
