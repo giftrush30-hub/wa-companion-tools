@@ -211,6 +211,18 @@ class QuickFireActivity : Activity() {
         questionArea.addView(label("Best correct-answer streak: $bestStreak", 16, ink, true))
         questionArea.addView(label("Your answers are checked and recorded by the server. This is a quiz score, not spendable Games Points. Rewards and leaderboards will be connected in a later milestone.", 14, muted))
         questionArea.addView(Button(this).apply {
+            text = "Share my Quick Fire result"
+            isAllCaps = false
+            setOnClickListener {
+                val message = "I just played Quick Fire on WA Companion! ⚡\\nScore: $score / $total\\nBest streak: $bestStreak\\nCan you beat me? Open WA Companion → Daily Arena → Quick Fire."
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_TEXT, message)
+                }
+                startActivity(android.content.Intent.createChooser(send, "Share your Quick Fire result"))
+            }
+        })
+        questionArea.addView(Button(this).apply {
             text = "Play another random round"
             isAllCaps = false
             setOnClickListener { chooseDifficulty() }
