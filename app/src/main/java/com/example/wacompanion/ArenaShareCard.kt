@@ -57,6 +57,7 @@ object ArenaShareCard {
                 activity.runOnUiThread {
                     val send = Intent(Intent.ACTION_SEND).apply {
                         type = "image/png"
+                        putExtra(Intent.EXTRA_TITLE, "WA Companion Daily Arena")
                         putExtra(Intent.EXTRA_STREAM, uri)
                         putExtra(Intent.EXTRA_TEXT, footer)
                         clipData = ClipData.newUri(activity.contentResolver, "Daily Arena share", uri)
