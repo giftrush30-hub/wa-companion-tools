@@ -83,6 +83,8 @@ class MainActivity : Activity() {
         card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }
         card("DAILY STATUS CHALLENGE", "Get a fresh daily prompt, create your response and share it as a status.") { dailyChallenge() }
         card("STATUS CONVERSATION GAMES", "Create fun polls, choose-one questions and conversation starters for your Status.") { statusConversationGames() }
+        card("7-DAY STATUS CALENDAR", "Plan, save and share a week of status ideas without needing internet.") { statusCalendar() }
+        card("PERSONAL BRAND BUILDER", "Save your name, business identity and contact call-to-action for consistent status cards.") { personalBrandBuilder() }
         card("REPLY-TO-STATUS ASSISTANT", "Bring in a status or describe it, then get thoughtful reply ideas in different tones.") { replyAssistant() }
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
         card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
@@ -456,6 +458,95 @@ class MainActivity : Activity() {
             }
         }
         root.addView(label("These prompts are designed for genuine conversation. Users share them manually and read replies in WhatsApp.", 11, Color.GRAY))
+    }
+
+    private fun statusCalendar() {
+        val categories = linkedMapOf(
+            "Personal / lifestyle" to listOf("A little moment I am grateful for today...", "One lesson I am carrying into this week...", "Something simple that makes me happy is..."),
+            "Business / promotion" to listOf("Here is what we can help you with this week...", "A happy customer is the best reward. Thank you for your support.", "Need quality service? Send us a message and let's talk."),
+            "Faith / encouragement" to listOf("May this week bring renewed strength and fresh hope.", "Keep doing what is right, even when progress feels slow.", "One prayer I am holding close today is..."),
+            "Fun / Naija vibes" to listOf("Omo, we thank God for another day. Who else is grateful? 😂", "If enjoyment was a subject, what grade would you get?", "Small wins deserve celebration too. No dulling!"),
+            "Connection / friendship" to listOf("Tag or message someone whose kindness you appreciate.", "What is one quality you value in a true friend?", "Checking on you: how is your heart today?")
+        )
+        val date = Calendar.getInstance()
+        val days = (0..6).map { offset ->
+            Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, offset) }
+        }
+        val dayNames = days.map { SimpleDateFormat("EEE, d MMM", Locale.getDefault()).format(it.time) }
+        val dayPicker = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, dayNames)
+        }
+        val category = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, categories.keys.toList())
+        }
+        val draft = EditText(this).apply { hint = "Your planned status for this day"; minLines = 3 }
+        val saved = TextView(this).apply { textSize = 13f; setTextColor(Color.DKGRAY) }
+        root.addView(label("YOUR NEXT SEVEN DAYS", 16, Color.rgb(6, 63, 50), true))
+        root.addView(label("Choose a day and a theme. Your plans are saved locally on this phone.", 12, Color.DKGRAY))
+        root.addView(dayPicker); root.addView(category); root.addView(draft)
+        fun key(): String = "status_calendar_" + SimpleDateFormat("yyyyMMdd", Locale.US).format(days[dayPicker.selectedItemPosition].time)
+        fun refreshSaved() {
+            val value = prefs.getString(key(), "") ?: ""
+            saved.text = if (value.isBlank()) "No plan saved for this day yet." else "SAVED PLAN\n$value"
+            draft.setText(value)
+        }
+        dayPicker.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) { refreshSaved() }
+        }
+        button("Suggest a status for this day") {
+            val options = categories[category.selectedItem.toString()].orEmpty()
+            draft.setText(options.random())
+        }
+        button("Save this day's plan") {
+            val value = draft.text.toString().trim()
+            if (value.isBlank()) toast("Write or generate a status first.") else {
+                prefs.edit().putString(key(), value).apply()
+                saved.text = "SAVED PLAN\n$value"
+                toast("Status plan saved.")
+            }
+        }
+        button("Share this planned status") {
+            val value = draft.text.toString().trim()
+            if (value.isBlank()) toast("Choose or write a status first.") else shareMemeImage(value)
+        }
+        root.addView(saved)
+        refreshSaved()
+        root.addView(label("This is a planning calendar, not automatic posting. You choose when to share each status.", 11, Color.GRAY))
+    }
+
+    private fun personalBrandBuilder() {
+        root.addView(label("BUILD A CONSISTENT IDENTITY", 16, Color.rgb(6, 63, 50), true))
+        root.addView(label("Save a few details once, then use them when creating promotional status cards.", 12, Color.DKGRAY))
+        val brandName = EditText(this).apply { hint = "Your name or business name"; isSingleLine = true; setText(prefs.getString("brand_name", "")) }
+        val tagline = EditText(this).apply { hint = "Short tagline (e.g. Quality you can trust)"; isSingleLine = true; setText(prefs.getString("brand_tagline", "")) }
+        val contact = EditText(this).apply { hint = "Contact or call-to-action (optional)"; isSingleLine = true; setText(prefs.getString("brand_contact", "")) }
+        val sample = EditText(this).apply { hint = "What are you announcing or promoting?"; minLines = 3 }
+        root.addView(brandName); root.addView(tagline); root.addView(contact); root.addView(sample)
+        button("Save my brand details") {
+            val name = brandName.text.toString().trim()
+            if (name.isBlank()) toast("Enter your name or business name first.") else {
+                prefs.edit().putString("brand_name", name)
+                    .putString("brand_tagline", tagline.text.toString().trim())
+                    .putString("brand_contact", contact.text.toString().trim()).apply()
+                toast("Brand details saved on this phone.")
+            }
+        }
+        button("Create branded status card") {
+            val name = brandName.text.toString().trim()
+            val message = sample.text.toString().trim()
+            if (name.isBlank() || message.isBlank()) {
+                toast("Enter your name or business name and a message.")
+            } else {
+                val line = tagline.text.toString().trim()
+                val call = contact.text.toString().trim()
+                val branded = message + "\n\n" + name +
+                    (if (line.isBlank()) "" else "\n" + line) +
+                    (if (call.isBlank()) "" else "\n" + call)
+                shareMemeImage(branded)
+            }
+        }
+        root.addView(label("Your details stay in this app on this phone. Preview your wording before sharing; the tool does not post automatically.", 11, Color.GRAY))
     }
 
     private fun replyAssistant() {
