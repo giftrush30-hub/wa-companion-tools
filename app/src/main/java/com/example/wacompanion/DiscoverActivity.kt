@@ -269,7 +269,7 @@ class DiscoverActivity : Activity() {
     private fun showSellerNotice() {
         val panel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(8), dp(16), dp(8)) }
         fun field(hintText: String, inputType: Int = android.text.InputType.TYPE_CLASS_TEXT): EditText {
-            val e = EditText(this).apply { hint = hintText; textSize = 14f; inputType = inputType }
+            val e = EditText(this).apply { hint = hintText; textSize = 14f; this.inputType = inputType }
             panel.addView(e, LinearLayout.LayoutParams(-1, dp(50)))
             return e
         }
