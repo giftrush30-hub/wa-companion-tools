@@ -122,6 +122,65 @@ as $$
   );
 $$;
 
+-- Prevent ordinary sellers from approving their own records or granting themselves privileges.
+create or replace function public.guard_profile_privileges()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+begin
+  if not public.is_discover_admin() then
+    if new.is_admin is distinct from old.is_admin
+       or new.phone_verified is distinct from old.phone_verified then
+      raise exception 'Only marketplace administrators can change account verification or admin privileges';
+    end if;
+  end if;
+  return new;
+end;
+$;
+
+create or replace function public.guard_business_moderation()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+begin
+  if not public.is_discover_admin() then
+    if new.owner_id is distinct from old.owner_id
+       or new.approval_status is distinct from old.approval_status then
+      raise exception 'Only marketplace administrators can change business ownership or approval status';
+    end if;
+  end if;
+  return new;
+end;
+$;
+
+create or replace function public.guard_listing_moderation()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+begin
+  if not public.is_discover_admin() then
+    if new.owner_id is distinct from old.owner_id
+       or new.approval_status is distinct from old.approval_status then
+      raise exception 'Only marketplace administrators can change listing ownership or approval status';
+    end if;
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists protect_profile_privileges on public.profiles;
+create trigger protect_profile_privileges before update on public.profiles
+  for each row execute function public.guard_profile_privileges();
+drop trigger if exists protect_business_moderation on public.businesses;
+create trigger protect_business_moderation before update on public.businesses
+  for each row execute function public.guard_business_moderation();
+drop trigger if exists protect_listing_moderation on public.listings;
+create trigger protect_listing_moderation before update on public.listings
+  for each row execute function public.guard_listing_moderation();
+
 alter table public.profiles enable row level security;
 alter table public.categories enable row level security;
 alter table public.businesses enable row level security;
