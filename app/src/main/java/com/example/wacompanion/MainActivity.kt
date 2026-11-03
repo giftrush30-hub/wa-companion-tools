@@ -359,7 +359,11 @@ class MainActivity : Activity() {
         val contact = EditText(this).apply { hint = "Phone number (optional)"; isSingleLine = true; inputType = 3 }
         val task = EditText(this).apply { hint = "Order, promise or follow-up note"; minLines = 2 }
         val amount = EditText(this).apply { hint = "Amount in naira (optional)"; isSingleLine = true; inputType = 2 }
+        val addReminder = CheckBox(this).apply { text = "Remind me to follow up with this customer"; isChecked = false }
+        val dueButton = Button(this).apply { text = "Choose follow-up reminder time"; isAllCaps = false }
         root.addView(customer); root.addView(contact); root.addView(task); root.addView(amount)
+        root.addView(addReminder); root.addView(dueButton)
+        dueButton.setOnClickListener { chooseDateTime(dueButton) }
         val list = TextView(this).apply { textSize = 13f; setTextColor(Color.DKGRAY); setPadding(0, dp(10), 0, dp(6)) }
         fun refresh() {
             val entries = prefs.getString("business_followups", "") ?: ""
@@ -373,8 +377,20 @@ class MainActivity : Activity() {
                     (if (money.isBlank()) "" else " — ₦" + money) + "\n  " + note
                 val old = prefs.getString("business_followups", "") ?: ""
                 prefs.edit().putString("business_followups", old + (if (old.isBlank()) "" else "\n\n") + record).apply()
+                if (addReminder.isChecked) {
+                    if (selectedTime.timeInMillis <= System.currentTimeMillis()) {
+                        toast("Customer saved, but choose a future time to set the reminder.")
+                    } else {
+                        scheduleReminder("Follow up with $name: $note", selectedTime.timeInMillis)
+                        toast("Customer saved and reminder scheduled.")
+                    }
+                } else {
+                    toast("Saved on this phone.")
+                }
                 customer.setText(""); contact.setText(""); task.setText(""); amount.setText("")
-                refresh(); toast("Saved on this phone.")
+                addReminder.isChecked = false
+                dueButton.text = "Choose follow-up reminder time"
+                refresh()
             }
         }
         root.addView(list); refresh()
