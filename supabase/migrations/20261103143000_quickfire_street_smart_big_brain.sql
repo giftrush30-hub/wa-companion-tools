@@ -1,0 +1,58 @@
+-- A second original Quick Fire pack focused on practical intelligence and clear thinking.
+-- Safe to reapply: set and question text are checked before inserts; answer keys stay private.
+with seed(title,description) as (
+  values ('Quick Fire: Street Smart & Big Brain','Everyday reasoning, digital safety, money sense, science and decisions under pressure.')
+), new_set as (
+  insert into public.arena_quickfire_sets(title,description,status)
+  select title,description,'published' from seed
+  where not exists(select 1 from public.arena_quickfire_sets where title=seed.title)
+  returning id
+), chosen_set as (
+  select id from new_set
+  union all select id from public.arena_quickfire_sets where title='Quick Fire: Street Smart & Big Brain'
+  limit 1
+), q(position,question_text,options,correct_index,explanation,difficulty) as (values
+(1,'A seller says a phone is “brand new” but refuses to let you check its IMEI or test it. What is the wisest move?','["Pay quickly before it sells","Walk away or verify through an authorised channel","Trust the packaging alone","Send a deposit to a stranger"]'::jsonb,1,'A device should be checked through reliable channels before payment.','easy'),
+(2,'You receive an OTP you did not request. What should you do?','["Share it with the caller","Post it in a group","Keep it private and secure your account if needed","Reply with your bank PIN"]'::jsonb,2,'An unsolicited OTP may mean someone is attempting to access an account. Never disclose it.','easy'),
+(3,'A friend forwards a voice note claiming a bank will close tomorrow. What is the best first step?','["Forward it to everyone","Check the bank’s official channels","Add a warning emoji","Assume voice notes are verified"]'::jsonb,1,'Urgent financial claims should be checked directly with the institution.','easy'),
+(4,'You have ₦20,000 and an essential bill due tomorrow. A tempting sale ends tonight. What comes first?','["The sale","The essential bill","A new phone case","A random online giveaway"]'::jsonb,1,'Prioritise essential obligations before discretionary purchases.','easy'),
+(5,'A friend makes a joke that hurts you, then says you are too sensitive. What is a useful response?','["Explain calmly what crossed the line","Insult them publicly","Pretend nothing happened forever","Share their private messages"]'::jsonb,0,'Clear boundaries can be expressed without escalating or exposing private information.','easy'),
+(6,'A website address has a spelling error and asks for your password. What should you do?','["Enter the password quickly","Use the link because it has a logo","Leave and type the official address yourself","Send your password to support"]'::jsonb,2,'Lookalike domains are a common phishing method. Navigate independently to the official site.','easy'),
+(7,'You want to learn a skill but keep postponing. Which plan is most likely to work?','["Wait for perfect motivation","Set a small repeatable daily practice","Buy many courses at once","Tell everyone but never schedule time"]'::jsonb,1,'A small scheduled habit is easier to sustain than relying on motivation alone.','easy'),
+(8,'A customer is angry because an order arrived late. What should a responsible seller do first?','["Listen, verify the order and explain the next step","Delete the customer","Blame another customer","Make a promise they cannot keep"]'::jsonb,0,'Acknowledge the issue, check facts and give a realistic resolution.','easy'),
+(9,'You see a dramatic health claim from an unknown page. What is the safest response?','["Try it immediately","Check qualified health sources and professionals","Forward it as medical advice","Assume many shares mean it is true"]'::jsonb,1,'Health claims need reliable evidence and qualified advice, not popularity.','easy'),
+(10,'Your phone storage is almost full. Which action is safest before deleting files?','["Delete random system folders","Back up important files and review large items","Install an unknown cleaner APK","Delete every photo without checking"]'::jsonb,1,'Back up valuable data and inspect files before removing anything.','easy'),
+(11,'A shop buys an item for ₦8,000 and sells it for ₦10,000. Ignoring other costs, what is the gross profit?','["₦1,000","₦2,000","₦8,000","₦18,000"]'::jsonb,1,'Gross profit before other costs is selling price minus purchase cost: ₦2,000.','standard'),
+(12,'A price rises from ₦5,000 to ₦6,000. What is the percentage increase?','["10%","15%","20%","25%"]'::jsonb,2,'The increase is ₦1,000; ₦1,000 divided by ₦5,000 is 20%.','standard'),
+(13,'A survey asks only people at a football stadium whether the whole city loves football. What is the main weakness?','["The sample may be biased","The question is too short","The stadium is too large","The result must be correct"]'::jsonb,0,'A sample drawn from one setting may not represent the wider population.','standard'),
+(14,'A person claims a product works because one customer praised it. What evidence would be stronger?','["A larger set of independent, well-documented results","A louder advertisement","More caps lock","A celebrity photo"]'::jsonb,0,'Multiple independent observations are stronger than a single testimonial.','standard'),
+(15,'You have 3 tasks: an urgent bill, a deadline due today, and a non-urgent room makeover. What should guide the order?','["Urgency, consequences and importance","Which task looks easiest only","Which task gets the most likes","A random choice"]'::jsonb,0,'Prioritise deadlines and consequences before optional tasks.','standard'),
+(16,'A business has many sales but little cash available. What could explain this?','["Customers owe money or cash is tied up in stock","Sales automatically equal cash","The logo is too small","Profit has no relationship to cash"]'::jsonb,0,'Revenue may not have been collected yet, or money may be tied up in inventory and costs.','standard'),
+(17,'Someone gives you two conflicting claims. What is the best way to compare them?','["Check source credibility, evidence and date","Choose the more dramatic one","Count emojis","Believe the first one you saw"]'::jsonb,0,'Source quality, supporting evidence and freshness help assess conflicting claims.','standard'),
+(18,'A password is reused across five websites. What is the main risk?','["One breach could expose several accounts","It makes the internet faster","It prevents phishing","It improves battery life"]'::jsonb,0,'Credential reuse lets attackers try leaked passwords on other services.','standard'),
+(19,'A team finishes early but the result has not been checked. What should happen before delivery?','["Review against requirements and test important parts","Submit without looking","Delete the task list","Assume speed proves quality"]'::jsonb,0,'A quick quality check catches mistakes before they reach the customer.','standard'),
+(20,'A friend asks you to keep a secret that suggests someone is in immediate danger. What is the responsible priority?','["Protect safety and seek appropriate help","Promise absolute secrecy","Post it online","Ignore it"]'::jsonb,0,'Immediate safety takes priority; involve trusted people or emergency services as appropriate.','standard'),
+(21,'A product is discounted by 25%, then the reduced price is discounted by another 20%. What is the total reduction from the original price?','["45%","40%","50%","25%"]'::jsonb,0,'After the first discount 75% remains; 20% off that leaves 60%, so the total reduction is 40%.','expert'),
+(22,'A shop’s revenue rises 10%, but its costs rise 18%. What can you safely conclude about profit?','["Profit must rise","Profit may fall; exact effect needs the starting figures","Profit is unchanged","Revenue and profit are identical"]'::jsonb,1,'Costs growing faster than revenue can reduce profit, but exact profit depends on initial margins and cost structure.','expert'),
+(23,'A claim says “90% of people agree” but gives no sample size or method. What is the key missing information?','["How respondents were selected and how many answered","The font used","The author’s favourite colour","Whether the headline rhymes"]'::jsonb,0,'Sampling method and sample size are essential to judge how representative a survey is.','expert'),
+(24,'A project has a 30% chance of earning ₦100,000 and a 70% chance of earning nothing. What is its expected gross return?','["₦30,000","₦70,000","₦100,000","₦0"]'::jsonb,0,'Expected value is 0.30 × ₦100,000 plus 0.70 × ₦0 = ₦30,000, before costs and risk preferences.','expert'),
+(25,'A person says a policy caused an outcome because the outcome happened afterward. What reasoning error may be present?','["Confusing sequence with causation","Using a control group","Checking alternative explanations","Measuring a baseline"]'::jsonb,0,'An event happening after another does not by itself prove the first caused it.','expert'),
+(26,'A password manager is protected by a strong unique master password and multi-factor authentication. What is its main benefit?','["It helps use unique strong passwords across accounts","It makes phishing impossible","It removes the need for updates","It guarantees no account can be breached"]'::jsonb,0,'Unique credentials reduce password-reuse risk; MFA adds another layer but cannot eliminate every threat.','expert'),
+(27,'A survey result changes dramatically after weighting responses. What should an analyst disclose?','["The weighting method and assumptions","Only the preferred result","Nothing if the chart looks nice","The names of every respondent"]'::jsonb,0,'Transparency about weighting and assumptions helps readers interpret the estimate.','expert'),
+(28,'A business has a positive profit on paper but cannot pay a bill due today. Which concept best explains the problem?','["Liquidity","Brand awareness","Market share","Depreciation alone"]'::jsonb,0,'Liquidity is the ability to meet short-term payment obligations when they fall due.','expert'),
+(29,'A test produces the same result repeatedly but measures the wrong thing. What does it have?','["Reliability without validity","Validity without reliability","Neither reliability nor repeatability","Proof of causation"]'::jsonb,0,'Consistency is reliability; measuring the intended construct is validity. One does not guarantee the other.','expert'),
+(30,'A plan succeeds only if every estimate is exactly right. What is the most important improvement?','["Add contingencies and test assumptions","Remove all measurement","Hide the risks","Assume best-case outcomes"]'::jsonb,0,'Robust plans test assumptions and include margins for uncertainty.','expert')
+), chosen_set as (
+ select id from new_set
+ union all select id from public.arena_quickfire_sets where title='Quick Fire: Street Smart & Big Brain'
+ limit 1
+), inserted as (
+ insert into public.arena_quickfire_questions(set_id,question_text,options,position,points,difficulty)
+ select s.id,q.question_text,q.options,q.position,10,q.difficulty
+ from q cross join chosen_set s
+ where not exists(select 1 from public.arena_quickfire_questions old where old.set_id=s.id and old.question_text=q.question_text)
+ returning id,position
+)
+insert into private.arena_quickfire_answer_keys(question_id,correct_option_index,explanation)
+select i.id,q.correct_index,q.explanation from inserted i join q using(position)
+on conflict(question_id) do nothing;
