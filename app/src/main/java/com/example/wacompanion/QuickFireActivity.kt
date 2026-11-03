@@ -104,6 +104,18 @@ class QuickFireActivity : Activity() {
         questionArea.removeAllViews()
         status.text = "Question ${questionIndex + 1} of ${current.questions.size} • Streak: $streak"
         questionArea.addView(label(question.text, 18, ink, true))
+        questionArea.addView(Button(this).apply {
+            text = "Challenge a friend with this question"
+            isAllCaps = false
+            setOnClickListener {
+                val message = "⚡ QUICK FIRE CHALLENGE\\n\\n${question.text}\\n\\nWhat would you choose? Play Quick Fire on WA Companion → Daily Arena and compare your score with mine!"
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_TEXT, message)
+                }
+                startActivity(android.content.Intent.createChooser(send, "Challenge a friend"))
+            }
+        })
         val choices = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         question.options.forEach { option ->
             val button = Button(this).apply {
