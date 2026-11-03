@@ -20,24 +20,34 @@ class LudoActivity : Activity() {
     private data class Player(val name: String, val color: Int, val start: Int, val lane: List<Pair<Int,Int>>, val base: List<Pair<Float,Float>>)
     private data class Token(var progress: Int = -1)
     private val colors = listOf(Color.rgb(210,55,61), Color.rgb(40,133,86), Color.rgb(238,184,45), Color.rgb(54,111,194))
+    // Conventional 15x15 Ludo cross: 52 clockwise shared squares around four 6x6 yards.
     private val track = buildList {
-        for (x in 0..13) add(0 to x)
-        for (y in 1..13) add(y to 13)
-        for (x in 12 downTo 0) add(13 to x)
-        for (y in 12 downTo 1) add(y to 0)
+        for (c in 1..5) add(6 to c)
+        for (r in 5 downTo 0) add(r to 6)
+        add(0 to 7)
+        for (r in 0..5) add(r to 8)
+        for (c in 9..14) add(6 to c)
+        add(7 to 14)
+        for (c in 14 downTo 9) add(8 to c)
+        for (r in 9..14) add(r to 8)
+        add(14 to 7)
+        for (r in 14 downTo 9) add(r to 6)
+        for (c in 5 downTo 0) add(8 to c)
+        add(7 to 0)
     }
-    private val starts = listOf(7,20,33,46)
+    private val starts = listOf(0,13,26,39)
+    private val safeTrack = setOf(0,8,13,21,26,34,39,47)
     private val lanes = listOf(
-        (1..6).map { it to 7 },
-        (12 downTo 7).map { 7 to it },
-        (12 downTo 7).map { it to 6 },
-        (1..6).map { 6 to it }
+        (1..5).map { 7 to it },
+        (1..5).map { it to 7 },
+        (13 downTo 9).map { 7 to it },
+        (13 downTo 9).map { it to 7 }
     )
     private val bases = listOf(
-        listOf(2.5f to 2.5f,4f to 2.5f,2.5f to 4f,4f to 4f),
-        listOf(9.5f to 2.5f,11f to 2.5f,9.5f to 4f,11f to 4f),
-        listOf(9.5f to 9.5f,11f to 9.5f,9.5f to 11f,11f to 11f),
-        listOf(2.5f to 9.5f,4f to 9.5f,2.5f to 11f,4f to 11f)
+        listOf(2f to 2f,4f to 2f,2f to 4f,4f to 4f),
+        listOf(11f to 2f,13f to 2f,11f to 4f,13f to 4f),
+        listOf(11f to 11f,13f to 11f,11f to 13f,13f to 13f),
+        listOf(2f to 11f,4f to 11f,2f to 13f,4f to 13f)
     )
     private lateinit var players: List<Player>
     private val tokens = mutableListOf<MutableList<Token>>()
@@ -50,6 +60,7 @@ class LudoActivity : Activity() {
     private var consecutiveSixes = 0
     private var gameOver = false
     private var selectedPlayers = 4
+    private var readyToRoll = false
 
     override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); choosePlayers() }
 
@@ -71,7 +82,15 @@ class LudoActivity : Activity() {
         root.addView(label("One phone • $selectedPlayers players • Offline practice",13,Color.DKGRAY))
         board=LudoBoard(); root.addView(board,LinearLayout.LayoutParams(-1,dp(330)))
         status=label("",16,Color.rgb(18,42,55),true); root.addView(status)
-        rollButton=Button(this).apply { text="ROLL DICE"; isAllCaps=false; setOnClickListener { rollDice() } }; root.addView(rollButton)
+        rollButton=Button(this).apply {
+            text="PASS PHONE • TAP WHEN READY"; isAllCaps=false
+            setOnClickListener {
+                if (!readyToRoll) {
+                    readyToRoll=true; text="ROLL DICE"
+                    status.text="${players[current].name} is ready. Roll the dice!"
+                } else rollDice()
+            }
+        }; root.addView(rollButton)
         tokenButtons=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }; root.addView(tokenButtons)
         root.addView(label("Rules: roll a 6 to leave base; starting squares are safe; land on a single rival to send it home; exact roll required to finish. A 6 or capture earns another roll. Three consecutive sixes end your turn.",12,Color.DKGRAY))
         root.addView(Button(this).apply { text="New game"; isAllCaps=false; setOnClickListener { choosePlayers() } })
@@ -128,7 +147,7 @@ class LudoActivity : Activity() {
         var captured=false
         if(token.progress in 0..51) {
             val global=(players[current].start+token.progress)%52
-            if(!starts.contains(global)) tokens.indices.filter{it!=current}.forEach { other ->
+            if(global !in safeTrack) tokens.indices.filter{it!=current}.forEach { other ->
                 tokens[other].forEach { rival ->
                     if(rival.progress in 0..51 && (players[other].start+rival.progress)%52==global) {
                         rival.progress=-1; captured=true
@@ -153,7 +172,8 @@ class LudoActivity : Activity() {
     private fun updateTurn(note:String="") {
         if(gameOver) return
         status.text="${players[current].name}'s turn • Home: ${tokens[current].count{it.progress==57}}/4\nPass the phone, then roll."+if(note.isNotBlank()) "\n$note" else ""
-        rollButton.isEnabled=true; rollButton.text="ROLL DICE"; tokenButtons.removeAllViews(); board.invalidate()
+        readyToRoll=false
+        rollButton.isEnabled=true; rollButton.text="PASS PHONE • TAP WHEN READY"; tokenButtons.removeAllViews(); board.invalidate()
     }
 
     private inner class LudoBoard:View(this@LudoActivity) {
@@ -162,22 +182,47 @@ class LudoActivity : Activity() {
             super.onDraw(canvas)
             val size=min(width.toFloat(),height.toFloat())-dp(10)
             val cell=size/15f; val left=(width-size)/2f; val top=(height-size)/2f
-            fun square(row:Int,col:Int,color:Int) {
-                p.color=color; canvas.drawRect(left+col*cell,top+row*cell,left+(col+1)*cell,top+(row+1)*cell,p)
-                p.color=Color.rgb(205,215,210); p.style=Paint.Style.STROKE; p.strokeWidth=dp(0.7f)
-                canvas.drawRect(left+col*cell,top+row*cell,left+(col+1)*cell,top+(row+1)*cell,p); p.style=Paint.Style.FILL
+            fun rect(row:Int,col:Int,color:Int,stroke:Int=Color.rgb(206,216,210)) {
+                val box=RectF(left+col*cell,top+row*cell,left+(col+1)*cell,top+(row+1)*cell)
+                p.color=color;p.style=Paint.Style.FILL;canvas.drawRect(box,p)
+                p.color=stroke;p.style=Paint.Style.STROKE;p.strokeWidth=dp(0.7f);canvas.drawRect(box,p);p.style=Paint.Style.FILL
             }
-            track.forEach{(r,c)->square(r,c,Color.WHITE)}
-            val basesAt=listOf(1 to 1,1 to 9,9 to 9,9 to 1)
-            basesAt.forEachIndexed{i,pair->
-                val(r,c)=pair; p.color=colors[i]
-                canvas.drawRoundRect(RectF(left+c*cell,top+r*cell,left+(c+5)*cell,top+(r+5)*cell),cell,cell,p)
-                p.color=Color.WHITE; canvas.drawRoundRect(RectF(left+(c+1)*cell,top+(r+1)*cell,left+(c+4)*cell,top+(r+4)*cell),cell/2,cell/2,p)
+            fun rounded(r:Float,c:Float,w:Float,h:Float,color:Int,rad:Float) {
+                p.color=color;p.style=Paint.Style.FILL
+                canvas.drawRoundRect(RectF(left+c*cell,top+r*cell,left+(c+w)*cell,top+(r+h)*cell),rad,rad,p)
             }
-            starts.forEachIndexed{i,s->val(r,c)=track[s];square(r,c,colors[i])}
-            lanes.forEachIndexed{i,l->l.forEach{(r,c)->square(r,c,colors[i])}}
-            p.color=Color.rgb(7,91,69);canvas.drawCircle(left+7.5f*cell,top+7.5f*cell,cell*1.2f,p)
-            p.color=Color.WHITE;p.textAlign=Paint.Align.CENTER;p.textSize=cell*0.5f;canvas.drawText("HOME",left+7.5f*cell,top+7.7f*cell,p)
+            canvas.drawColor(Color.rgb(250,251,248))
+            val yards=listOf(0 to 0,0 to 9,9 to 9,9 to 0)
+            yards.forEachIndexed{i,pair->
+                val(r,c)=pair;rounded(r.toFloat(),c.toFloat(),6f,6f,colors[i],cell*0.45f)
+                rounded(r+1f,c+1f,4f,4f,Color.WHITE,cell*0.35f)
+                val padCenters=listOf((r+2f) to (c+2f),(r+2f) to (c+4f),(r+4f) to (c+2f),(r+4f) to (c+4f))
+                padCenters.forEach{(pr,pc)->
+                    p.color=Color.rgb(231,237,233);canvas.drawCircle(left+(pc+0.5f)*cell,top+(pr+0.5f)*cell,cell*0.72f,p)
+                }
+            }
+            track.forEachIndexed{i,pair->
+                val(r,c)=pair;rect(r,c,if(i in starts) colors[starts.indexOf(i)] else Color.WHITE)
+                if(i in safeTrack && i !in starts){
+                    p.color=Color.rgb(204,171,67);p.textAlign=Paint.Align.CENTER;p.textSize=cell*0.62f
+                    canvas.drawText("★",left+(c+0.5f)*cell,top+(r+0.72f)*cell,p)
+                }
+            }
+            lanes.forEachIndexed{i,l->l.forEach{(r,c)->rect(r,c,colors[i])}}
+            val centerLeft=left+6f*cell;val centerTop=top+6f*cell
+            val cx=left+7.5f*cell;val cy=top+7.5f*cell
+            val paths=listOf(
+                floatArrayOf(centerLeft,centerTop,centerLeft+3*cell,centerTop,cx,cy),
+                floatArrayOf(centerLeft+3*cell,centerTop,centerLeft+3*cell,centerTop+3*cell,cx,cy),
+                floatArrayOf(centerLeft+3*cell,centerTop+3*cell,centerLeft,centerTop+3*cell,cx,cy),
+                floatArrayOf(centerLeft,centerTop+3*cell,centerLeft,centerTop,cx,cy)
+            )
+            paths.forEachIndexed{i,pts->
+                val path=android.graphics.Path().apply{moveTo(pts[0],pts[1]);lineTo(pts[2],pts[3]);lineTo(pts[4],pts[5]);close()}
+                p.color=colors[i];canvas.drawPath(path,p)
+            }
+            p.color=Color.WHITE;p.textAlign=Paint.Align.CENTER;p.textSize=cell*0.34f
+            canvas.drawText("FINISH",cx,cy+cell*0.12f,p)
             tokens.forEachIndexed{pi,list->list.forEachIndexed{ti,t->
                 val(x,y)=when {
                     t.progress==-1->players[pi].base[ti]
