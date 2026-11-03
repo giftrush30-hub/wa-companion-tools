@@ -155,7 +155,7 @@ class DiscoverActivity : Activity() {
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Open") { _, _ ->
                 val link = input.text.toString().trim()
-                if (link.startsWith("https://") || link.startsWith("http://")) {
+                if (link.startsWith("https://", ignoreCase = true)) {
                     try {
                         startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)))
                     } catch (_: Exception) {
@@ -163,7 +163,7 @@ class DiscoverActivity : Activity() {
                             .setPositiveButton("OK", null).show()
                     }
                 } else {
-                    AlertDialog.Builder(this).setMessage("Please paste a full link beginning with https://.")
+                    AlertDialog.Builder(this).setMessage("Please paste a secure link beginning with https://.")
                         .setPositiveButton("OK", null).show()
                 }
             }
@@ -259,8 +259,8 @@ class DiscoverActivity : Activity() {
                 return false
             }
             val link = catalogue.text.toString().trim()
-            if (link.isNotEmpty() && !(link.startsWith("https://") || link.startsWith("http://"))) {
-                catalogue.error = "Enter a full link beginning with https://"
+            if (link.isNotEmpty() && !link.startsWith("https://", ignoreCase = true)) {
+                catalogue.error = "Use a secure link beginning with https://"
                 return false
             }
             return true
