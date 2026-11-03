@@ -1,6 +1,7 @@
 package com.example.wacompanion
 
 import android.app.Activity
+import android.content.Intent
 import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
@@ -114,7 +115,7 @@ class BigQuizActivity : Activity() {
             setBackgroundColor(Color.rgb(246,249,247))
         }
         setContentView(ScrollView(this).apply { addView(root) })
-        root.addView(label(if(intent.hasExtra("game_room_id")) "BIG QUIZ • ONLINE ROOM" else "BIG QUIZ",28,green,true))
+        root.addView(label(if(intent.hasExtra("game_room_id")) "BIG QUIZ • ROOM CHAT CONNECTED" else "BIG QUIZ",28,green,true))
         if(intent.hasExtra("game_room_id"))root.addView(Button(this).apply{
             text="💬 Chat & voice with players";isAllCaps=false;setOnClickListener{openRoomChat()}
         })
