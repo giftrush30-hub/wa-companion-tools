@@ -235,3 +235,10 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Added concise explanations to each new question. Result tiers now use percentage accuracy, so the same performance standards apply fairly to short subject rounds and the 66-question full challenge. No timers, points, paid rewards, ranking or network competition were introduced; practice remains offline and free of Games Points.
 - Content was designed around the quiz-learning patterns already reviewed from Kahoot and CDC guidance: clear question wording, manageable answer choices, useful explanations and completion feedback. This is original WA Companion question content, not copied quiz material.
 - Source-only change committed to GitHub main. No Android build, APK, device test or deployment was performed.
+
+## Games Arena reliability and hub copy pass — 3 November 2026
+- Updated the Games Arena hub to accurately describe Big Quiz as a 66-question offline practice bank across six subjects, with a subject choice or full challenge. The old 30-question description was stale.
+- Hardened WHOT draw-pile exhaustion handling. Drawing now reports whether the requested cards were successfully drawn; if the market and recyclable discard are exhausted, the round ends immediately and the calling action stops rather than advancing the turn or continuing a General Market distribution after the result screen appears.
+- This preserves the chosen local WHOT practice rules and does not introduce points, rankings or online play.
+- Rule references remain the Nigerian WHOT variant documented by Pagat (https://www.pagat.com/com/whot.html) and conventional Ludo safe-square, blockade and exact-finish rules (https://leludo.org/rules). These sources inform rule consistency; local house-rule variations are still disclosed in the game.
+- Source-only changes committed to GitHub main. No Android build, APK, device test or deployment was performed.
