@@ -13,8 +13,8 @@ import java.net.URL
 class DiscoverBackend(context: Context) {
     private val prefs = context.getSharedPreferences("wa_discover_session", Context.MODE_PRIVATE)
     private val secureSession = SecureSessionStore(context.applicationContext)
-    private val baseUrl = "https://coodsyfdhjpqfxanqhwm.supabase.co"
-    private val publishableKey = "sb_publishable_JqE_4yBgTnkp1n6I2j-l2A_tKxKAC9H"
+    internal val baseUrl = "https://coodsyfdhjpqfxanqhwm.supabase.co"
+    internal val publishableKey = "sb_publishable_JqE_4yBgTnkp1n6I2j-l2A_tKxKAC9H"
 
     data class SellerSession(val accessToken: String, val userId: String)
 
