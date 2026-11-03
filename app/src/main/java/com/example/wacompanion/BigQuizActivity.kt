@@ -114,7 +114,10 @@ class BigQuizActivity : Activity() {
             setBackgroundColor(Color.rgb(246,249,247))
         }
         setContentView(ScrollView(this).apply { addView(root) })
-        root.addView(label("BIG QUIZ",28,green,true))
+        root.addView(label(if(intent.hasExtra("game_room_id")) "BIG QUIZ • ONLINE ROOM" else "BIG QUIZ",28,green,true))
+        if(intent.hasExtra("game_room_id"))root.addView(Button(this).apply{
+            text="💬 Chat & voice with players";isAllCaps=false;setOnClickListener{openRoomChat()}
+        })
         root.addView(label("THE QUIZ SHOW • OFFLINE PRACTICE",14,muted,true))
         status = label("",14,muted,true)
         root.addView(status)
@@ -324,4 +327,14 @@ class BigQuizActivity : Activity() {
         setPadding(0,dp(4),0,dp(7))
     }
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
+    private fun openRoomChat(){
+        val id=intent.getStringExtra("game_room_id")?:return
+        startActivity(Intent(this,GamesMultiplayerActivity::class.java).apply{
+            putExtra("open_room_id",id)
+            putExtra("game_display_name",intent.getStringExtra("game_display_name"))
+            putExtra("chat_only",true)
+        })
+    }
+
+
 }
