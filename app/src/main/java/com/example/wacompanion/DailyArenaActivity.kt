@@ -115,7 +115,6 @@ class DailyArenaActivity : Activity() {
         content.addView(note)
         loadPoll()
         loadSuggestions()
-        loadActivity()
     }
 
     private fun loadPoll(excludePollId: String? = null) {
