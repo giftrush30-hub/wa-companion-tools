@@ -47,10 +47,10 @@ class MemeWarActivity : Activity() {
         loadChallenge()
     }
 
-    private fun loadChallenge() {
+    private fun loadChallenge(excludeChallengeId: String? = null) {
         worker.execute {
             try {
-                val loaded = backend.activeChallenge()
+                val loaded = backend.activeChallenge(excludeChallengeId)
                 runOnUiThread {
                     challenge = loaded
                     if (loaded == null) {
@@ -78,12 +78,18 @@ class MemeWarActivity : Activity() {
     private fun renderChallenge(item: MemeWarBackend.Challenge) {
         challengeArea.removeAllViews()
         val card = panel()
+        card.addView(label(item.category.uppercase(), 12, green, true))
         card.addView(label(item.title, 20, ink, true))
         card.addView(label(item.instructions, 15, muted))
         if (!item.templateImageUrl.isNullOrBlank()) {
             card.addView(label("A challenge image is attached to this round.", 13, green))
         }
         challengeArea.addView(card)
+        challengeArea.addView(Button(this).apply {
+            text = "Try another challenge"
+            isAllCaps = false
+            setOnClickListener { loadChallenge(item.id) }
+        })
         challengeArea.addView(gap(10))
     }
 
