@@ -267,104 +267,138 @@ class DiscoverActivity : Activity() {
     }
 
     private fun showSellerNotice() {
-        val fields = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(8), dp(18), dp(8))
+        val panel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(8), dp(16), dp(8)) }
+        fun field(hintText: String, inputType: Int = android.text.InputType.TYPE_CLASS_TEXT): EditText {
+            val e = EditText(this).apply { hint = hintText; textSize = 14f; inputType = inputType }
+            panel.addView(e, LinearLayout.LayoutParams(-1, dp(50)))
+            return e
         }
-        fun addField(label: String, type: Int = android.text.InputType.TYPE_CLASS_TEXT): EditText {
-            val input = EditText(this).apply {
-                hint = label
-                textSize = 15f
-                isSingleLine = true
-                inputType = type
-            }
-            fields.addView(input, LinearLayout.LayoutParams(-1, dp(52)))
-            return input
-        }
-        val saved = getSharedPreferences("wa_discover_seller_draft", MODE_PRIVATE)
-        val business = addField("Business name").apply { setText(saved.getString("business", "")) }
-        val category = addField("Category (e.g. Fashion, Food, Phones)").apply { setText(saved.getString("category", "")) }
-        val state = addField("State").apply { setText(saved.getString("state", "")) }
-        val city = addField("City or town").apply { setText(saved.getString("city", "")) }
-        val phone = addField("WhatsApp number with country code", android.text.InputType.TYPE_CLASS_PHONE).apply { setText(saved.getString("phone", "")) }
-        val catalogue = addField("WhatsApp Business catalogue link (optional)").apply { setText(saved.getString("catalogue", "")) }
-        val about = EditText(this).apply {
-            hint = "Short description of your business"
-            textSize = 15f
-            minLines = 2
-        }
-        about.setText(saved.getString("about", ""))
-        fields.addView(about, LinearLayout.LayoutParams(-1, dp(82)))
-        val content = ScrollView(this).apply { addView(fields) }
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Prepare your business profile")
-            .setMessage("This is a private draft on this phone for now. It will NOT publish your business in the public directory yet.")
-            .setView(content)
-            .setNegativeButton("Cancel", null)
-            .setNeutralButton("Save draft", null)
-            .setPositiveButton("Share details", null)
-            .create()
-
-        fun valid(): Boolean {
-            if (business.text.isBlank() || category.text.isBlank() || state.text.isBlank() ||
-                city.text.isBlank() || phone.text.isBlank()) {
-                AlertDialog.Builder(this)
-                    .setMessage("Please fill in business name, category, state, city and WhatsApp number.")
-                    .setPositiveButton("OK", null).show()
-                return false
-            }
-            if (phone.text.toString().filter { it.isDigit() }.length < 10) {
-                phone.error = "Enter a valid number with country code"
-                return false
-            }
-            val link = catalogue.text.toString().trim()
-            if (link.isNotEmpty() && !link.startsWith("https://", ignoreCase = true)) {
-                catalogue.error = "Use a secure link beginning with https://"
-                return false
-            }
-            return true
-        }
-
+        val name = field("Business name")
+        val category = field("Category: Fashion, Food, Phones, Beauty…")
+        val state = field("State")
+        val city = field("City or town")
+        val phone = field("WhatsApp number e.g. 2348012345678", android.text.InputType.TYPE_CLASS_PHONE)
+        val catalogue = field("WhatsApp catalogue link (optional)")
+        val description = field("Short business description")
+        val dialog = AlertDialog.Builder(this).setTitle("Submit your business")
+            .setMessage("Your listing is reviewed before it becomes public. Use your Nigerian number with country code 234 and no leading zero.")
+            .setView(ScrollView(this).apply { addView(panel) })
+            .setNegativeButton("Cancel", null).setPositiveButton("Continue", null).create()
         dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                if (!valid()) return@setOnClickListener
-                getSharedPreferences("wa_discover_seller_draft", MODE_PRIVATE).edit()
-                    .putString("business", business.text.toString().trim())
-                    .putString("category", category.text.toString().trim())
-                    .putString("state", state.text.toString().trim())
-                    .putString("city", city.text.toString().trim())
-                    .putString("phone", phone.text.toString().trim())
-                    .putString("catalogue", catalogue.text.toString().trim())
-                    .putString("about", about.text.toString().trim())
-                    .apply()
-                AlertDialog.Builder(this).setTitle("Draft saved")
-                    .setMessage("Your business details are saved privately on this phone. They have not been uploaded or published.")
-                    .setPositiveButton("OK", null).show()
-                dialog.dismiss()
-            }
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                if (!valid()) return@setOnClickListener
-                val details = buildString {
-                    appendLine("WA DISCOVER — BUSINESS PROFILE")
-                    appendLine("Business: ${business.text.toString().trim()}")
-                    appendLine("Category: ${category.text.toString().trim()}")
-                    appendLine("Location: ${city.text.toString().trim()}, ${state.text.toString().trim()}, Nigeria")
-                    appendLine("WhatsApp: ${phone.text.toString().trim()}")
-                    if (catalogue.text.isNotBlank()) appendLine("Catalogue: ${catalogue.text.toString().trim()}")
-                    if (about.text.isNotBlank()) appendLine("About: ${about.text.toString().trim()}")
-                    appendLine()
-                    append("Owner-submitted draft; not yet a verified WA Discover listing.")
+                val n = phone.text.toString().filter { it.isDigit() }
+                if (name.text.isBlank() || category.text.isBlank() || state.text.isBlank() || city.text.isBlank()) {
+                    name.error = "Complete the required business details"; return@setOnClickListener
                 }
-                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "WA Discover business profile")
-                    putExtra(Intent.EXTRA_TEXT, details)
+                if (!n.matches(Regex("^[1-9][0-9]{9,14}$"))) {
+                    phone.error = "Use international format, e.g. 2348012345678"; return@setOnClickListener
                 }
-                startActivity(Intent.createChooser(shareIntent, "Share business details"))
+                val link = catalogue.text.toString().trim()
+                if (link.isNotEmpty() && !link.startsWith("https://")) {
+                    catalogue.error = "Catalogue link must begin with https://"; return@setOnClickListener
+                }
+                val cat = category.text.toString().lowercase()
+                val categoryId = when {
+                    "fashion" in cat || "cloth" in cat -> "fashion"
+                    "food" in cat || "grocery" in cat -> "food"
+                    "phone" in cat -> "phones"
+                    "beaut" in cat -> "beauty"
+                    "elect" in cat -> "electronics"
+                    "home" in cat -> "home"
+                    "farm" in cat -> "farming"
+                    "service" in cat -> "services"
+                    else -> "other"
+                }
+                val payload = org.json.JSONObject()
+                    .put("name", name.text.toString().trim())
+                    .put("category_id", categoryId)
+                    .put("description", description.text.toString().trim())
+                    .put("whatsapp_number", n)
+                    .put("catalogue_url", if (link.isBlank()) org.json.JSONObject.NULL else link)
+                    .put("state", state.text.toString().trim())
+                    .put("city", city.text.toString().trim())
+                getSharedPreferences("wa_discover_seller_draft", MODE_PRIVATE).edit()
+                    .putString("business", name.text.toString()).putString("category", category.text.toString())
+                    .putString("state", state.text.toString()).putString("city", city.text.toString())
+                    .putString("phone", n).putString("catalogue", link).putString("about", description.text.toString()).apply()
                 dialog.dismiss()
+                val session = backend.currentSession()
+                if (session != null) submitSellerListing(session, payload)
+                else sellerLoginDialog(payload)
             }
         }
         dialog.show()
+    }
+
+    private fun sellerLoginDialog(payload: org.json.JSONObject) {
+        val panel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(4), dp(16), dp(4)) }
+        val email = EditText(this).apply { hint = "Email address"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS }
+        val password = EditText(this).apply { hint = "Password (minimum 8 characters)"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
+        panel.addView(email); panel.addView(password)
+        val dialog = AlertDialog.Builder(this).setTitle("Seller account")
+            .setMessage("Create a free seller account or sign in. Buyers do not need an account.")
+            .setView(panel).setNegativeButton("Cancel", null)
+            .setNeutralButton("Create account", null).setPositiveButton("Sign in", null).create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val e = email.text.toString().trim(); val p = password.text.toString()
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(e).matches() || p.length < 8) {
+                    password.error = "Enter a valid email and password"; return@setOnClickListener
+                }
+                dialog.dismiss()
+                io.execute {
+                    try {
+                        val session = backend.signIn(e, p)
+                        runOnUiThread { submitSellerListing(session, payload) }
+                    } catch (ex: Exception) {
+                        runOnUiThread { AlertDialog.Builder(this).setMessage(ex.message ?: "Sign-in failed").setPositiveButton("OK", null).show() }
+                    }
+                }
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                val e = email.text.toString().trim(); val p = password.text.toString()
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(e).matches() || p.length < 8) {
+                    password.error = "Enter a valid email and password"; return@setOnClickListener
+                }
+                dialog.dismiss()
+                io.execute {
+                    try {
+                        backend.signUp(e, p)
+                        runOnUiThread {
+                            AlertDialog.Builder(this).setTitle("Account request received")
+                                .setMessage("Check your email if confirmation is enabled. Then choose Add my business again and sign in to submit your listing.")
+                                .setPositiveButton("OK", null).show()
+                        }
+                    } catch (ex: Exception) {
+                        runOnUiThread { AlertDialog.Builder(this).setMessage(ex.message ?: "Account creation failed").setPositiveButton("OK", null).show() }
+                    }
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun submitSellerListing(session: DiscoverBackend.SellerSession, payload: org.json.JSONObject) {
+        val progress = AlertDialog.Builder(this).setMessage("Submitting your business for review…").setCancelable(false).create()
+        progress.show()
+        io.execute {
+            try {
+                backend.submitBusiness(session, payload)
+                runOnUiThread {
+                    progress.dismiss()
+                    AlertDialog.Builder(this).setTitle("Submitted for review")
+                        .setMessage("Your business details have been received. Your listing stays private until an administrator approves it.")
+                        .setPositiveButton("OK", null).show()
+                }
+            } catch (ex: Exception) {
+                runOnUiThread {
+                    progress.dismiss()
+                    AlertDialog.Builder(this).setTitle("Submission failed")
+                        .setMessage(ex.message ?: "Please check your internet connection and try again.")
+                        .setPositiveButton("OK", null).show()
+                }
+            }
+        }
     }
 
     private fun searchLive(term: String, state: String, city: String, output: LinearLayout) {
