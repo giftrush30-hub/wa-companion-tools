@@ -1,6 +1,7 @@
 package com.example.wacompanion
 
 import android.app.Activity
+import android.content.Intent
 import android.app.AlertDialog
 import android.animation.ValueAnimator
 import android.view.animation.DecelerateInterpolator
@@ -92,7 +93,7 @@ class LudoActivity : Activity() {
         current=0; roll=null; consecutiveSixes=0; gameOver=false; readyToRoll=false
         rootLayout=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(12),dp(14),dp(12),dp(18)); setBackgroundColor(Color.rgb(246,249,247)) }
         setContentView(ScrollView(this).apply { addView(rootLayout) })
-        rootLayout.addView(label(if (intent.hasExtra("game_room_id")) "LUDO • ONLINE ROOM" else "LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
+        rootLayout.addView(label(if (intent.hasExtra("game_room_id")) "LUDO • ROOM CHAT CONNECTED" else "LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
         if (intent.hasExtra("game_room_id")) rootLayout.addView(Button(this).apply {
             text = "💬 Chat & voice with players"; isAllCaps = false
             setOnClickListener { openRoomChat() }
