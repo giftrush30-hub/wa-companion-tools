@@ -6,6 +6,9 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.text.InputFilter
@@ -70,24 +73,75 @@ class MemeWarActivity : Activity() {
         }
     }
 
-    private fun uploadSelectedImage(uri: Uri): String {
-        val bitmap = contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
-            ?: throw IllegalStateException("Could not read the selected image.")
+    private fun uploadMemeImage(uri: Uri?, templateUrl: String?, caption: String): String? {
+        if (uri == null && templateUrl.isNullOrBlank()) return null
+        val bitmap = if (uri != null) {
+            contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        } else {
+            java.net.URL(templateUrl).openStream().use { BitmapFactory.decodeStream(it) }
+        } ?: throw IllegalStateException("Could not read the selected image or challenge template.")
+
         val maxSide = 1440
         val scale = minOf(1f, maxSide.toFloat() / maxOf(bitmap.width, bitmap.height))
         val resized = if (scale < 1f) Bitmap.createScaledBitmap(
             bitmap, (bitmap.width * scale).toInt(), (bitmap.height * scale).toInt(), true
         ) else bitmap
-        val output = ByteArrayOutputStream()
-        resized.compress(Bitmap.CompressFormat.JPEG, 84, output)
+        val composed = resized.copy(Bitmap.Config.ARGB_8888, true)
         if (resized !== bitmap) resized.recycle()
         bitmap.recycle()
+        drawCaptionOverlay(composed, caption)
+
+        val output = ByteArrayOutputStream()
+        composed.compress(Bitmap.CompressFormat.JPEG, 86, output)
+        composed.recycle()
         val bytes = output.toByteArray()
-        if (bytes.size > 5 * 1024 * 1024) throw IllegalArgumentException("This photo is still too large. Choose another image.")
+        if (bytes.size > 5 * 1024 * 1024) throw IllegalArgumentException("This image is still too large. Choose another photo.")
         val session = DiscoverBackend(this).currentSession()
             ?: throw IllegalStateException("Sign in first to upload a photo.")
         val path = "${session.userId}/${UUID.randomUUID()}.jpg"
         return DiscoverBackend(this).uploadMemeImage(path, bytes, "image/jpeg")
+    }
+
+    private fun drawCaptionOverlay(bitmap: Bitmap, caption: String) {
+        val canvas = Canvas(bitmap)
+        val text = caption.trim().uppercase()
+        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = (bitmap.width * 0.052f).coerceIn(28f, 68f)
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+            textAlign = Paint.Align.CENTER
+        }
+        val maxWidth = bitmap.width * 0.88f
+        val lines = mutableListOf<String>()
+        var current = ""
+        text.split(Regex("\\s+")).forEach { word ->
+            val candidate = if (current.isEmpty()) word else "$current $word"
+            if (textPaint.measureText(candidate) <= maxWidth || current.isEmpty()) {
+                current = candidate
+            } else {
+                lines.add(current)
+                current = word
+            }
+        }
+        if (current.isNotBlank()) lines.add(current)
+        val visibleLines = lines.take(6).toMutableList()
+        if (lines.size > 6 && visibleLines.isNotEmpty()) {
+            visibleLines[5] = visibleLines[5].take(24) + "…"
+        }
+        val lineHeight = textPaint.textSize * 1.12f
+        val padding = bitmap.width * 0.035f
+        val bannerHeight = padding * 2 + lineHeight * visibleLines.size
+        val bannerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(178, 0, 0, 0) }
+        canvas.drawRect(0f, 0f, bitmap.width.toFloat(), bannerHeight, bannerPaint)
+        visibleLines.forEachIndexed { index, line ->
+            val y = padding + textPaint.textSize + index * lineHeight
+            textPaint.style = Paint.Style.STROKE
+            textPaint.strokeWidth = textPaint.textSize * 0.13f
+            textPaint.color = Color.BLACK
+            canvas.drawText(line, bitmap.width / 2f, y, textPaint)
+            textPaint.style = Paint.Style.FILL
+            textPaint.color = Color.WHITE
+            canvas.drawText(line, bitmap.width / 2f, y, textPaint)
+        }
     }
 
     private fun loadRemoteImage(url: String, target: ImageView) {
@@ -228,7 +282,7 @@ class MemeWarActivity : Activity() {
                 )
             }
             card.addView(imagePreview)
-            imageStatus = label("You can add a photo or submit text only.", 12, muted)
+            imageStatus = label(if (item.templateImageUrl.isNullOrBlank()) "You can add a photo or submit text only." else "Your caption will be placed on this challenge image. You can also choose your own photo.", 12, muted)
             card.addView(imageStatus)
             card.addView(Button(this).apply {
                 text = "Add a photo"
@@ -281,7 +335,7 @@ class MemeWarActivity : Activity() {
                     status.text = "Submitting your caption for review…"
                     worker.execute {
                         try {
-                            val photoUrl = selectedImageUri?.let { uploadSelectedImage(it) }
+                            val photoUrl = uploadMemeImage(selectedImageUri, item.templateImageUrl, caption)
                             backend.submitCaption(item.id, caption, photoUrl)
                             selectedImageUri = null
                             val refreshed = backend.mySubmission(item.id)
