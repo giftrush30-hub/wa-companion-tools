@@ -40,6 +40,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
     private val seen = hashSetOf<String>()
     private var refreshing = false
     private var gameLaunched = false
+    private var chatOnly = false
     private val poll = object : Runnable {
         override fun run() {
             val active = room ?: return
@@ -69,7 +70,19 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         api = GamesMultiplayerBackend(this)
         userId = DiscoverBackend(this).currentSession()?.userId.orEmpty()
         shell()
-        landing()
+        val existingRoom = intent.getStringExtra("open_room_id")
+        chatOnly = intent.getBooleanExtra("chat_only", false)
+        if (!intent.getStringExtra("game_display_name").isNullOrBlank()) {
+            nickname = intent.getStringExtra("game_display_name").orEmpty()
+        }
+        if (!existingRoom.isNullOrBlank()) {
+            io.execute {
+                try {
+                    val value = api.roomDetails(existingRoom)
+                    main.post { enterRoom(value) }
+                } catch (e: Exception) { main.post { landing(); status.text = e.message ?: "Could not reopen game chat." } }
+            }
+        } else landing()
     }
 
     private fun shell() {
@@ -202,7 +215,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         body.addView(roster)
         readyButton = Button(this).apply { text = "I'm ready"; isAllCaps = false; setOnClickListener { setReady(!ready) } }
         body.addView(readyButton)
-        if (active.hostId == userId) body.addView(Button(this).apply {
+        if (active.hostId == userId && active.status == "waiting" && !chatOnly) body.addView(Button(this).apply {
             text = "Start match"; isAllCaps = false; setOnClickListener { startMatch() }
         })
         body.addView(label("LIVE TEXT CHAT", 15, green, true))
@@ -226,7 +239,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
             "\n\n" + players.size + "/" + value.maxPlayers + " players"
         ready = players.firstOrNull { it.userId == userId }?.isReady ?: ready
         readyButton.text = if (ready) "Cancel ready" else "I'm ready"
-        if (value.status == "in_progress" && !gameLaunched) {
+        if (value.status == "in_progress" && !gameLaunched && !chatOnly) {
             status.text = "MATCH STARTED • Tap Start match to enter"
             if (value.hostId != userId) {
                 // A joining player gets a launch button once the host starts.
@@ -338,7 +351,7 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
 
     private fun closeRoom() {
         main.removeCallbacks(poll); realtime?.close(); realtime = null; voice?.disconnect(); voice = null
-        room = null; gameLaunched = false; seen.clear(); landing()
+        room = null; gameLaunched = false; chatOnly = false; seen.clear(); landing()
     }
 
     override fun onDestroy() {
