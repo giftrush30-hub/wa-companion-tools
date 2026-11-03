@@ -11,6 +11,7 @@ import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import java.util.concurrent.Executors
 
 /**
  * WA Discover link-first directory.
@@ -20,6 +21,8 @@ import android.widget.TextView
  * catalogue/contact links only. Live publishing waits for a shared backend.
  */
 class DiscoverActivity : Activity() {
+    private val backend by lazy { DiscoverBackend(this) }
+    private val io = Executors.newSingleThreadExecutor()
     private val green = Color.rgb(6, 63, 50)
     private val muted = Color.rgb(93, 105, 100)
 
@@ -53,6 +56,17 @@ class DiscoverActivity : Activity() {
         page.addView(hero)
         page.addView(space(16))
 
+        page.addView(text("FIND A BUSINESS", 13, green, true))
+        val searchTerm = EditText(this).apply { hint = "Business, product or service"; textSize = 15f }
+        val searchState = EditText(this).apply { hint = "State (optional)"; textSize = 14f }
+        val searchCity = EditText(this).apply { hint = "City or town (optional)"; textSize = 14f }
+        val searchResults = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        page.addView(searchTerm)
+        page.addView(searchState)
+        page.addView(searchCity)
+        page.addView(Button(this).apply { text = "Search live businesses"; isAllCaps = false; setOnClickListener { searchLive(searchTerm.text.toString(), searchState.text.toString(), searchCity.text.toString(), searchResults) } })
+        page.addView(searchResults)
+        page.addView(space(14))
         page.addView(text("START DISCOVERING", 13, green, true))
         page.addView(space(8))
         page.addView(Button(this).apply {
@@ -352,6 +366,36 @@ class DiscoverActivity : Activity() {
         }
         dialog.show()
     }
+
+    private fun searchLive(term: String, state: String, city: String, output: LinearLayout) {
+        output.removeAllViews()
+        output.addView(text("Searching WA Discover…", 13, muted))
+        io.execute {
+            try {
+                val rows = backend.searchBusinesses(term, state, city)
+                runOnUiThread {
+                    output.removeAllViews()
+                    if (rows.length() == 0) output.addView(text("No approved businesses found yet. Try another search.", 13, muted))
+                    for (i in 0 until rows.length()) {
+                        val item = rows.getJSONObject(i)
+                        val card = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(12), dp(12), dp(12)); setBackgroundColor(Color.WHITE) }
+                        card.addView(text(item.optString("name"), 17, green, true))
+                        card.addView(text(item.optString("city") + ", " + item.optString("state") + " • " + item.optString("category_id"), 12, muted))
+                        if (item.optString("description").isNotBlank()) card.addView(text(item.optString("description"), 13, muted))
+                        card.addView(Button(this).apply { text = "Chat on WhatsApp"; isAllCaps = false; setOnClickListener { val n = item.optString("whatsapp_number"); if (n.isNotBlank()) startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://wa.me/" + n))) } })
+                        val link = item.optString("catalogue_url")
+                        if (link.startsWith("https://")) card.addView(Button(this).apply { text = "Open catalogue"; isAllCaps = false; setOnClickListener { startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link))) } })
+                        output.addView(card)
+                        output.addView(space(8))
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread { output.removeAllViews(); output.addView(text("Search failed: " + (e.message ?: "Please try again."), 13, Color.RED)) }
+            }
+        }
+    }
+
+    override fun onDestroy() { super.onDestroy(); io.shutdown() }
 
     private fun text(value: String, size: Int, color: Int, bold: Boolean = false): TextView =
         TextView(this).apply {
