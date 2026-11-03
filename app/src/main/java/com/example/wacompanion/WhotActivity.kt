@@ -92,9 +92,13 @@ class WhotActivity : Activity() {
         hands[current].forEachIndexed{index,card->
             val legal=isLegal(card)
             table.addView(Button(this).apply{
-                text=card.display+(if(legal)"  • PLAY" else "  • not playable")
+                text=card.display+(if(legal)"  • PLAY" else "  • LOCKED")
                 isAllCaps=false;isEnabled=legal
-                setTextColor(if(legal)green else Color.GRAY)
+                textSize=17f;setPadding(dp(18),dp(13),dp(18),dp(13))
+                setTextColor(if(legal)Color.WHITE else Color.rgb(105,112,116))
+                setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    if(legal) cardTint(card) else Color.rgb(224,229,227)))
+                elevation=if(legal)dp(3).toFloat() else 0f
                 setOnClickListener{playCard(index)}
             })
         }
@@ -145,13 +149,41 @@ class WhotActivity : Activity() {
     }
 
     private fun drawCards(count:Int,player:Int=current){
-        repeat(count){
+        for (draw in 0 until count) {
             if(market.isEmpty()&&discard.size>1){
                 val face=discard.removeAt(discard.lastIndex)
                 market.addAll(discard);discard.clear();discard.add(face);market.shuffle()
             }
-            if(market.isNotEmpty())hands[player].add(market.removeAt(market.lastIndex))
+            if(market.isEmpty()) {
+                finishByLowestHand()
+                return
+            }
+            hands[player].add(market.removeAt(market.lastIndex))
         }
+    }
+
+    /** If the draw pile and recyclable discard are exhausted, the lowest hand wins. */
+    private fun finishByLowestHand(){
+        if(gameOver)return
+        val fewest=hands.minOfOrNull{it.size} ?: return
+        val leaders=hands.indices.filter{hands[it].size==fewest}
+        gameOver=true;table.removeAllViews();status.text="THE MARKET IS EMPTY • ROUND COMPLETE"
+        val names=leaders.joinToString(" & "){players[it]}
+        table.addView(label(if(leaders.size==1) "🏆 $names wins on the fewest cards!" else "🤝 Draw! $names finish level.",22,green,true))
+        table.addView(label("No cards remained to draw. The player(s) holding the fewest cards take the round.",14,ink))
+        table.addView(Button(this).apply{text="Share the result";isAllCaps=false;setOnClickListener{
+            ArenaShareCard.share(this@WhotActivity,"WHOT! MATCH RESULT","$names finished with the fewest cards in a $playerCount-player practice match.","YOUR TURN • GAMES ARENA")
+        }})
+        table.addView(Button(this).apply{text="Play again";isAllCaps=false;setOnClickListener{newGame()}})
+    }
+
+    private fun cardTint(card:Card):Int = when(card.suit){
+        "BALL" -> Color.rgb(30,105,190)
+        "ANGLE" -> Color.rgb(15,130,94)
+        "CROSS" -> Color.rgb(113,68,165)
+        "CARPET" -> Color.rgb(190,83,42)
+        "STAR" -> Color.rgb(190,139,20)
+        else -> Color.rgb(22,47,68)
     }
 
     private fun nextPlayer(note:String=""){
