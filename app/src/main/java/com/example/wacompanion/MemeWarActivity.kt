@@ -145,6 +145,9 @@ class MemeWarActivity : Activity() {
             }
             card.addView(template)
             loadRemoteImage(item.templateImageUrl, template)
+            if (!item.templateCredit.isNullOrBlank()) {
+                card.addView(label(item.templateCredit, 11, muted))
+            }
         }
         challengeArea.addView(card)
         challengeArea.addView(Button(this).apply {
