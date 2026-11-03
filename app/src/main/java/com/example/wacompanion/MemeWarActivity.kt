@@ -40,6 +40,8 @@ class MemeWarActivity : Activity() {
     private var selectedImageUri: Uri? = null
     private var imagePreview: ImageView? = null
     private var imageStatus: TextView? = null
+    private var captionStyle = "classic"
+    private var captionPosition = "top"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,7 +91,7 @@ class MemeWarActivity : Activity() {
         val composed = resized.copy(Bitmap.Config.ARGB_8888, true)
         if (resized !== bitmap) resized.recycle()
         bitmap.recycle()
-        drawCaptionOverlay(composed, caption)
+        drawCaptionOverlay(composed, caption, captionStyle, captionPosition)
 
         val output = ByteArrayOutputStream()
         composed.compress(Bitmap.CompressFormat.JPEG, 86, output)
@@ -102,7 +104,7 @@ class MemeWarActivity : Activity() {
         return DiscoverBackend(this).uploadMemeImage(path, bytes, "image/jpeg")
     }
 
-    private fun drawCaptionOverlay(bitmap: Bitmap, caption: String) {
+    private fun drawCaptionOverlay(bitmap: Bitmap, caption: String, style: String, position: String) {
         val canvas = Canvas(bitmap)
         val text = caption.trim().uppercase()
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -130,16 +132,23 @@ class MemeWarActivity : Activity() {
         val lineHeight = textPaint.textSize * 1.12f
         val padding = bitmap.width * 0.035f
         val bannerHeight = padding * 2 + lineHeight * visibleLines.size
-        val bannerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(178, 0, 0, 0) }
-        canvas.drawRect(0f, 0f, bitmap.width.toFloat(), bannerHeight, bannerPaint)
+        val top = if (position == "bottom") bitmap.height - bannerHeight else 0f
+        val bannerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = if (style == "clean") Color.argb(220, 255, 255, 255) else Color.argb(178, 0, 0, 0)
+        }
+        canvas.drawRect(0f, top, bitmap.width.toFloat(), top + bannerHeight, bannerPaint)
         visibleLines.forEachIndexed { index, line ->
-            val y = padding + textPaint.textSize + index * lineHeight
+            val y = top + padding + textPaint.textSize + index * lineHeight
             textPaint.style = Paint.Style.STROKE
             textPaint.strokeWidth = textPaint.textSize * 0.13f
-            textPaint.color = Color.BLACK
+            textPaint.color = if (style == "clean") Color.WHITE else Color.BLACK
             canvas.drawText(line, bitmap.width / 2f, y, textPaint)
             textPaint.style = Paint.Style.FILL
-            textPaint.color = Color.WHITE
+            textPaint.color = when (style) {
+                "bold" -> Color.rgb(255, 220, 45)
+                "clean" -> Color.rgb(24, 40, 34)
+                else -> Color.WHITE
+            }
             canvas.drawText(line, bitmap.width / 2f, y, textPaint)
         }
     }
@@ -292,6 +301,28 @@ class MemeWarActivity : Activity() {
                     startActivityForResult(Intent.createChooser(picker, "Choose a Meme War photo"), 4201)
                 }
             })
+            val styleRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            styleRow.addView(Button(this).apply {
+                text = "Text style"
+                isAllCaps = false
+                setOnClickListener {
+                    val labels = arrayOf("Classic white", "Bold yellow", "Clean dark")
+                    val values = arrayOf("classic", "bold", "clean")
+                    AlertDialog.Builder(this@MemeWarActivity).setTitle("Choose caption style")
+                        .setItems(labels) { _, which -> captionStyle = values[which] }.show()
+                }
+            })
+            styleRow.addView(Button(this).apply {
+                text = "Text position"
+                isAllCaps = false
+                setOnClickListener {
+                    val labels = arrayOf("Top banner", "Bottom banner")
+                    val values = arrayOf("top", "bottom")
+                    AlertDialog.Builder(this@MemeWarActivity).setTitle("Choose caption position")
+                        .setItems(labels) { _, which -> captionPosition = values[which] }.show()
+                }
+            })
+            card.addView(styleRow)
             card.addView(label("STICKER LIBRARY", 12, green, true))
             val stickerScroll = HorizontalScrollView(this).apply {
                 isHorizontalScrollBarEnabled = false
@@ -299,7 +330,9 @@ class MemeWarActivity : Activity() {
             val stickerRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             val stickerItems = listOf(
                 "😂" to "1f602", "🔥" to "1f525", "😭" to "1f62d", "💀" to "1f480",
-                "✨" to "2728", "👀" to "1f440", "💯" to "1f4af", "🤝" to "1f91d"
+                "✨" to "2728", "👀" to "1f440", "💯" to "1f4af", "🤝" to "1f91d",
+                "🥳" to "1f973", "🤣" to "1f923", "😎" to "1f60e", "🙌" to "1f64c",
+                "😅" to "1f605", "❤️" to "2764-fe0f"
             )
             stickerItems.forEach { (sticker, code) ->
                 val stickerImage = ImageView(this).apply {
