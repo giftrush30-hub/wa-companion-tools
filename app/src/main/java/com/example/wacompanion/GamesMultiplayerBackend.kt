@@ -71,6 +71,16 @@ class GamesMultiplayerBackend(context: Context) {
         return parseRoom(result)
     }
 
+    fun roomDetails(roomId: String): Room {
+        val active = session()
+        val rows = discover.request(
+            "/rest/v1/game_rooms?select=id,room_code,game_type,visibility,status,host_id,max_players,created_at,expires_at&id=eq.$roomId&limit=1",
+            "GET", null, active.accessToken
+        ) as JSONArray
+        if (rows.length() == 0) throw IllegalStateException("This game room no longer exists.")
+        return parseRoom(rows.getJSONObject(0))
+    }
+
     fun publicRooms(gameType: String): List<Room> {
         val active = session()
         require(gameType in setOf("big_quiz", "ludo", "whot")) { "Choose a supported game." }
