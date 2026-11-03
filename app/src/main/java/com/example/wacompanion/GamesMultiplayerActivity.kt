@@ -29,6 +29,8 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
     private lateinit var message: EditText
     private lateinit var readyButton: Button
     private lateinit var voiceButton: Button
+    private lateinit var micButton: Button
+    private lateinit var speakerButton: Button
     private var game = "ludo"
     private var nickname = ""
     private var userId = ""
@@ -38,6 +40,8 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
     private var voice: GamesVoiceClient? = null
     private var ready = false
     private var connectingVoice = false
+    private var micMuted = false
+    private var speakerMuted = false
     private val seen = hashSetOf<String>()
     private var refreshing = false
     private var gameLaunched = false
@@ -232,6 +236,24 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         body.addView(send)
         voiceButton = Button(this).apply { text = "🎙 Join live voice"; isAllCaps = false; setOnClickListener { toggleVoice() } }
         body.addView(voiceButton)
+        micButton = Button(this).apply {
+            text = "Mute microphone"; isAllCaps = false; isEnabled = false
+            setOnClickListener {
+                micMuted = !micMuted
+                voice?.setMicrophoneEnabled(!micMuted)
+                text = if (micMuted) "Unmute microphone" else "Mute microphone"
+            }
+        }
+        body.addView(micButton)
+        speakerButton = Button(this).apply {
+            text = "Mute speaker"; isAllCaps = false; isEnabled = false
+            setOnClickListener {
+                speakerMuted = !speakerMuted
+                voice?.setSpeakerMuted(speakerMuted)
+                text = if (speakerMuted) "Unmute speaker" else "Mute speaker"
+            }
+        }
+        body.addView(speakerButton)
         body.addView(label("Optional voice call. Mute when you need privacy. Headphones help prevent echo.", 12, muted))
         body.addView(Button(this).apply { text = "Leave room"; isAllCaps = false; setOnClickListener { leave() } })
     }
@@ -315,6 +337,9 @@ class GamesMultiplayerActivity : Activity(), GamesVoiceClient.Listener {
         if (voice != null) {
             voice?.setMicrophoneEnabled(false); voice?.disconnect(); voice = null
             voiceButton.text = "🎙 Join live voice"
+            micButton.isEnabled = false; speakerButton.isEnabled = false
+            micMuted = false; speakerMuted = false
+            micButton.text = "Mute microphone"; speakerButton.text = "Mute speaker"
             return
         }
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
