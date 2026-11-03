@@ -98,6 +98,51 @@ class DiscoverBackend(context: Context) {
         return JSONArray(result.toString())
     }
 
+    /** Upload a user-owned image to the public Meme War media bucket. */
+    fun uploadMemeImage(path: String, bytes: ByteArray, contentType: String): String {
+        val session = currentSession()
+            ?: throw IllegalStateException("Sign in first to upload a Meme War image.")
+        if (bytes.isEmpty() || bytes.size > 5 * 1024 * 1024) {
+            throw IllegalArgumentException("Choose an image smaller than 5 MB.")
+        }
+        if (contentType !in setOf("image/jpeg", "image/png", "image/webp")) {
+            throw IllegalArgumentException("Please choose a JPG, PNG or WEBP image.")
+        }
+        val safePath = path.split("/").joinToString("/") { encode(it) }
+        val url = URL(baseUrl + "/storage/v1/object/arena-meme-submissions/" + safePath)
+        var activeToken = session.accessToken
+        var refreshed = false
+        while (true) {
+            val connection = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 15000
+                readTimeout = 30000
+                doOutput = true
+                setRequestProperty("apikey", publishableKey)
+                setRequestProperty("Authorization", "Bearer $activeToken")
+                setRequestProperty("Content-Type", contentType)
+                setRequestProperty("x-upsert", "false")
+            }
+            try {
+                connection.outputStream.use { it.write(bytes) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val responseText = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                if (code == 401 && !refreshed) {
+                    activeToken = refreshAccessToken()
+                    refreshed = true
+                    continue
+                }
+                if (code !in 200..299) {
+                    throw IllegalStateException("Image upload failed ($code): " + responseText.take(300))
+                }
+                return baseUrl + "/storage/v1/object/public/arena-meme-submissions/" + safePath
+            } finally {
+                connection.disconnect()
+            }
+        }
+    }
+
     /**
      * Refresh an expired access token once after an authenticated request receives HTTP 401.
      * Network requests are made by the app's IO executor.
