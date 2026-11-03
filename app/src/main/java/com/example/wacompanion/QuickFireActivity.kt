@@ -50,6 +50,10 @@ class QuickFireActivity : Activity() {
             try {
                 val loaded = backend.activeQuiz()
                 runOnUiThread {
+                    headerArea.removeAllViews()
+                    questionArea.removeAllViews()
+                    questionIndex = 0
+                    score = 0
                     quiz = loaded
                     if (loaded == null || loaded.questions.isEmpty()) {
                         status.text = "No published quiz is available yet. Please check back soon."
@@ -77,14 +81,14 @@ class QuickFireActivity : Activity() {
         status.text = "Question ${questionIndex + 1} of ${current.questions.size}"
         questionArea.addView(label(question.text, 18, ink, true))
         val choices = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        question.options.forEachIndexed { index, option ->
+        question.options.forEach { option ->
             val button = Button(this).apply {
-                text = option
+                text = option.text
                 isAllCaps = false
                 setTextColor(ink)
                 setBackgroundColor(Color.rgb(232, 242, 237))
                 setOnClickListener {
-                    if (!locked) submitAnswer(question, index, choices)
+                    if (!locked) submitAnswer(question, option.originalIndex, choices)
                 }
             }
             choices.addView(button)
@@ -111,7 +115,8 @@ class QuickFireActivity : Activity() {
                         if (result.alreadyAnswered) "You already answered this question." else if (result.correct) "Correct!" else "Not quite — keep going!",
                         16, if (result.correct) green else ink, true
                     ))
-                    feedback.addView(label("Correct answer: ${question.options.getOrNull(result.correctIndex) ?: "Unavailable"}", 14, ink, true))
+                    val correctText = question.options.firstOrNull { it.originalIndex == result.correctIndex }?.text ?: "Unavailable"
+                    feedback.addView(label("Correct answer: $correctText", 14, ink, true))
                     if (result.explanation.isNotBlank()) feedback.addView(label(result.explanation, 14, muted))
                     questionArea.addView(feedback)
                     questionArea.addView(Button(this).apply {
@@ -140,6 +145,11 @@ class QuickFireActivity : Activity() {
         val total = quiz?.questions?.sumOf { it.points } ?: 0
         questionArea.addView(label("Quiz score: $score / $total", 21, green, true))
         questionArea.addView(label("Your answers are checked and recorded by the server. This is a quiz score, not spendable Games Points. Rewards and leaderboards will be connected in a later milestone.", 14, muted))
+        questionArea.addView(Button(this).apply {
+            text = "Play another random round"
+            isAllCaps = false
+            setOnClickListener { status.text = "Finding a fresh question set…"; loadQuiz() }
+        })
         questionArea.addView(Button(this).apply {
             text = "Back to Daily Arena"
             isAllCaps = false
