@@ -286,7 +286,7 @@ class BigQuizActivity : Activity() {
         }
         questionArea.addView(label("ACCURACY: $percentage%",12,muted,true))
         questionArea.addView(label(message,16,ink))
-        questionArea.addView(label(if(newBest) "🏅 NEW PERSONAL BEST • $correct/\${questions.size}" else "PERSONAL BEST • $bestScore/\${questions.size}",14,green,true))
+        questionArea.addView(label(if(newBest) "🏅 NEW PERSONAL BEST • $correct/${questions.size}" else "PERSONAL BEST • $bestScore/${questions.size}",14,green,true))
         questionArea.addView(label("ROUNDS COMPLETED: $completed  •  ACHIEVEMENTS: $achievementCount/4",12,muted,true))
         if (unlocked.isNotEmpty()) {
             questionArea.addView(label("NEW ACHIEVEMENT UNLOCKED",13,green,true))
