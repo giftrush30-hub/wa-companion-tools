@@ -20,3 +20,5 @@ This is starter source code, not a signed production release. The APK must be in
 ## Third-party visual asset credits
 - Meme War challenge photos: Unsplash contributors, credited beside each template in the app; images are used under the Unsplash License.
 - Meme War sticker artwork: Twemoji by Twitter and contributors, graphics licensed CC BY 4.0. https://github.com/twitter/twemoji
+
+- Additional Meme War photos: Chibuzo Nwaneri (Nigerian jollof rice), Ufoma Ojo (friends laughing), and Microsoft 365 (laptop/work photo), each sourced from Unsplash and credited in-app.
