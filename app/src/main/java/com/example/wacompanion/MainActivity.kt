@@ -111,7 +111,7 @@ class MainActivity : Activity() {
             "Reply-to-Status Assistant", "Status & Flyer Studio",
             "Naija Message Lab", "Small Business Follow-up Desk",
             "Price, Profit & Quotation Calculator", "Quick Replies",
-            "Message Reminders", "Privacy Shortcuts", "Status Organiser"
+            "Message Reminders", "Privacy Shortcuts", "Status Organiser", "WhatsApp Chat Archive"
         )
         AlertDialog.Builder(this)
             .setTitle("More tools")
@@ -163,6 +163,7 @@ class MainActivity : Activity() {
                         }
                         showNotes()
                     }
+                    21 -> startActivity(Intent(this, WhatsAppArchiveActivity::class.java))
                 }
             }
             .setNegativeButton("Close", null)
