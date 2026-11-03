@@ -81,6 +81,9 @@ class MainActivity : Activity() {
         root.addView(label("Simple tools. Your WhatsApp stays unchanged.", 13, Color.rgb(6, 100, 70)))
         root.addView(space(18))
 
+        card("DAILY ARENA", "Daily Hot Seat questions, Quick Fire challenges and Meme War.") {
+            startActivity(Intent(this, DailyArenaActivity::class.java))
+        }
         card("DISCOVER", "Find Nigerian businesses and useful opportunities.") {
             startActivity(Intent(this, DiscoverActivity::class.java))
         }
