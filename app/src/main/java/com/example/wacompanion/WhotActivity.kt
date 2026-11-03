@@ -110,7 +110,10 @@ class WhotActivity : Activity() {
         }
         table.addView(Button(this).apply{
             text=if(pendingDraw>0)"Pick up $pendingDraw cards" else "Go to market • draw 1"
-            isAllCaps=false;setOnClickListener{drawCards(if(pendingDraw>0)pendingDraw else 1);pendingDraw=0;pendingType=0;nextPlayer()}
+            isAllCaps=false;setOnClickListener{
+                if(!drawCards(if(pendingDraw>0)pendingDraw else 1))return@setOnClickListener
+                pendingDraw=0;pendingType=0;nextPlayer()
+            }
         })
         table.addView(Button(this).apply{text="Hide hand";isAllCaps=false;setOnClickListener{showTurn()}})
     }
@@ -141,7 +144,7 @@ class WhotActivity : Activity() {
                 showTurn("Suspension! $skips turn(s) skipped.")
             }
             card.number==14->{
-                for(i in hands.indices)if(i!=current)drawCards(1,i)
+                for(i in hands.indices)if(i!=current && !drawCards(1,i))return
                 showTurn("General Market! Every other player picks one card.")
             }
             else->nextPlayer()
@@ -154,7 +157,8 @@ class WhotActivity : Activity() {
             .setCancelable(false).show()
     }
 
-    private fun drawCards(count:Int,player:Int=current){
+    /** Draws the full requested amount, or ends the round if no card can be drawn. */
+    private fun drawCards(count:Int,player:Int=current):Boolean{
         for (draw in 0 until count) {
             if(market.isEmpty()&&discard.size>1){
                 val face=discard.removeAt(discard.lastIndex)
@@ -162,10 +166,11 @@ class WhotActivity : Activity() {
             }
             if(market.isEmpty()) {
                 finishByLowestHand()
-                return
+                return false
             }
             hands[player].add(market.removeAt(market.lastIndex))
         }
+        return true
     }
 
     /** If the draw pile and recyclable discard are exhausted, the lowest hand wins. */
