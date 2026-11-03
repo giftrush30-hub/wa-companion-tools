@@ -26,9 +26,20 @@ class QuickFireBackend(context: Context) {
         ) as JSONArray
         if (sets.length() == 0) return null
         val allSets = (0 until sets.length()).map { sets.getJSONObject(it) }
+        val eligibleSets = if (difficulty == "mixed") allSets else {
+            val eligibleRows = discover.request(
+                "/rest/v1/arena_quickfire_questions?select=set_id&difficulty=eq.$difficulty&limit=500",
+                "GET", null, null
+            ) as JSONArray
+            val eligibleIds = (0 until eligibleRows.length()).map {
+                eligibleRows.getJSONObject(it).getString("set_id")
+            }.toSet()
+            allSets.filter { it.getString("id") in eligibleIds }
+        }
+        if (eligibleSets.isEmpty()) return null
         val lastSetId = rotationPrefs.getString("last_set_id", null)
-        val alternatives = allSets.filter { it.getString("id") != lastSetId }
-        val chosenSet = (if (alternatives.isNotEmpty()) alternatives else allSets).random()
+        val alternatives = eligibleSets.filter { it.getString("id") != lastSetId }
+        val chosenSet = (if (alternatives.isNotEmpty()) alternatives else eligibleSets).random()
         val setId = chosenSet.getString("id")
         rotationPrefs.edit().putString("last_set_id", setId).apply()
         val difficultyFilter = if (difficulty == "mixed") "" else "&difficulty=eq.$difficulty"
