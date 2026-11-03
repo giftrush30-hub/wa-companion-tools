@@ -60,6 +60,7 @@ class LudoActivity : Activity() {
     private var isRolling = false
     private lateinit var tokenButtons: LinearLayout
     private lateinit var rollButton: Button
+    private lateinit var rootLayout: LinearLayout
     private var current = 0
     private var roll: Int? = null
     private var consecutiveSixes = 0
@@ -82,9 +83,9 @@ class LudoActivity : Activity() {
         players=seats.map { i -> Player(names[i],colors[i],starts[i],lanes[i],bases[i]) }
         tokens.clear(); repeat(selectedPlayers) { tokens.add(MutableList(4){Token()}) }
         current=0; roll=null; consecutiveSixes=0; gameOver=false; readyToRoll=false
-        val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(12),dp(14),dp(12),dp(18)); setBackgroundColor(Color.rgb(246,249,247)) }
-        setContentView(ScrollView(this).apply { addView(root) })
-        root.addView(label("LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
+        rootLayout=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(12),dp(14),dp(12),dp(18)); setBackgroundColor(Color.rgb(246,249,247)) }
+        setContentView(ScrollView(this).apply { addView(rootLayout) })
+        rootLayout.addView(label("LUDO • PASS & PLAY",25,Color.rgb(7,91,69),true))
         root.addView(label("One phone • $selectedPlayers players • Offline practice",13,Color.DKGRAY))
         board=LudoBoard(); root.addView(board,LinearLayout.LayoutParams(-1,dp(330)))
         diceView=label("⚄",54,Color.rgb(7,91,69),true).apply {
@@ -224,11 +225,31 @@ class LudoActivity : Activity() {
         if(token.progress==56) bonus=true
         roll=null; tokenButtons.removeAllViews(); board.invalidate()
         if(tokens[current].all{it.progress==56}) {
-            gameOver=true; status.text="🏆 ${players[current].name} wins the Ludo practice match!"
-            rollButton.text="MATCH COMPLETE"; rollButton.isEnabled=false; return
+            gameOver=true
+            val winner=players[current].name
+            status.text="🏆 $winner wins the Ludo practice match!"
+            rollButton.text="MATCH COMPLETE"; rollButton.isEnabled=false
+            showMatchRecord(winner)
+            return
         }
         val note=when { captured -> "Capture! A rival token returned to base."; token.progress==56 -> "Token reached home!"; bonus -> "You rolled a six. Roll again!"; else -> "Move complete." }
         if(bonus) updateTurn(note) else advanceTurn(note)
+    }
+
+    private fun showMatchRecord(winner:String) {
+        val prefs=getSharedPreferences("ludo_local_records",MODE_PRIVATE)
+        val played=prefs.getInt("matches_played",0)+1
+        val wins=prefs.getInt("matches_won",0)+1
+        val history=(prefs.getString("recent_results","") ?: "").split("|").filter{it.isNotBlank()}.toMutableList()
+        history.add(0,"$winner won a $selectedPlayers-player match")
+        prefs.edit().putInt("matches_played",played).putInt("matches_won",wins)
+            .putBoolean("first_match",true).putBoolean("first_win",true)
+            .putString("recent_results",history.take(8).joinToString("|")).apply()
+        rootLayout.addView(label("MATCH RECORD",13,Color.rgb(7,91,69),true))
+        rootLayout.addView(label("Matches completed on this device: $played  •  Wins: $wins",14,Color.rgb(18,42,55),true))
+        rootLayout.addView(label(if(wins==1) "🏆 FIRST VICTORY unlocked" else "🏆 VICTORY BUILDER • $wins wins recorded",13,Color.rgb(7,91,69),true))
+        rootLayout.addView(label("RECENT RESULTS",12,Color.rgb(91,108,119),true))
+        history.take(5).forEach { rootLayout.addView(label("• $it",12,Color.rgb(18,42,55))) }
     }
 
     private fun advanceTurn(note:String="") {
