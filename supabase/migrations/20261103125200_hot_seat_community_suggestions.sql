@@ -36,7 +36,7 @@ create policy "Players read only their Hot Seat suggestion votes" on public.aren
 using (user_id=(select auth.uid()));
 drop policy if exists "Players vote as themselves on Hot Seat suggestions" on public.arena_hot_seat_suggestion_votes;
 create policy "Players vote as themselves on Hot Seat suggestions" on public.arena_hot_seat_suggestion_votes for insert to authenticated
-with check (user_id=(select auth.uid()) and exists(select 1 from public.arena_hot_seat_suggestions s where s.id=suggestion_id and s.status='approved'));
+with check (user_id=(select auth.uid()) and exists(select 1 from public.arena_hot_seat_suggestions s where s.id=suggestion_id and s.status='approved' and s.user_id <> (select auth.uid())));
 create or replace function private.enforce_hot_seat_suggestion_rate_limit()
 returns trigger language plpgsql security definer set search_path=pg_catalog,public as $$
 begin
