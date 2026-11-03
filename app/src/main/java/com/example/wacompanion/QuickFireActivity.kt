@@ -226,12 +226,12 @@ class QuickFireActivity : Activity() {
             text = "Share my Quick Fire result"
             isAllCaps = false
             setOnClickListener {
-                val message = "I just played Quick Fire on WA Companion! ⚡\\nScore: $score / $total\\nBest streak: $bestStreak\\nCan you beat me? Open WA Companion → Daily Arena → Quick Fire."
-                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(android.content.Intent.EXTRA_TEXT, message)
-                }
-                startActivity(android.content.Intent.createChooser(send, "Share your Quick Fire result"))
+                ArenaShareCard.share(
+                    this@QuickFireActivity,
+                    "QUICK FIRE RESULT",
+                    "Score: ${score} / ${total}\\nBest correct-answer streak: ${bestStreak}\\n\\nCan you beat this score?",
+                    "YOUR TURN  •  DAILY ARENA"
+                )
             }
         })
         questionArea.addView(Button(this).apply {
