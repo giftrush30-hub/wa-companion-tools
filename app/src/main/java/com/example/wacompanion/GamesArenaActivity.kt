@@ -61,7 +61,12 @@ class GamesArenaActivity : Activity() {
         val whot = panel()
         whot.addView(label("🃏  WHOT!", 21, green, true))
         whot.addView(label("A Nigerian card-game experience with a clearly stated rule set, private rooms and fair matchmaking. Rule-set decisions and authoritative gameplay come before release.", 14, ink))
-        whot.addView(label("GAME RULES & MULTIPLAYER — IN DEVELOPMENT", 11, muted, true))
+        whot.addView(label("OFFLINE PASS & PLAY — AVAILABLE", 11, muted, true))
+        whot.addView(Button(this).apply {
+            text = "Play WHOT! on this phone"
+            isAllCaps = false
+            setOnClickListener { startActivity(Intent(this@GamesArenaActivity, WhotActivity::class.java)) }
+        })
         root.addView(whot)
         root.addView(space(12))
 
