@@ -56,7 +56,7 @@ class DiscoverActivity : Activity() {
         val search = EditText(this).apply {
             hint = "Search products, shops and services"
             textSize = 15f
-            singleLine = true
+            isSingleLine = true
             setPadding(dp(13), dp(12), dp(13), dp(12))
             setBackgroundColor(Color.WHITE)
             isFocusable = false
