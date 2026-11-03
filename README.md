@@ -16,3 +16,7 @@ The project uses Android Gradle Plugin 8.7.3, Kotlin 2.0.21, compile SDK 35 and 
 
 ## Important
 This is starter source code, not a signed production release. The APK must be installed and tested on a real device before wider distribution. Exact alarms and notifications depend on Android permissions.
+
+## Third-party visual asset credits
+- Meme War challenge photos: Unsplash contributors, credited beside each template in the app; images are used under the Unsplash License.
+- Meme War sticker artwork: Twemoji by Twitter and contributors, graphics licensed CC BY 4.0. https://github.com/twitter/twemoji
