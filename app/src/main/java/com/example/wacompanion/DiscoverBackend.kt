@@ -37,6 +37,7 @@ class DiscoverBackend(context: Context) {
         }
         prefs.edit().putString("access_token", token)
             .putString("refresh_token", result.optString("refresh_token"))
+            .putLong("token_expires_at", System.currentTimeMillis() + result.optLong("expires_in", 3600L) * 1000L)
             .putString("user_id", userId).apply()
         return SellerSession(token, userId)
     }
@@ -77,33 +78,77 @@ class DiscoverBackend(context: Context) {
         return JSONArray(result.toString())
     }
 
-    private fun request(path: String, method: String, body: JSONObject?, token: String?, returnRepresentation: Boolean = false): Any {
-        val connection = (URL(baseUrl + path).openConnection() as HttpURLConnection).apply {
-            requestMethod = method
-            connectTimeout = 15000
-            readTimeout = 20000
-            setRequestProperty("apikey", publishableKey)
-            setRequestProperty("Authorization", "Bearer ${token ?: publishableKey}")
-            setRequestProperty("Accept", "application/json")
-            if (body != null) {
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
-                if (returnRepresentation) setRequestProperty("Prefer", "return=representation")
-            }
+    /**
+     * Refresh an expired access token once after an authenticated request receives HTTP 401.
+     * Network requests are made by the app's IO executor.
+     */
+    @Synchronized
+    private fun refreshAccessToken(): String {
+        val refreshToken = prefs.getString("refresh_token", null)
+            ?: throw IllegalStateException("Your session has expired. Please sign in again.")
+        val result = request("/auth/v1/token?grant_type=refresh_token", "POST",
+            JSONObject().put("refresh_token", refreshToken), null, allowRefresh = false) as JSONObject
+        val token = result.optString("access_token")
+        val nextRefresh = result.optString("refresh_token")
+        if (token.isBlank() || nextRefresh.isBlank()) {
+            prefs.edit().clear().apply()
+            throw IllegalStateException("Your session could not be refreshed. Please sign in again.")
         }
-        try {
-            if (body != null) connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
-            val code = connection.responseCode
-            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-            val text = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
-            if (code !in 200..299) {
-                val message = try { JSONObject(text).optString("message").ifBlank { JSONObject(text).optString("msg") } } catch (_: Exception) { text }
-                throw IllegalStateException(message.ifBlank { "Supabase request failed ($code)." })
+        val userId = result.optJSONObject("user")?.optString("id")
+            ?: prefs.getString("user_id", "").orEmpty()
+        prefs.edit().putString("access_token", token)
+            .putString("refresh_token", nextRefresh)
+            .putLong("token_expires_at", System.currentTimeMillis() + result.optLong("expires_in", 3600L) * 1000L)
+            .putString("user_id", userId).apply()
+        return token
+    }
+
+    private fun request(
+        path: String,
+        method: String,
+        body: JSONObject?,
+        token: String?,
+        returnRepresentation: Boolean = false,
+        allowRefresh: Boolean = true
+    ): Any {
+        var activeToken = token
+        var refreshed = false
+        while (true) {
+            val connection = (URL(baseUrl + path).openConnection() as HttpURLConnection).apply {
+                requestMethod = method
+                connectTimeout = 15000
+                readTimeout = 20000
+                setRequestProperty("apikey", publishableKey)
+                setRequestProperty("Authorization", "Bearer ${activeToken ?: publishableKey}")
+                setRequestProperty("Accept", "application/json")
+                if (body != null) {
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                    if (returnRepresentation) setRequestProperty("Prefer", "return=representation")
+                }
             }
-            if (text.isBlank()) return JSONObject()
-            return if (text.trimStart().startsWith("[")) JSONArray(text) else JSONObject(text)
-        } finally {
-            connection.disconnect()
+            try {
+                if (body != null) connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val responseText = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                if (code == 401 && allowRefresh && !refreshed && !activeToken.isNullOrBlank()) {
+                    activeToken = refreshAccessToken()
+                    refreshed = true
+                    continue
+                }
+                if (code !in 200..299) {
+                    val message = try {
+                        JSONObject(responseText).optString("message")
+                            .ifBlank { JSONObject(responseText).optString("msg") }
+                    } catch (_: Exception) { responseText }
+                    throw IllegalStateException(message.ifBlank { "Supabase request failed ($code)." })
+                }
+                if (responseText.isBlank()) return JSONObject()
+                return if (responseText.trimStart().startsWith("[")) JSONArray(responseText) else JSONObject(responseText)
+            } finally {
+                connection.disconnect()
+            }
         }
     }
 
