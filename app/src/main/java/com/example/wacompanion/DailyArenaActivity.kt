@@ -169,6 +169,7 @@ class DailyArenaActivity : Activity() {
 
     private fun showResults(poll: ArenaBackend.Poll, results: List<ArenaBackend.Result>) {
         pollArea.removeAllViews()
+        pollReportButtonAdded = false
         val counts = results.associate { it.optionId to it.count }
         val totalVotes = results.sumOf { it.count }
         pollArea.addView(text(poll.question, 18, ink, true))
