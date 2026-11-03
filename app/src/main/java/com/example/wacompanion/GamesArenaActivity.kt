@@ -49,7 +49,12 @@ class GamesArenaActivity : Activity() {
         val ludo = panel()
         ludo.addView(label("🎲  LUDO", 21, green, true))
         ludo.addView(label("Classic 2–4 player board game. Private rooms, online matchmaking, reconnects and rematches are planned. We will not label local-only play as online multiplayer.", 14, ink))
-        ludo.addView(label("MULTIPLAYER FOUNDATION — IN DEVELOPMENT", 11, muted, true))
+        ludo.addView(label("OFFLINE PASS & PLAY — AVAILABLE", 11, muted, true))
+        ludo.addView(Button(this).apply {
+            text = "Play Ludo on this phone"
+            isAllCaps = false
+            setOnClickListener { startActivity(Intent(this@GamesArenaActivity, LudoActivity::class.java)) }
+        })
         root.addView(ludo)
         root.addView(space(10))
 
