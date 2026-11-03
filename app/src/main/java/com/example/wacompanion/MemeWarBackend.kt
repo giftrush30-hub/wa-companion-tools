@@ -119,7 +119,7 @@ class MemeWarBackend(context: Context) {
         val session = discover.currentSession()
         val submittedIds = if (session == null) emptySet() else {
             val submitted = discover.request(
-                "/rest/v1/arena_meme_submissions?select=challenge_id&user_id=eq.\${session.userId}&limit=500",
+                "/rest/v1/arena_meme_submissions?select=challenge_id&user_id=eq.${session.userId}&limit=500",
                 "GET", null, session.accessToken
             ) as JSONArray
             (0 until submitted.length()).map { submitted.getJSONObject(it).getString("challenge_id") }.toSet()
