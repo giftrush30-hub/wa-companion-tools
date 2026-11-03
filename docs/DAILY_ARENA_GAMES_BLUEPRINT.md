@@ -227,3 +227,11 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Practice remains offline and awards no Games Points or competitive ranking. No new reward economy or monetization was introduced.
 - Research informed the design: Kahoot guidance recommends varied, clearly presented question experiences, difficulty-appropriate timing and concise options; the CDC quiz guidance highlights explanations and useful end-of-quiz feedback. This update does not yet add timers or new question formats.
 - Source committed to GitHub main. No build, APK, device test or deployment performed.
+
+## Big Quiz question-bank expansion — 3 November 2026
+- Expanded the offline practice bank from **30 to 66 questions**. The full challenge now contains 66 questions; the final-level banner follows the selected challenge length rather than assuming the last level is always question 30.
+- All seven subject choices remain available. The category pools now contain: Nigeria & Africa (11), Science & Nature (13), Maths & Logic (15), Digital & Technology (9), World & Society (10), and Business & Money (7), plus the full 66-question challenge.
+- Added questions on Nigerian and African civics/geography, core science, arithmetic and logic, digital literacy and online safety, world knowledge, and practical business/financial literacy.
+- Added concise explanations to each new question. No timers, points, paid rewards, ranking or network competition were introduced; practice remains offline and free of Games Points.
+- Content was designed around the quiz-learning patterns already reviewed from Kahoot and CDC guidance: clear question wording, manageable answer choices, useful explanations and completion feedback. This is original WA Companion question content, not copied quiz material.
+- Source-only change committed to GitHub main. No Android build, APK, device test or deployment was performed.
