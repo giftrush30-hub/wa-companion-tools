@@ -135,3 +135,14 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Daily Arena now records private activity events from server-side triggers and shows four daily missions plus a seven-day participation history. The history is private to each account and does not award Games Points.
 - Product research: Kahoot official question types and randomization informed quiz mode/timer design; Slido's official Q&A product and moderation guides informed community suggestions, upvoting and pre-publication review; Unsplash free photo pages were checked for creator and license attribution. See references below.
 - Current published backend inventory: 16 Hot Seat polls, 145 Quick Fire questions in 8 packs, 15 Meme War challenges, 8 photo-backed Meme War templates.
+
+
+### Visual image sharing expansion — 3 November 2026
+- Replaced text-only share actions with generated 4:5 PNG image cards using the Android Sharesheet and FileProvider content URIs.
+- Hot Seat shares a designed question card with answer options; after voting it can share a separate results card with community percentages.
+- Quick Fire shares a designed challenge card containing the question and options, plus a result card with score and best streak.
+- Meme War shares the challenge as a designed image card and embeds its actual challenge photo when available. Approved caption shares embed the submitted meme image when available, alongside the caption and vote context.
+- Images are generated locally, saved temporarily under the app cache shared_memes/ directory, and exposed through the existing non-exported AndroidX FileProvider with read grants. The existing @xml/file_paths already grants the matching cache subdirectory.
+- Users can choose WhatsApp, WhatsApp Status where supported, or another compatible app. The output is a real image attachment rather than a text-only message. A remote photo failure falls back to a designed graphic card.
+- Inspiration: Kahoot documents a mix of knowledge checks and opinion-gathering formats; audience participation and visualized responses informed the share-card framing. These are original WA Companion graphics, not copied assets.
+- Not verified on-device and not build-tested in this batch. No APK was produced and no deployment was made.
