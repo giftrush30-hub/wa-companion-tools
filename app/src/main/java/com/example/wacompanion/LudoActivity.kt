@@ -29,7 +29,7 @@ class LudoActivity : Activity() {
     private val starts = listOf(6,19,32,45)
     private val lanes = listOf(
         (1..6).map { it to 7 },
-        (7..12).map { 7 to it },
+        (12 downTo 7).map { 7 to it },
         (12 downTo 7).map { it to 6 },
         (7 downTo 2).map { 6 to it }
     )
@@ -133,6 +133,7 @@ class LudoActivity : Activity() {
                 }
             }
         }
+        if(captured) bonus=true
         if(token.progress==57) bonus=true
         roll=null; tokenButtons.removeAllViews(); board.invalidate()
         if(tokens[current].all{it.progress==57}) {
