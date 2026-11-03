@@ -82,3 +82,39 @@ The current Android screen includes two direct buyer actions:
 - **Chat with a business on WhatsApp**: the buyer enters an international phone number; the app opens the wa.me chat link. For Nigeria, enter 234 followed by the national number without its leading zero.
 
 These are link hand-off tools, not public discovery search. The public searchable directory is connected to Supabase and returns approved listings only. The app must not claim that a pasted link is verified or that a WhatsApp message was sent; the buyer reviews and sends any message in WhatsApp themselves.
+
+
+## WA Companion expansion and simplicity rules (2026-11-03)
+
+The home screen is being simplified around four clear destinations: Discover, My Vault, My Diary and Referral Hub. Existing utilities move behind a single More tools action so first-time users are not confronted with a long catalogue of features.
+
+Design rules are based on Android's current navigation guidance:
+- Keep only a small number of primary destinations visible (3–5).
+- Use clear labels and familiar icons; do not rely on icons alone.
+- Give each screen one obvious main action.
+- Reveal advanced options only when needed.
+- Keep language short, friendly and non-technical.
+- Keep forms short and explain why information is needed.
+- Never put paid promotions, points or advanced settings in the user's way when they are trying to complete a simple task.
+
+### Personal space milestone
+- My Vault and My Diary screens have been added as a first simple implementation.
+- Current version saves text notes/entries locally on the phone only.
+- It does not yet upload files, sync across devices, back up to Supabase or provide cloud account recovery.
+- File attachments, encrypted cloud storage, import/export and cross-device sync are later stages. Do not describe local notes as cloud-backed.
+
+### Referral Hub milestone
+- A first simple Referral Hub draft screen has been added.
+- Referral submissions currently save as local drafts on the phone only; they are not public, reviewed, promoted or visible to other members.
+- Public referral listings, link safety checks, moderation, paid campaigns, points boosts and verified analytics require a secure shared backend and are not active yet.
+- No external clicks, registrations, sales or affiliate conversions are guaranteed.
+
+### Message archive and WhatsApp integration boundaries
+- Future chat archive should use files deliberately exported/shared by the user or individual messages the user chooses to share.
+- It must not scrape private WhatsApp chats, contacts, groups, channels or Status.
+- It must not automate unsolicited WhatsApp messages, follows or group joins.
+- Users remain in control of opening WhatsApp links and taking actions inside WhatsApp.
+
+### Current development status
+- The home navigation, local Vault/Diary, and local Referral Hub draft screen are committed to main.
+- The last known Android build before these changes failed on a Kotlin inputType assignment in the seller form; that issue has been corrected in source. The newest GitHub Actions run must pass before the APK is considered ready.
