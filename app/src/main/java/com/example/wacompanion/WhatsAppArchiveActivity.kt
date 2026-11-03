@@ -163,6 +163,13 @@ class WhatsAppArchiveActivity : Activity() {
                 setOnClickListener { if (file.exists()) showConversation(name, content) else toast("The saved archive file is missing.") }
             })
             card.addView(Button(this).apply {
+                text = "Share / export chat copy"
+                isAllCaps = false
+                setOnClickListener {
+                    if (file.exists()) shareArchive(file) else toast("The saved archive file is missing.")
+                }
+            })
+            card.addView(Button(this).apply {
                 text = "Delete archive"
                 isAllCaps = false
                 setOnClickListener {
@@ -182,6 +189,22 @@ class WhatsAppArchiveActivity : Activity() {
             entries.addView(space(8))
         }
         if (shown == 0) entries.addView(label(if (q.isBlank()) "No chat exports saved yet. Export a chat from WhatsApp, then import its .txt file here." else "No matching saved chats or messages.", 13, muted))
+    }
+
+    private fun shareArchive(file: File) {
+        try {
+            val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, "WhatsApp chat archive")
+                clipData = android.content.ClipData.newUri(contentResolver, "Chat archive", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(send, "Share chat archive"))
+        } catch (_: Exception) {
+            toast("Could not prepare this archive for sharing.")
+        }
     }
 
     private fun showConversation(name: String, content: String) {
