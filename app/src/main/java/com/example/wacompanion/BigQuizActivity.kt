@@ -231,14 +231,16 @@ class BigQuizActivity : Activity() {
         status.text = "CHALLENGE COMPLETE • $correct/${questions.size}"
         progressBar.progress = questions.size
         questionArea.addView(label("You got $correct out of ${questions.size} correct.",23,green,true))
+        val percentage = correct * 100 / questions.size
         val message = when {
-            correct >= 27 -> "Quiz Champion! Outstanding performance."
-            correct >= 23 -> "Expert level. Your brain came prepared."
-            correct >= 18 -> "Masterful effort. You know your stuff."
-            correct >= 13 -> "Sharp performance. Keep building."
-            correct >= 8 -> "Good effort. A little more practice will sharpen you."
+            percentage >= 90 -> "Quiz Champion! Outstanding performance."
+            percentage >= 75 -> "Expert level. Your brain came prepared."
+            percentage >= 60 -> "Masterful effort. You know your stuff."
+            percentage >= 45 -> "Sharp performance. Keep building."
+            percentage >= 30 -> "Good effort. A little more practice will sharpen you."
             else -> "Every champion starts somewhere. Run it back!"
         }
+        questionArea.addView(label("ACCURACY: $percentage%",12,muted,true))
         questionArea.addView(label(message,16,ink))
         questionArea.addView(Button(this).apply {
             text = "Share my Big Quiz result"
