@@ -1,6 +1,7 @@
 package com.example.wacompanion
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -121,6 +122,11 @@ class DailyArenaActivity : Activity() {
             (status.parent as LinearLayout).addView(choice)
         }
         if (poll.options.isEmpty()) status.text = "This question has no answer choices yet."
+        (status.parent as LinearLayout).addView(Button(this).apply {
+            text = "Report this question"
+            isAllCaps = false
+            setOnClickListener { showPollReportDialog(poll.id) }
+        })
     }
 
     private fun submitVote(poll: ArenaBackend.Poll, option: ArenaBackend.Option) {
@@ -151,6 +157,30 @@ class DailyArenaActivity : Activity() {
             val count = counts[option.id] ?: 0L
             parent.addView(text("${option.text}  •  $count vote(s)", 14, ink, true))
         }
+        parent.addView(Button(this).apply {
+            text = "Report this question"
+            isAllCaps = false
+            setOnClickListener { showPollReportDialog(poll.id) }
+        })
+    }
+
+    private fun showPollReportDialog(pollId: String) {
+        val labels = arrayOf("Harassment", "Hate speech", "Sexual content", "Violence", "Spam", "Privacy violation", "Other")
+        val values = arrayOf("harassment", "hate", "sexual_content", "violence", "spam", "privacy", "other")
+        AlertDialog.Builder(this)
+            .setTitle("Report this Hot Seat question")
+            .setItems(labels) { _, which ->
+                worker.execute {
+                    try {
+                        arena.reportPoll(pollId, values[which])
+                        runOnUiThread { status.text = "Report received. Thank you for helping keep Daily Arena safe." }
+                    } catch (e: Exception) {
+                        runOnUiThread { status.text = e.message ?: "Could not submit your report." }
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun addFeature(parent: LinearLayout, title: String, description: String) {
