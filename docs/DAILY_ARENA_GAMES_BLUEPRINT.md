@@ -83,6 +83,7 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - **Moderation and safety:** moderator queue and approve/reject controls for Meme War captions, plus a Daily Arena report review queue (reviewing/resolved/dismissed), are implemented in the Android source. The database checks the trusted `app_metadata.role = 'admin'` claim for moderator access. Assign an admin role only through a trusted Supabase admin process; never use editable user metadata for this.
 - Meme War photo upload and display now use a dedicated public Supabase Storage bucket with authenticated per-user upload folders. The current sticker row uses Twemoji artwork rendered as images and inserts the corresponding emoji into captions. Meme War now composites the caption onto the selected photo or challenge template before upload, with Classic/Yellow/Clean text styles and top/bottom placement controls. The sticker library has fourteen image-based options. A curated original sticker pack and full visual redesign remain future visual work.
 - Supabase now contains Hot Seat, Quick Fire, Meme War and reporting tables, with RLS and server-side checks for the implemented features.
+- **Daily missions and history:** private activity events are logged by database triggers for Hot Seat votes, Quick Fire answers, Meme War captions and Meme War votes. Daily Arena displays four participation missions plus a private seven-day activity summary. These missions do not award Games Points.
 
 ### Not yet implemented
 - Shared Games Points wallet, reward ledger, cosmetics store, achievements and Trophy Room.
@@ -114,5 +115,14 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Added community Hot Seat question suggestions, moderator approval, one-support-vote-per-user, aggregate support counts and a three-suggestions-per-user daily rate limit. Suggested questions are not auto-published.
 - Quick Fire now has Easy/Standard/Expert/Mixed modes, server-tagged question difficulty, countdown timers, correct-answer streaks, and local recent-question rotation to reduce repetition. These streaks are entertainment feedback only; no Games Points are awarded yet.
 - Meme War now supports Classic, Bold Yellow and Clean caption styles, top/bottom caption placement, fourteen Twemoji sticker images, and three additional photo-backed prompts.
+- Product research: Kahoot official question types and randomization informed quiz mode/timer design; Slido's official Q&A product and moderation guides informed community suggestions, upvoting and pre-publication review; Unsplash free photo pages were checked for creator and license attribution. See references below.
+- Current published backend inventory: 16 Hot Seat polls, 115 Quick Fire questions in 8 packs, 15 Meme War challenges, 8 photo-backed Meme War templates.
+
+
+### Daily Arena improvement batch — 3 November 2026
+- Added community Hot Seat question suggestions, moderator approval, one-support-vote-per-user, aggregate support counts and a three-suggestions-per-user daily rate limit. Suggested questions are not auto-published.
+- Quick Fire now has Easy/Standard/Expert/Mixed modes, server-tagged question difficulty, countdown timers, correct-answer streaks, and local recent-question rotation to reduce repetition. These streaks are entertainment feedback only; no Games Points are awarded.
+- Meme War now supports Classic, Bold Yellow and Clean caption styles, top/bottom caption placement, fourteen Twemoji sticker images, and three additional photo-backed prompts.
+- Daily Arena now records private activity events from server-side triggers and shows four daily missions plus a seven-day participation history. The history is private to each account and does not award Games Points.
 - Product research: Kahoot official question types and randomization informed quiz mode/timer design; Slido's official Q&A product and moderation guides informed community suggestions, upvoting and pre-publication review; Unsplash free photo pages were checked for creator and license attribution. See references below.
 - Current published backend inventory: 16 Hot Seat polls, 115 Quick Fire questions in 8 packs, 15 Meme War challenges, 8 photo-backed Meme War templates.
