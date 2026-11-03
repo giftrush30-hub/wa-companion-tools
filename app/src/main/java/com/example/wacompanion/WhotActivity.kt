@@ -58,7 +58,7 @@ class WhotActivity : Activity() {
         market.shuffle()
         repeat(6){hands.forEach{it.add(market.removeAt(market.lastIndex))}}
         var first=market.removeAt(market.lastIndex)
-        while(first.wild){market.add(0,first);first=market.removeAt(market.lastIndex)}
+        while(first.wild || first.number in listOf(1,2,5,8,14)){market.add(0,first);first=market.removeAt(market.lastIndex)}
         discard.add(first);top=first;calledSuit=null
         current=0;pendingDraw=0;pendingType=0;gameOver=false
         root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(16),dp(14),dp(24));setBackgroundColor(Color.rgb(246,249,247))}
