@@ -149,7 +149,7 @@ class LudoActivity : Activity() {
             val global=(players[current].start+token.progress)%52
             if(global !in safeTrack) tokens.indices.filter{it!=current}.forEach { other ->
                 tokens[other].forEach { rival ->
-                    if(rival.progress in 0..51 && (players[other].start+rival.progress)%52==global) {
+                    if(rival.progress in 0..50 && (players[other].start+rival.progress)%52==global) {
                         rival.progress=-1; captured=true
                     }
                 }
@@ -162,7 +162,7 @@ class LudoActivity : Activity() {
             gameOver=true; status.text="🏆 ${players[current].name} wins the Ludo practice match!"
             rollButton.text="MATCH COMPLETE"; rollButton.isEnabled=false; return
         }
-        val note=when { captured -> "Capture! A rival token returned to base."; token.progress==57 -> "Token reached home!"; bonus -> "You rolled a six. Roll again!"; else -> "Move complete." }
+        val note=when { captured -> "Capture! A rival token returned to base."; token.progress==56 -> "Token reached home!"; bonus -> "You rolled a six. Roll again!"; else -> "Move complete." }
         if(bonus) updateTurn(note) else advanceTurn(note)
     }
 
@@ -212,10 +212,10 @@ class LudoActivity : Activity() {
             val centerLeft=left+6f*cell;val centerTop=top+6f*cell
             val cx=left+7.5f*cell;val cy=top+7.5f*cell
             val paths=listOf(
+                floatArrayOf(centerLeft,centerTop,centerLeft,centerTop+3*cell,cx,cy),
                 floatArrayOf(centerLeft,centerTop,centerLeft+3*cell,centerTop,cx,cy),
                 floatArrayOf(centerLeft+3*cell,centerTop,centerLeft+3*cell,centerTop+3*cell,cx,cy),
-                floatArrayOf(centerLeft+3*cell,centerTop+3*cell,centerLeft,centerTop+3*cell,cx,cy),
-                floatArrayOf(centerLeft,centerTop+3*cell,centerLeft,centerTop,cx,cy)
+                floatArrayOf(centerLeft,centerTop+3*cell,centerLeft+3*cell,centerTop+3*cell,cx,cy)
             )
             paths.forEachIndexed{i,pts->
                 val path=android.graphics.Path().apply{moveTo(pts[0],pts[1]);lineTo(pts[2],pts[3]);lineTo(pts[4],pts[5]);close()}
