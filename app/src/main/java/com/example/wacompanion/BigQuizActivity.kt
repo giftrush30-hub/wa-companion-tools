@@ -137,7 +137,7 @@ class BigQuizActivity : Activity() {
             .setMessage("Pick a subject or take the full 66-question championship challenge.")
             .setItems(names) { _, which ->
                 selectedCategory = names[which]
-                questions = categories[selectedCategory].map { questionBank[it] }
+                prepareRound()
                 index = 0
                 correct = 0
                 fiftyUsed = false
@@ -145,6 +145,22 @@ class BigQuizActivity : Activity() {
             }
             .setCancelable(false)
             .show()
+    }
+
+    /** Shuffle both question order and answer order while preserving each correct answer. */
+    private fun prepareRound() {
+        questions = categories[selectedCategory].orEmpty()
+            .map { questionBank[it] }
+            .shuffled()
+            .map { question ->
+                val order = question.options.indices.shuffled()
+                Question(
+                    question.text,
+                    order.map { question.options[it] },
+                    order.indexOf(question.answer),
+                    question.explanation
+                )
+            }
     }
 
     private fun renderQuestion() {
@@ -259,7 +275,7 @@ class BigQuizActivity : Activity() {
         questionArea.addView(Button(this).apply {
             text = "Play again"
             isAllCaps = false
-            setOnClickListener { index=0; correct=0; fiftyUsed=false; progressBar.progress=0; renderQuestion() }
+            setOnClickListener { prepareRound(); index=0; correct=0; fiftyUsed=false; progressBar.progress=0; renderQuestion() }
         })
         questionArea.addView(Button(this).apply {
             text = "Back to Games Arena"
