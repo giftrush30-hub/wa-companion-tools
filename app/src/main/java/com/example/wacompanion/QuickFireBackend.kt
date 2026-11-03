@@ -7,6 +7,7 @@ import org.json.JSONObject
 /** Supabase-backed Quick Fire. Correct answers stay in the private schema. */
 class QuickFireBackend(context: Context) {
     private val discover = DiscoverBackend(context.applicationContext)
+    private val rotationPrefs = context.applicationContext.getSharedPreferences("quickfire_rotation", Context.MODE_PRIVATE)
 
     data class Quiz(val id: String, val title: String, val description: String, val questions: List<Question>)
     data class Option(val text: String, val originalIndex: Int)
@@ -24,8 +25,12 @@ class QuickFireBackend(context: Context) {
             "GET", null, null
         ) as JSONArray
         if (sets.length() == 0) return null
-        val chosenSet = sets.getJSONObject(kotlin.random.Random.nextInt(sets.length()))
+        val allSets = (0 until sets.length()).map { sets.getJSONObject(it) }
+        val lastSetId = rotationPrefs.getString("last_set_id", null)
+        val alternatives = allSets.filter { it.getString("id") != lastSetId }
+        val chosenSet = (if (alternatives.isNotEmpty()) alternatives else allSets).random()
         val setId = chosenSet.getString("id")
+        rotationPrefs.edit().putString("last_set_id", setId).apply()
         val rows = discover.request(
             "/rest/v1/arena_quickfire_questions?select=id,question_text,options,position,points&set_id=eq.$setId&order=position.asc&limit=100",
             "GET", null, null
