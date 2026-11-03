@@ -196,3 +196,12 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - **WHOT! exhausted-market rule:** Fixed the no-draw-card dead-end. When the draw pile is empty and the discard pile has no recyclable cards, the round now ends; the player(s) holding the fewest cards win, with a tie explicitly shown. The result can be shared.
 - **Big Quiz presentation:** Added a 30-level progress bar, a stronger score/level status line and four distinct answer-button colours. Completion fills the progress bar, and replay resets it.
 - These are source updates only. No Android build, device test, APK creation or deployment was performed. The traditional cross-shaped Ludo board and full turn-handoff polish remain outstanding.
+
+
+### Ludo traditional-board and turn-flow pass — 3 November 2026
+- Replaced the custom square-loop visual with a conventional **15×15 cross-shaped Ludo board**: four 6×6 coloured corner yards, a 52-square clockwise shared route, four five-cell private home lanes and a four-colour centre finish.
+- Corrected the coordinate sequence to contain all 52 shared track cells and aligned the player start offsets at 0, 13, 26 and 39. Safe cells are represented at indices 0, 8, 13, 21, 26, 34, 39 and 47; captures are prevented on those cells.
+- Corrected token progress to the conventional model: positions 0–50 on the shared route, 51–55 in the private home lane, and 56 at the finish. Exact-roll finishing remains required; pair blockades are checked along the shared route.
+- Two-player setup now uses opposite corners (Red and Yellow); three-player setup uses three distinct corners; four-player setup uses all four. Added a pass-phone confirmation before the next player rolls, making local hand-off clearer.
+- Geometry and rule design were cross-checked against a published 15×15 Ludo implementation and a current Ludo board/rules guide: https://github.com/bocaletto-luca/Ludo and https://passandplaygames.com/guides/ludo. Rule variants still differ between families and apps; this remains the selected practice ruleset.
+- This is a source-code update only. No Android build, APK, device test or deployment was performed. The board and interaction still need visual verification on a phone before being called finished.
