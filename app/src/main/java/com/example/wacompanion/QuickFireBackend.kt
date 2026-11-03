@@ -9,7 +9,8 @@ class QuickFireBackend(context: Context) {
     private val discover = DiscoverBackend(context.applicationContext)
 
     data class Quiz(val id: String, val title: String, val description: String, val questions: List<Question>)
-    data class Question(val id: String, val text: String, val options: List<String>, val points: Int)
+    data class Option(val text: String, val originalIndex: Int)
+    data class Question(val id: String, val text: String, val options: List<Option>, val points: Int)
     data class AnswerResult(
         val correct: Boolean,
         val correctIndex: Int,
@@ -19,24 +20,28 @@ class QuickFireBackend(context: Context) {
 
     fun activeQuiz(): Quiz? {
         val sets = discover.request(
-            "/rest/v1/arena_quickfire_sets?select=id,title,description&status=eq.published&order=created_at.desc&limit=1",
+            "/rest/v1/arena_quickfire_sets?select=id,title,description&status=eq.published&order=created_at.desc&limit=100",
             "GET", null, null
         ) as JSONArray
         if (sets.length() == 0) return null
-        val row = sets.getJSONObject(0)
-        val setId = row.getString("id")
+        val chosenSet = sets.getJSONObject(kotlin.random.Random.nextInt(sets.length()))
+        val setId = chosenSet.getString("id")
         val rows = discover.request(
-            "/rest/v1/arena_quickfire_questions?select=id,question_text,options,position,points&set_id=eq.$setId&order=position.asc",
+            "/rest/v1/arena_quickfire_questions?select=id,question_text,options,position,points&set_id=eq.$setId&order=position.asc&limit=100",
             "GET", null, null
         ) as JSONArray
-        val questions = (0 until rows.length()).map { index ->
+        val questionPool = (0 until rows.length()).map { index ->
             val item = rows.getJSONObject(index)
             val choices = item.getJSONArray("options")
+            val shuffledOptions = (0 until choices.length())
+                .map { Option(choices.getString(it), it) }
+                .shuffled()
             Question(item.getString("id"), item.getString("question_text"),
-                (0 until choices.length()).map { choices.getString(it) },
-                item.optInt("points", 10))
-        }
-        return Quiz(setId, row.getString("title"), row.optString("description"), questions)
+                shuffledOptions, item.optInt("points", 10))
+        }.shuffled()
+        val roundQuestions = questionPool.take(10)
+        if (roundQuestions.isEmpty()) return null
+        return Quiz(setId, chosenSet.getString("title"), chosenSet.optString("description"), roundQuestions)
     }
 
     fun submit(questionId: String, selectedIndex: Int): AnswerResult {
