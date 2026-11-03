@@ -36,7 +36,7 @@ class GamesArenaActivity : Activity() {
         root.addView(space(14))
         val online = panel()
         online.addView(label("🌐  PLAY WITH FRIENDS", 19, green, true))
-        online.addView(label("Create or join a room, invite friends with a code, chat while you play and optionally talk live by voice.", 14, ink))
+        online.addView(label("Create or join a room, invite friends with a code and chat together. Live voice and synchronized game turns are the next development stage.", 14, ink))
         online.addView(Button(this).apply {
             text = "Open multiplayer rooms"
             isAllCaps = false
