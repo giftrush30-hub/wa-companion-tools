@@ -55,3 +55,12 @@ Never put a Supabase service-role key or payment secret in Android source code o
 ## Build and testing
 
 A successful GitHub Actions Android build verifies compilation and artifact creation only. It does not prove that the backend is connected or that the directory works on a physical phone. Test seller submission, public browsing, moderation and outbound links before public launch.
+
+
+## Buyer link hand-off (implemented in Android UI)
+
+The current Android screen includes two direct buyer actions:
+- **Open a WhatsApp catalogue link**: the buyer pastes a link intentionally shared by a seller; Android opens it with the installed app or browser.
+- **Chat with a business on WhatsApp**: the buyer enters an international phone number; the app opens the wa.me chat link. For Nigeria, enter 234 followed by the national number without its leading zero.
+
+These are link hand-off tools, not public discovery search. The public searchable directory remains pending until a shared backend exists. The app must not claim that a pasted link is verified or that a WhatsApp message was sent; the buyer reviews and sends any message in WhatsApp themselves.
