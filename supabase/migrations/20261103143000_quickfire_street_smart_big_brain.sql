@@ -7,10 +7,6 @@ with seed(title,description) as (
   select title,description,'published' from seed
   where not exists(select 1 from public.arena_quickfire_sets where title=seed.title)
   returning id
-), chosen_set as (
-  select id from new_set
-  union all select id from public.arena_quickfire_sets where title='Quick Fire: Street Smart & Big Brain'
-  limit 1
 ), q(position,question_text,options,correct_index,explanation,difficulty) as (values
 (1,'A seller says a phone is “brand new” but refuses to let you check its IMEI or test it. What is the wisest move?','["Pay quickly before it sells","Walk away or verify through an authorised channel","Trust the packaging alone","Send a deposit to a stranger"]'::jsonb,1,'A device should be checked through reliable channels before payment.','easy'),
 (2,'You receive an OTP you did not request. What should you do?','["Share it with the caller","Post it in a group","Keep it private and secure your account if needed","Reply with your bank PIN"]'::jsonb,2,'An unsolicited OTP may mean someone is attempting to access an account. Never disclose it.','easy'),
