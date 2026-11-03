@@ -106,14 +106,17 @@ class LudoActivity : Activity() {
 
     private fun legalTokens(value:Int)=tokens[current].indices.filter { i ->
         val p=tokens[current][i].progress
-        (p==-1 && value==6) || (p>=0 && p<57 && p+value<=57 && !blockedByPair(p+value))
+        (p==-1 && value==6) || (p>=0 && p<57 && p+value<=57 && !blockedByPair(p,p+value))
     }
 
-    private fun blockedByPair(next:Int):Boolean {
-        if(next !in 0..51) return false
-        val target=(players[current].start+next)%52
-        return tokens.indices.filter{it!=current}.any { other ->
-            tokens[other].count { it.progress in 0..51 && (players[other].start+it.progress)%52==target }>=2
+    private fun blockedByPair(from:Int,next:Int):Boolean {
+        val lastTrackStep=minOf(next,51)
+        if(from+1>lastTrackStep) return false
+        return (from+1..lastTrackStep).any { step ->
+            val target=(players[current].start+step)%52
+            tokens.indices.filter{it!=current}.any { other ->
+                tokens[other].count { it.progress in 0..51 && (players[other].start+it.progress)%52==target }>=2
+            }
         }
     }
 
