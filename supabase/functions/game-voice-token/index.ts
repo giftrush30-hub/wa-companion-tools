@@ -56,7 +56,7 @@ Deno.serve(async (request) => {
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
   const livekitUrl = Deno.env.get("LIVEKIT_URL");
   const livekitKey = Deno.env.get("LIVEKIT_API_KEY");
   const livekitSecret = Deno.env.get("LIVEKIT_API_SECRET");
