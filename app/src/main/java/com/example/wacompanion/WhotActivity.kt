@@ -1,0 +1,181 @@
+package com.example.wacompanion
+
+import android.app.Activity
+import android.app.AlertDialog
+import android.graphics.Color
+import android.os.Bundle
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import kotlin.random.Random
+
+/** Local pass-and-play Nigerian WHOT practice using a disclosed Pagat-style 54-card deck. */
+class WhotActivity : Activity() {
+    private data class Card(val suit:String,val number:Int) {
+        val wild get()=suit=="WHOT"
+        val display get()=if(wild) "WHOT 20" else "$suit $number"
+    }
+    private val suits=listOf("BALL","ANGLE","CROSS","CARPET","STAR")
+    private val numbers=mapOf(
+        "BALL" to listOf(1,2,3,4,5,7,8,10,11,12,13,14),
+        "ANGLE" to listOf(1,2,3,4,5,7,8,10,11,12,13,14),
+        "CROSS" to listOf(1,2,3,5,7,10,11,13,14),
+        "CARPET" to listOf(1,2,3,5,7,10,11,13,14),
+        "STAR" to listOf(1,2,3,4,5,7,8)
+    )
+    private val ink=Color.rgb(30,39,48)
+    private val green=Color.rgb(7,91,69)
+    private val hands=mutableListOf<MutableList<Card>>()
+    private val discard=mutableListOf<Card>()
+    private val market=mutableListOf<Card>()
+    private lateinit var players:List<String>
+    private lateinit var root:LinearLayout
+    private lateinit var status:TextView
+    private lateinit var table:LinearLayout
+    private var current=0
+    private var top:Card?=null
+    private var calledSuit:String?=null
+    private var pendingDraw=0
+    private var pendingType=0
+    private var gameOver=false
+    private var playerCount=2
+
+    override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);choosePlayers()}
+
+    private fun choosePlayers(){
+        AlertDialog.Builder(this).setTitle("WHOT! • Choose players")
+            .setItems(arrayOf("2 players","3 players","4 players")){_,which->playerCount=which+2;newGame()}
+            .setCancelable(false).show()
+    }
+
+    private fun newGame(){
+        players=listOf("PLAYER 1","PLAYER 2","PLAYER 3","PLAYER 4").take(playerCount)
+        hands.clear();repeat(playerCount){hands.add(mutableListOf())}
+        discard.clear();market.clear()
+        suits.forEach{s->numbers[s].orEmpty().forEach{n->market.add(Card(s,n))}}
+        repeat(5){market.add(Card("WHOT",20))}
+        market.shuffle()
+        repeat(6){hands.forEach{it.add(market.removeAt(market.lastIndex))}}
+        var first=market.removeAt(market.lastIndex)
+        while(first.wild){market.add(0,first);first=market.removeAt(market.lastIndex)}
+        discard.add(first);top=first;calledSuit=null
+        current=0;pendingDraw=0;pendingType=0;gameOver=false
+        root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(16),dp(14),dp(24));setBackgroundColor(Color.rgb(246,249,247))}
+        setContentView(ScrollView(this).apply{addView(root)})
+        root.addView(label("WHOT! • NAIJA CARD TABLE",24,green,true))
+        root.addView(label("Pass-and-play practice • $playerCount players • No Games Points",13,Color.DKGRAY))
+        status=label("",16,ink,true);root.addView(status)
+        val topPanel=panel();topPanel.addView(label("CALL CARD",11,green,true))
+        topPanel.addView(label(first.display,27,ink,true))
+        root.addView(topPanel)
+        root.addView(label("YOUR HAND",13,green,true))
+        table=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL};root.addView(table)
+        root.addView(Button(this).apply{text="New match";isAllCaps=false;setOnClickListener{choosePlayers()}})
+        root.addView(label("Rules in this practice table: match by shape or number. 1 = Hold On; 2 = Pick Two (stackable); 5 = Pick Three (stackable); 8 = Suspension; Star 8 skips two players; 14 = General Market; WHOT 20 = wild and calls a shape. Drawing ends your turn. First to clear their hand wins.",12,Color.DKGRAY))
+        showTurn()
+    }
+
+    private fun showTurn(){
+        if(gameOver)return
+        status.text="${players[current]}'s turn • Cards left: "+hands.mapIndexed{i,h->"${players[i]} ${h.size}"}.joinToString("  |  ")+
+            if(pendingDraw>0)"\nPICK PENALTY: $pendingDraw cards. Defend with another $pendingType or pick up." else ""
+        table.removeAllViews()
+        table.addView(label("Pass the phone to ${players[current]}. Only that player should view the hand.",13,Color.rgb(120,85,35),true))
+        table.addView(Button(this).apply{text="I'm ready — show my cards";isAllCaps=false;setOnClickListener{showHand()}})
+    }
+
+    private fun showHand(){
+        if(gameOver)return
+        table.removeAllViews()
+        table.addView(label("${players[current]}'S CARDS",14,green,true))
+        hands[current].forEachIndexed{index,card->
+            val legal=isLegal(card)
+            table.addView(Button(this).apply{
+                text=card.display+(if(legal)"  • PLAY" else "  • not playable")
+                isAllCaps=false;isEnabled=legal
+                setTextColor(if(legal)green else Color.GRAY)
+                setOnClickListener{playCard(index)}
+            })
+        }
+        table.addView(Button(this).apply{
+            text=if(pendingDraw>0)"Pick up $pendingDraw cards" else "Go to market • draw 1"
+            isAllCaps=false;setOnClickListener{drawCards(if(pendingDraw>0)pendingDraw else 1);pendingDraw=0;pendingType=0;nextPlayer()}
+        })
+        table.addView(Button(this).apply{text="Hide hand";isAllCaps=false;setOnClickListener{showTurn()}})
+    }
+
+    private fun isLegal(card:Card):Boolean{
+        if(pendingDraw>0)return !card.wild && card.number==pendingType
+        val face=top ?: return true
+        return card.wild || card.number==face.number || card.suit==calledSuit || (!face.wild && card.suit==face.suit)
+    }
+
+    private fun playCard(index:Int){
+        if(gameOver)return
+        val card=hands[current].getOrNull(index)?:return
+        if(!isLegal(card))return
+        hands[current].removeAt(index);discard.add(card);top=card;calledSuit=null
+        if(hands[current].isEmpty()){finishGame(current);return}
+        when{
+            card.wild->chooseSuit()
+            card.number==2||card.number==5->{
+                val amount=if(card.number==2)2 else 3
+                if(pendingDraw==0)pendingType=card.number
+                pendingDraw+=amount;nextPlayer("Defend with another $pendingType or pick up $pendingDraw.")
+            }
+            card.number==1->showTurn()
+            card.number==8->{
+                val skips=if(card.suit=="STAR")2 else 1
+                repeat(skips){current=(current+1)%playerCount}
+                showTurn("Suspension! $skips turn(s) skipped.")
+            }
+            card.number==14->{
+                for(i in hands.indices)if(i!=current)drawCards(1,i)
+                showTurn("General Market! Every other player picks one card.")
+            }
+            else->nextPlayer()
+        }
+    }
+
+    private fun chooseSuit(){
+        AlertDialog.Builder(this).setTitle("WHOT! — call the next shape")
+            .setItems(suits.toTypedArray()){_,which->calledSuit=suits[which];nextPlayer("Shape called: ${suits[which]}.")}
+            .setCancelable(false).show()
+    }
+
+    private fun drawCards(count:Int,player:Int=current){
+        repeat(count){
+            if(market.isEmpty()&&discard.size>1){
+                val face=discard.removeAt(discard.lastIndex)
+                market.addAll(discard);discard.clear();discard.add(face);market.shuffle()
+            }
+            if(market.isNotEmpty())hands[player].add(market.removeAt(market.lastIndex))
+        }
+    }
+
+    private fun nextPlayer(note:String=""){
+        current=(current+1)%playerCount
+        showTurn(note)
+    }
+
+    private fun showTurn(note:String){
+        showTurn()
+        if(note.isNotBlank())status.text=status.text.toString()+"\n"+note
+    }
+
+    private fun finishGame(winner:Int){
+        gameOver=true;table.removeAllViews()
+        status.text="MATCH COMPLETE"
+        table.addView(label("🏆 ${players[winner]} wins! CHECK UP!",23,green,true))
+        table.addView(label("The first player to play their final card wins this practice round.",15,ink))
+        table.addView(Button(this).apply{text="Share the result";isAllCaps=false;setOnClickListener{
+            ArenaShareCard.share(this@WhotActivity,"WHOT! MATCH RESULT","${players[winner]} won a $playerCount-player practice match. Who is ready for a rematch?","YOUR TURN • GAMES ARENA")
+        }})
+        table.addView(Button(this).apply{text="Play again";isAllCaps=false;setOnClickListener{newGame()}})
+    }
+
+    private fun panel()=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(12),dp(10),dp(12),dp(10));setBackgroundColor(Color.WHITE)}
+    private fun label(s:String,size:Int,color:Int,bold:Boolean=false)=TextView(this).apply{text=s;textSize=size.toFloat();setTextColor(color);if(bold)setTypeface(null,android.graphics.Typeface.BOLD);setPadding(2,dp(4),2,dp(6))}
+    private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
+}
