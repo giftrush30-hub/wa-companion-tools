@@ -542,7 +542,7 @@ class MainActivity : Activity() {
             summary.text = if (t == null || p == null || t < 0 || p < 0 || p > t) {
                 "Enter valid amounts. Amount paid cannot be greater than the order total."
             } else {
-                "Outstanding balance: ₦\${money(t - p)}"
+                "Outstanding balance: ₦${money(t - p)}"
             }
         }
         total.addTextChangedListener(object : android.text.TextWatcher {
@@ -583,7 +583,7 @@ class MainActivity : Activity() {
                 toast("Enter valid order details first.")
             } else {
                 val balance = t - p
-                val note = "Hello $who, this is a friendly update about your $what order. Total: ₦\${money(t)}. Paid: ₦\${money(p)}. Balance: ₦\${money(balance)}. Thank you."
+                val note = "Hello $who, this is a friendly update about your $what order. Total: ₦${money(t)}. Paid: ₦${money(p)}. Balance: ₦${money(balance)}. Thank you."
                 shareToWhatsApp(note)
             }
         }
@@ -595,37 +595,94 @@ class MainActivity : Activity() {
 
     private fun renderCustomerOrders() {
         val holder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val raw = prefs.getString("customer_orders", "") ?: ""
-        if (raw.isBlank()) {
-            holder.addView(label("No customer orders saved yet.", 12, Color.GRAY))
-        } else {
-            raw.split("\u001f").filter { it.isNotBlank() }.forEach { record ->
-                val fields = record.split("\u001e")
-                val who = fields.getOrNull(0).orEmpty()
-                val what = fields.getOrNull(1).orEmpty()
-                val total = fields.getOrNull(2)?.toDoubleOrNull() ?: 0.0
-                val paid = fields.getOrNull(3)?.toDoubleOrNull() ?: 0.0
-                val status = fields.getOrNull(4).orEmpty()
-                val balance = (total - paid).coerceAtLeast(0.0)
-                val format = java.text.NumberFormat.getNumberInstance(Locale("en", "NG"))
-                val card = LinearLayout(this).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(dp(10), dp(10), dp(10), dp(10))
-                    setBackgroundColor(Color.WHITE)
-                }
-                card.addView(label(who + " • " + what, 14, Color.rgb(6, 63, 50), true))
-                card.addView(label("Total: ₦\${format.format(total)}  |  Paid: ₦\${format.format(paid)}  |  Balance: ₦\${format.format(balance)}", 12, Color.DKGRAY))
-                card.addView(label("Status: $status", 12, Color.GRAY))
-                val share = Button(this).apply { text = "Share order update"; isAllCaps = false }
-                share.setOnClickListener {
-                    shareToWhatsApp("Hello $who, an update on your $what order: $status. Total: ₦\${format.format(total)}. Paid: ₦\${format.format(paid)}. Balance: ₦\${format.format(balance)}. Thank you.")
-                }
-                card.addView(share)
-                holder.addView(card)
-                holder.addView(space(6))
-            }
-        }
+        refreshCustomerOrderCards(holder)
         root.addView(holder)
+    }
+
+    private fun refreshCustomerOrderCards(holder: LinearLayout) {
+        holder.removeAllViews()
+        val records = (prefs.getString("customer_orders", "") ?: "").split("\u001f").filter { it.isNotBlank() }
+        if (records.isEmpty()) {
+            holder.addView(label("No customer orders saved yet.", 12, Color.GRAY))
+            return
+        }
+        val format = java.text.NumberFormat.getNumberInstance(Locale("en", "NG"))
+        records.forEachIndexed { index, record ->
+            val fields = record.split("\u001e")
+            val who = fields.getOrNull(0).orEmpty()
+            val what = fields.getOrNull(1).orEmpty()
+            val total = fields.getOrNull(2)?.toDoubleOrNull() ?: 0.0
+            val paid = fields.getOrNull(3)?.toDoubleOrNull() ?: 0.0
+            val status = fields.getOrNull(4).orEmpty()
+            val balance = (total - paid).coerceAtLeast(0.0)
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(10), dp(10), dp(10), dp(10))
+                setBackgroundColor(Color.WHITE)
+            }
+            card.addView(label(who + " • " + what, 14, Color.rgb(6, 63, 50), true))
+            card.addView(label("Total: ₦${format.format(total)}  |  Paid: ₦${format.format(paid)}", 12, Color.DKGRAY))
+            card.addView(label("Outstanding: ₦${format.format(balance)}", 13, if (balance > 0) Color.rgb(170, 75, 20) else Color.rgb(20, 120, 70), true))
+            card.addView(label("Order status: $status", 12, Color.GRAY))
+            val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            val paymentButton = Button(this).apply { text = "Add payment"; isAllCaps = false }
+            paymentButton.setOnClickListener {
+                val amountInput = EditText(this).apply {
+                    hint = "Payment received (₦)"
+                    inputType = 2
+                }
+                android.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Record a payment")
+                    .setMessage("Outstanding balance: ₦${format.format(balance)}")
+                    .setView(amountInput)
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Save payment") { _, _ ->
+                        val amount = amountInput.text.toString().toDoubleOrNull()
+                        if (amount == null || amount <= 0 || amount > balance) {
+                            toast("Enter an amount above zero and not more than the balance.")
+                        } else {
+                            val updated = fields.toMutableList()
+                            updated[3] = (paid + amount).toString()
+                            val mutableRecords = records.toMutableList()
+                            mutableRecords[index] = updated.joinToString("\u001e")
+                            prefs.edit().putString("customer_orders", mutableRecords.joinToString("\u001f")).apply()
+                            refreshCustomerOrderCards(holder)
+                            toast("Payment recorded. Balance updated.")
+                        }
+                    }.show()
+            }
+            val statusButton = Button(this).apply { text = "Update status"; isAllCaps = false }
+            statusButton.setOnClickListener {
+                val choices = listOf("Order received", "In progress", "Ready for collection", "Delivered", "Cancelled")
+                val picker = Spinner(this@MainActivity).apply {
+                    adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, choices)
+                    setSelection(choices.indexOf(status).coerceAtLeast(0))
+                }
+                android.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Update order progress")
+                    .setView(picker)
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Save") { _, _ ->
+                        val updated = fields.toMutableList()
+                        updated[4] = picker.selectedItem.toString()
+                        val mutableRecords = records.toMutableList()
+                        mutableRecords[index] = updated.joinToString("\u001e")
+                        prefs.edit().putString("customer_orders", mutableRecords.joinToString("\u001f")).apply()
+                        refreshCustomerOrderCards(holder)
+                        toast("Order status updated.")
+                    }.show()
+            }
+            actions.addView(paymentButton, LinearLayout.LayoutParams(0, dp(48), 1f))
+            actions.addView(statusButton, LinearLayout.LayoutParams(0, dp(48), 1f))
+            card.addView(actions)
+            val share = Button(this).apply { text = "Share order update"; isAllCaps = false }
+            share.setOnClickListener {
+                shareToWhatsApp("Hello $who, an update on your $what order: $status. Total: ₦${format.format(total)}. Paid: ₦${format.format(paid)}. Balance: ₦${format.format(balance)}. Thank you.")
+            }
+            card.addView(share)
+            holder.addView(card)
+            holder.addView(space(6))
+        }
     }
 
     private var selectedProductImage: Uri? = null
