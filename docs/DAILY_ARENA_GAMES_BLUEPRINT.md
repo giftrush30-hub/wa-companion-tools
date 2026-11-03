@@ -205,3 +205,11 @@ Keep the existing home tools intact. Recommended home emphasis: Daily Arena spot
 - Two-player setup now uses opposite corners (Red and Yellow); three-player setup uses three distinct corners; four-player setup uses all four. Added a pass-phone confirmation before the next player rolls, making local hand-off clearer.
 - Geometry and rule design were cross-checked against a published 15×15 Ludo implementation and a current Ludo board/rules guide: https://github.com/bocaletto-luca/Ludo and https://passandplaygames.com/guides/ludo. Rule variants still differ between families and apps; this remains the selected practice ruleset.
 - This is a source-code update only. No Android build, APK, device test or deployment was performed. The board and interaction still need visual verification on a phone before being called finished.
+
+## WHOT visual card redesign - 2026-11-03
+- Replaced plain coloured text buttons with individual card-face components in WhotActivity.kt.
+- Card faces use a cream surface, deep-brown corner values, large suit glyphs for Ball, Angle, Cross, Carpet, Star and WHOT, rounded edges, and a consistent suit/value footer.
+- Legal cards have a stronger green outline, elevation and PLAY cue. Illegal cards are muted and marked LOCKED. Suit glyphs supplement colour so suit recognition is not colour-only.
+- The call card uses the same visual language. The hand is displayed in a two-column touch-friendly grid and remains protected by the pass-phone reveal step.
+- Research references: whot.online describes cream cards, deep-brown symbols and mirrored corners; Tabletop Runner and Prototable discuss information hierarchy, visible playability, consistent card layout and readability.
+- Visual-only change: no rules, points, online play, build, device test or deployment were added.
