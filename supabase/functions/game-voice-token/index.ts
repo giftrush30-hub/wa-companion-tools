@@ -34,6 +34,7 @@ async function signLiveKitToken(apiKey: string, apiSecret: string, identity: str
       roomJoin: true,
       room: roomName,
       canPublish: true,
+      canPublishSources: ["microphone"],
       canSubscribe: true,
       canPublishData: false,
     },
