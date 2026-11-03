@@ -81,6 +81,8 @@ class MainActivity : Activity() {
         card("NAIJA WHATSAPP STICKERS", "Preview original Nigerian reactions and add the starter sticker pack to WhatsApp with your confirmation.") { stickerStudio() }
         card("DAILY MESSAGE & CAPTION GENERATOR", "Get fresh Nigerian-friendly ideas for greetings, faith, love, motivation and business. Copy or share the one you like.") { dailyMessageTool() }
         card("NIGERIAN MEME & REACTION STUDIO", "Choose a Nigerian-style reaction or write your own, turn it into a shareable image, and send it to WhatsApp or your status.") { memeStudio() }
+        card("DAILY STATUS CHALLENGE", "Get a fresh daily prompt, create your response and share it as a status.") { dailyChallenge() }
+        card("REPLY-TO-STATUS ASSISTANT", "Bring in a status or describe it, then get thoughtful reply ideas in different tones.") { replyAssistant() }
         card("STATUS & FLYER STUDIO", "Create shareable cards for birthdays, business adverts and announcements.") { statusStudio() }
         card("NAIJA MESSAGE LAB", "Polish messages in clear English, friendly Pidgin or a respectful business tone.") { messageLab() }
         card("SMALL BUSINESS FOLLOW-UP DESK", "Keep customer names, order notes and follow-ups on this phone.") { businessDesk() }
@@ -340,6 +342,87 @@ class MainActivity : Activity() {
         } catch (_: Exception) { toast("Could not create image. Please try again.") }
     }
 
+
+    private fun dailyChallenge() {
+        val challenges = listOf(
+            "Share one thing you are grateful for today.",
+            "Post a photo that reminds you of a beautiful memory.",
+            "Encourage someone who may be having a difficult week.",
+            "Share one lesson life has taught you recently.",
+            "Make somebody smile with a clean Nigerian joke.",
+            "Show one small achievement you are proud of.",
+            "Share a hope or prayer for the new week.",
+            "Tell people about a skill or service you can offer.",
+            "Complete this sentence: I am becoming someone who...",
+            "Share one piece of advice you wish you knew earlier.",
+            "Celebrate someone who has helped you.",
+            "Post something beautiful you noticed today."
+        )
+        val today = java.time.LocalDate.now()
+        val index = Math.floorMod(today.toEpochDay().toInt(), challenges.size)
+        val prompt = challenges[index]
+        root.addView(label("TODAY'S CREATIVE CHALLENGE", 16, Color.rgb(6, 63, 50), true))
+        root.addView(label(today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM")) , 12, Color.GRAY))
+        root.addView(label(prompt, 21, Color.rgb(20, 55, 48), true))
+        val response = EditText(this).apply {
+            hint = "Write your response or status here"
+            minLines = 3
+        }
+        root.addView(response)
+        button("Use a suggested opening") {
+            response.setText("Today's challenge: $prompt\n\nMy answer: ")
+            response.setSelection(response.text.length)
+        }
+        button("Design and share challenge") {
+            val value = response.text.toString().trim()
+            if (value.isBlank()) toast("Write your response first.") else shareMemeImage(value)
+        }
+        button("Copy challenge prompt") {
+            (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager)
+                .setPrimaryClip(ClipData.newPlainText("Daily challenge", prompt))
+            toast("Challenge copied.")
+        }
+        root.addView(label("Your challenge changes by date and works offline. Your progress stays private on this phone.", 11, Color.GRAY))
+    }
+
+    private fun replyAssistant() {
+        root.addView(label("TURN A STATUS INTO A GOOD CONVERSATION", 16, Color.rgb(6, 63, 50), true))
+        root.addView(label("Describe the status or paste its text. Only use content you choose to share with this app.", 12, Color.GRAY))
+        val contextInput = EditText(this).apply {
+            hint = "Example: My friend posted that they got a new job..."
+            minLines = 3
+        }
+        root.addView(contextInput)
+        val tones = listOf("Warm and friendly", "Funny and playful", "Encouraging", "Respectful", "Professional", "Short and simple")
+        val tone = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, tones)
+        }
+        root.addView(label("CHOOSE YOUR TONE", 12, Color.rgb(6, 63, 50), true))
+        root.addView(tone)
+        val result = EditText(this).apply { hint = "Your reply suggestions will appear here"; minLines = 3 }
+        root.addView(result)
+        button("Suggest replies") {
+            val contextText = contextInput.text.toString().trim()
+            if (contextText.isBlank()) {
+                toast("Describe or paste the status first.")
+            } else {
+                val suggestions = when (tone.selectedItemPosition) {
+                    0 -> listOf("This made me smile. Wishing you even more beautiful moments!", "So happy for you. You deserve good things!")
+                    1 -> listOf("Omo! This update is giving premium enjoyment 😂", "See person wey dey make moves! More wins!")
+                    2 -> listOf("Keep going. This is a beautiful step forward.", "May this be the beginning of even greater things.")
+                    3 -> listOf("Thank you for sharing this. I genuinely appreciate it.", "Wishing you peace and the very best.")
+                    4 -> listOf("Congratulations on this milestone. Wishing you continued success.", "That is wonderful news. Best wishes for what comes next.")
+                    else -> listOf("That's lovely! ❤️", "Really happy for you. More wins!")
+                }
+                result.setText(suggestions.joinToString("\n\n"))
+            }
+        }
+        button("Share selected reply") {
+            val value = result.text.toString().trim()
+            if (value.isBlank()) toast("Generate a reply first.") else shareToWhatsApp(value)
+        }
+        root.addView(label("These are offline writing suggestions, not AI and not automatic WhatsApp replies. Choose and edit your words before sending.", 11, Color.GRAY))
+    }
 
     private fun statusStudio() {
         root.addView(label("MAKE A STATUS PEOPLE WANT TO READ", 18, Color.rgb(6, 63, 50), true))
