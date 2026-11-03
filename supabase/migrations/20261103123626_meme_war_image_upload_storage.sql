@@ -17,7 +17,5 @@ with check (
   bucket_id='arena-meme-submissions'
   and (storage.foldername(name))[1]=(select auth.uid())::text
 );
+-- Public-bucket object GETs work by URL; do not grant object listing access.
 drop policy if exists "Public can view Meme War submission images" on storage.objects;
-create policy "Public can view Meme War submission images"
-on storage.objects for select to anon,authenticated
-using (bucket_id='arena-meme-submissions');
