@@ -4,61 +4,132 @@ import android.app.Activity
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import java.util.concurrent.Executors
 
-/**
- * Phase 1 navigation foundation for Daily Arena.
- * Community voting, moderation, rewards and multiplayer are intentionally
- * not simulated locally; they require trusted backend services.
- */
+/** Daily Arena home with the first live feature: Hot Seat polls. */
 class DailyArenaActivity : Activity() {
     private val ink = Color.rgb(18, 42, 55)
     private val muted = Color.rgb(91, 108, 119)
     private val green = Color.rgb(7, 91, 69)
+    private val worker = Executors.newSingleThreadExecutor()
+    private lateinit var content: LinearLayout
+    private lateinit var status: TextView
+    private val arena by lazy { ArenaBackend(this) }
+    private var activePoll: ArenaBackend.Poll? = null
+    private var voted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val content = LinearLayout(this).apply {
+        content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(22), dp(18), dp(28))
             setBackgroundColor(Color.rgb(246, 249, 247))
         }
-        val scroll = ScrollView(this).apply { addView(content) }
-        setContentView(scroll)
-
+        setContentView(ScrollView(this).apply { addView(content) })
         content.addView(text("DAILY ARENA", 27, green, true))
         content.addView(text("A fresh reason to have fun every day.", 15, muted))
-        content.addView(gap(16))
+        content.addView(gap(12))
+
         val intro = panel()
         intro.addView(text("PLAY • SHARE IDEAS • CHALLENGE YOURSELF", 12, green, true))
-        intro.addView(text("Your daily entertainment space is taking shape.", 20, ink, true))
-        intro.addView(text("Join quick activities, friendly competitions and creative challenges. Points will reward genuine participation—not advertising or visibility.", 14, muted))
+        intro.addView(text("Your daily entertainment space.", 20, ink, true))
+        intro.addView(text("Points reward genuine participation—not advertising, views or business visibility.", 14, muted))
         content.addView(intro)
         content.addView(gap(12))
 
-        addFeature(content, "HOT SEAT", "Daily questions and polls about life, opinions, culture and everyday Nigerian experiences.")
-        addFeature(content, "QUICK FIRE", "Short timed quizzes covering general knowledge, culture, entertainment, technology and more.")
-        addFeature(content, "MEME WAR", "Original caption challenges where the community can vote, with reporting and moderation.")
-        addFeature(content, "GAMES ARENA", "Big Quiz, multiplayer Ludo and WHOT!, with private rooms, matchmaking and fair-play protections.")
-        addFeature(content, "POINTS & REWARDS", "A separate entertainment-points wallet for achievements, avatars, profile decorations and game cosmetics.")
-        addFeature(content, "LEADERBOARDS", "Quiz, Ludo, WHOT! and All-Round rankings, with global and friends views plus monthly seasons.")
-
-        content.addView(gap(10))
-        val note = panel()
-        note.addView(text("IMPORTANT", 12, green, true))
-        note.addView(text("Games Points will never buy business ads, sponsored placement, views, followers or visibility. Business promotion remains a separate money-based service.", 14, ink))
-        content.addView(note)
+        val hotSeat = panel()
+        hotSeat.addView(text("HOT SEAT", 19, green, true))
+        hotSeat.addView(text("One question. Your opinion. A community conversation.", 14, muted))
+        status = text("Loading today's question…", 14, muted)
+        hotSeat.addView(status)
+        content.addView(hotSeat)
         content.addView(gap(12))
-        content.addView(text("FOUNDATION PREVIEW", 12, muted, true))
-        content.addView(text("This screen establishes the navigation and product structure. Live polls, public submissions, points, leaderboards and online games will be enabled only after secure backend rules, moderation and testing are ready.", 13, muted))
+
+        addFeature(content, "QUICK FIRE", "Short quizzes covering general knowledge, Nigerian culture, entertainment, technology and more. Coming next.")
+        addFeature(content, "MEME WAR", "Original caption challenges with voting, reporting and moderation. Coming next.")
+        addFeature(content, "GAMES ARENA", "Big Quiz, multiplayer Ludo and WHOT! with fair-play protections. Coming next.")
+        addFeature(content, "POINTS & REWARDS", "Cosmetics, avatars, profile decorations and game customisation only.")
+        addFeature(content, "LEADERBOARDS", "Separate Quiz, Ludo, WHOT! and All-Round rankings. Coming next.")
+
+        val note = panel()
+        note.addView(text("TWO SEPARATE ECONOMIES", 12, green, true))
+        note.addView(text("Games Points can never buy business ads, sponsored placement, views, followers or visibility. Business promotion remains money-based.", 14, ink))
+        content.addView(note)
+        loadPoll()
+    }
+
+    private fun loadPoll() {
+        status.text = "Loading today's question…"
+        worker.execute {
+            try {
+                val poll = arena.activePoll()
+                runOnUiThread {
+                    activePoll = poll
+                    if (poll == null) {
+                        status.text = "No live question yet. Check back soon."
+                    } else {
+                        renderPoll(poll)
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread { status.text = e.message ?: "Could not load the question. Check your connection and try again." }
+            }
+        }
+    }
+
+    private fun renderPoll(poll: ArenaBackend.Poll) {
+        status.text = poll.question
+        poll.options.forEach { option ->
+            val choice = Button(this).apply {
+                text = option.text
+                isAllCaps = false
+                setTextColor(ink)
+                setBackgroundColor(Color.rgb(232, 242, 237))
+                isEnabled = !voted
+                setOnClickListener { submitVote(poll, option) }
+            }
+            (status.parent as LinearLayout).addView(choice)
+        }
+        if (poll.options.isEmpty()) status.text = "This question has no answer choices yet."
+    }
+
+    private fun submitVote(poll: ArenaBackend.Poll, option: ArenaBackend.Option) {
+        status.text = "Submitting your vote…"
+        worker.execute {
+            try {
+                arena.vote(poll.id, option.id)
+                val results = arena.results(poll.id)
+                runOnUiThread {
+                    voted = true
+                    status.text = "Thanks for taking part! Here are the community results:"
+                    showResults(poll, results)
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    status.text = (e.message ?: "Your vote could not be submitted.") +
+                        if (e.message.orEmpty().contains("duplicate", true) || e.message.orEmpty().contains("unique", true))
+                            "\nIt looks like you have already voted in this poll." else ""
+                }
+            }
+        }
+    }
+
+    private fun showResults(poll: ArenaBackend.Poll, results: List<ArenaBackend.Result>) {
+        val parent = status.parent as LinearLayout
+        val counts = results.associate { it.optionId to it.count }
+        poll.options.forEach { option ->
+            val count = counts[option.id] ?: 0L
+            parent.addView(text("${option.text}  •  $count vote(s)", 14, ink, true))
+        }
     }
 
     private fun addFeature(parent: LinearLayout, title: String, description: String) {
         val box = panel()
-        box.addView(text(title, 17, ink, true))
+        box.addView(text(title, 16, ink, true))
         box.addView(text(description, 14, muted))
         parent.addView(box)
         parent.addView(gap(9))
@@ -84,4 +155,9 @@ class DailyArenaActivity : Activity() {
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+
+    override fun onDestroy() {
+        worker.shutdownNow()
+        super.onDestroy()
+    }
 }
